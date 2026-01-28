@@ -98,10 +98,7 @@ __global__ void hip_scale_qmat_double_complex_kernel(hipDoubleComplex *q, hipDou
     }
 }
 
-extern "C" void hip_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in, double _Complex *q_dev, double _Complex *tau_dev, hipStream_t  my_stream){
-  int ldq = *ldq_in;
-  int l_cols = *l_cols_in;
-
+extern "C" void hip_scale_qmat_double_complex_FromC(int ldq, int l_cols, double _Complex *q_dev, double _Complex *tau_dev, hipStream_t  my_stream){
   hipDoubleComplex* q_casted = (hipDoubleComplex*) q_dev;
   hipDoubleComplex* tau_casted = (hipDoubleComplex*) tau_dev;
 
@@ -137,10 +134,7 @@ __global__ void hip_scale_qmat_float_complex_kernel(hipFloatComplex *q, hipFloat
 
 }
 
-extern "C" void hip_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, float _Complex *q_dev, float _Complex *tau_dev, hipStream_t  my_stream){
-  int ldq = *ldq_in;
-  int l_cols = *l_cols_in;
-
+extern "C" void hip_scale_qmat_float_complex_FromC(int ldq, int l_cols, float _Complex *q_dev, float _Complex *tau_dev, hipStream_t  my_stream){
   hipFloatComplex* q_casted = (hipFloatComplex*) q_dev;
   hipFloatComplex* tau_casted = (hipFloatComplex*) tau_dev;
 

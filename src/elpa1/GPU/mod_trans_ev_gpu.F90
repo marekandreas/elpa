@@ -1,11 +1,13 @@
-!    Copyright 2024, A. Marek
+#if 0
+!    Copyright 2024, A. Marek, MPCDF
 !
 !    This file is part of ELPA.
 !
 !    The ELPA library was originally created by the ELPA consortium,
 !    consisting of the following organizations:
 !
-!    - Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
+!    - Max Planck Computing and Data Facility (MPCDF), formerly known as
+!      Rechenzentrum Garching der Max-Planck-Gesellschaft (RZG),
 !    - Bergische Universität Wuppertal, Lehrstuhl für angewandte
 !      Informatik,
 !    - Technische Universität München, Lehrstuhl für Informatik mit
@@ -15,7 +17,6 @@
 !      Leipzig, Abt. Komplexe Strukutren in Biologie und Kognition,
 !      and
 !    - IBM Deutschland GmbH
-!
 !
 !    More information can be found here:
 !    http://elpa.mpcdf.mpg.de/
@@ -39,93 +40,193 @@
 !    may have back to the original ELPA library distribution, and keep
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
-!
-! This file was written by A. Marek, MPCDF
+
+!    This file was written by A.Marek, MPCDF
+#endif
 
 
 #include "config-f90.h"
+
 module trans_ev_gpu
   use, intrinsic :: iso_c_binding
   use precision
-#ifdef WITH_NVIDIA_GPU_VERSION
-  use trans_ev_cuda
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-  use trans_ev_hip
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-  use trans_ev_sycl
-#endif
+
   implicit none
 
   public
-  contains
 
-    subroutine gpu_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+
+  interface
+    subroutine gpu_scale_qmat_double_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_scale_qmat_double_complex_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_scale_qmat_double_complex_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name="sycl_scale_qmat_double_complex_FromC")
+#endif
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in) :: ldq, l_cols
-      integer(kind=c_intptr_t)   :: q_dev, tau_dev
-      integer(kind=c_intptr_t)   :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
+      integer(kind=c_int), value       :: ldq, l_cols
+      integer(kind=c_intptr_t), value  :: q_dev, tau_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
+  end interface
 
-
-    subroutine gpu_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
+  interface
+    subroutine gpu_scale_qmat_float_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                                  bind(C, name="cuda_scale_qmat_float_complex_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                                  bind(C, name= "hip_scale_qmat_float_complex_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                                  bind(C, name="sycl_scale_qmat_float_complex_FromC")
+#endif
       use, intrinsic :: iso_c_binding
-
       implicit none
-      integer(c_int), intent(in) :: ldq, l_cols
-      integer(kind=c_intptr_t)   :: q_dev, tau_dev
-      integer(kind=c_intptr_t)   :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
-#endif
+      integer(kind=c_int), value       :: ldq, l_cols
+      integer(kind=c_intptr_t), value  :: q_dev, tau_dev
+      integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
+  end interface
 
-
-    subroutine gpu_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, &
-                              ics, ice, SM_count, debug, my_stream)
+  interface
+    subroutine gpu_copy_hvb_a_c(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                                nblk, ics, ice, SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                bind(C, name="cuda_copy_hvb_a_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                bind(C, name="hip_copy_hvb_a_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                bind(C, name="sycl_copy_hvb_a_FromC")
+#endif
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
       integer(kind=c_intptr_t), value :: hvb_dev, a_dev
-      integer(kind=c_int), intent(in) :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
+      integer(kind=c_int), value      :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
 
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
-                           nblk, ics, ice, SM_count, debug, my_stream)
+  interface
+    subroutine gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                                  ics, ice, SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                bind(C, name="cuda_copy_hvm_hvb_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                bind(C, name="hip_copy_hvm_hvb_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                bind(C, name="sycl_copy_hvm_hvb_FromC")
 #endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
+      integer(kind=c_int), value   :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
 
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_hvb_a (dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
-                           nblk, ics, ice, SM_count, debug, my_stream)
+  interface
+    subroutine gpu_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
+                                 SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                bind(C, name="cuda_update_tmat_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                bind(C, name="hip_update_tmat_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                bind(C, name="sycl_update_tmat_FromC")
 #endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
+      integer(kind=c_int), value      :: max_stored_rows, nc, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
 
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
-                           nblk, ics, ice, SM_count, debug, my_stream)
+  interface
+    subroutine gpu_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
+                                            SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                bind(C, name="cuda_set_tmat_diag_from_tau_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                bind(C, name="hip_set_tmat_diag_from_tau_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                bind(C, name="sycl_set_tmat_diag_from_tau_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, tau_dev
+      integer(kind=c_int), value      :: max_stored_rows, nstor, tau_offset, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+  interface
+    subroutine gpu_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                          SM_count, debug, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                bind(C, name="cuda_trmv_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                bind(C, name="hip_trmv_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                bind(C, name="sycl_trmv_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
+      integer(kind=c_int), value      :: max_stored_rows, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+    end subroutine
+  end interface
+
+#endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
+
+
+  contains
+
+
+    subroutine gpu_scale_qmat_double_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int), value         :: ldq, l_cols
+      integer(kind=c_intptr_t), value    :: q_dev, tau_dev
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_scale_qmat_double_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream)
 #endif
     end subroutine
 
+    subroutine gpu_scale_qmat_float_complex(ldq, l_cols, q_dev, tau_dev, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_int), value         :: ldq, l_cols
+      integer(kind=c_intptr_t), value    :: q_dev, tau_dev
+      integer(kind=c_intptr_t), value    :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_scale_qmat_float_complex_c(ldq, l_cols, q_dev, tau_dev, my_stream)
+#endif
+    end subroutine
+
+    subroutine gpu_copy_hvb_a(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                              nblk, ics, ice, SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: hvb_dev, a_dev
+      integer(kind=c_int), value      :: ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_copy_hvb_a_c(dataType, hvb_dev, a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, &
+                            nblk, ics, ice, SM_count, debug, my_stream)
+#endif
+    end subroutine
 
     subroutine gpu_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
                                 ics, ice, SM_count, debug, my_stream)
@@ -133,93 +234,55 @@ module trans_ev_gpu
       implicit none
       character(1, c_char), value     :: dataType
       integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
-      integer(kind=c_int), intent(in) :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_int), value      :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
 
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
-                            ics, ice, SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_copy_hvm_hvb (dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
-                            ics, ice, SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
-                            ics, ice, SM_count, debug, my_stream)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+                              ics, ice, SM_count, debug, my_stream)
 #endif
     end subroutine
 
-
     subroutine gpu_update_tmat(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                               SM_count, debug, my_stream)
+                                SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
       integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
-      integer(kind=c_int), intent(in) :: max_stored_rows, nc, n, SM_count, debug
+      integer(kind=c_int), value      :: max_stored_rows, nc, n, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
 
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_update_tmat(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                            SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_update_tmat (dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                            SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_update_tmat(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                            SM_count, debug, my_stream)
-#endif
-    end subroutine
-
-
-    subroutine gpu_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                        SM_count, debug, my_stream)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
-      integer(kind=c_int), intent(in) :: max_stored_rows, n, SM_count, debug
-      integer(kind=c_intptr_t), value :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                       SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_trmv_c (dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                       SM_count, debug, my_stream)
-#endif
-
-#ifdef WITH_SYCL_GPU_VERSION
-      call sycl_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                       SM_count, debug, my_stream)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
+                             SM_count, debug, my_stream)
 #endif
     end subroutine
 
     subroutine gpu_set_tmat_diag_from_tau(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
-                                          SM_count, debug, my_stream)
+                                           SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
       integer(kind=c_intptr_t), value :: tmat_dev, tau_dev
-      integer(kind=c_int), intent(in) :: max_stored_rows, nstor, tau_offset, SM_count, debug
+      integer(kind=c_int), value      :: max_stored_rows, nstor, tau_offset, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
-
-#ifdef WITH_NVIDIA_GPU_VERSION
-      call cuda_set_tmat_diag_from_tau(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
-                                       SM_count, debug, my_stream)
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
+                                        SM_count, debug, my_stream)
 #endif
-#ifdef WITH_AMD_GPU_VERSION
-      call hip_set_tmat_diag_from_tau (dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
-                                       SM_count, debug, my_stream)
+    end subroutine
+
+    subroutine gpu_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                         SM_count, debug, my_stream)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
+      integer(kind=c_int), value      :: max_stored_rows, n, SM_count, debug
+      integer(kind=c_intptr_t), value :: my_stream
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
+                      SM_count, debug, my_stream)
 #endif
     end subroutine
 

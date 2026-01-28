@@ -88,19 +88,8 @@ __global__ void gpu_copy_hvb_a_kernel(T *hvb_dev, T *a_dev, int ld_hvb, int lda,
 }
 
 template <typename T>
-void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int *ld_hvb_in, int *lda_in, int *my_prow_in, int *np_rows_in,
-                    int *my_pcol_in, int *np_cols_in, int *nblk_in, int *ics_in, int *ice_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  int ld_hvb = *ld_hvb_in;
-  int lda = *lda_in;
-  int my_prow = *my_prow_in;
-  int np_rows = *np_rows_in;
-  int my_pcol = *my_pcol_in;
-  int np_cols = *np_cols_in;
-  int nblk = *nblk_in;
-  int ics = *ics_in;
-  int ice = *ice_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int ld_hvb, int lda, int my_prow, int np_rows,
+                    int my_pcol, int np_cols, int nblk, int ics, int ice, int SM_count, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
@@ -122,28 +111,32 @@ void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int *ld_hvb_in, int *lda_in, int *my_p
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvb_a_FromC) (char dataType, intptr_t hvb_dev, intptr_t a_dev,
-                                      int *ld_hvb_in, int *lda_in, int *my_prow_in, int *np_rows_in,
-                                      int *my_pcol_in, int *np_cols_in, int *nblk_in, int *ics_in, int *ice_in, 
-                                      int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_copy_hvb_a<double>((double *) hvb_dev, (double *) a_dev, ld_hvb_in, lda_in, my_prow_in, np_rows_in, my_pcol_in, np_cols_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_copy_hvb_a<float> ((float  *) hvb_dev, (float  *) a_dev, ld_hvb_in, lda_in, my_prow_in, np_rows_in, my_pcol_in, np_cols_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_copy_hvb_a<gpuDoubleComplex>((gpuDoubleComplex *) hvb_dev, (gpuDoubleComplex *) a_dev, ld_hvb_in, lda_in, my_prow_in, np_rows_in, my_pcol_in, np_cols_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_copy_hvb_a<gpuFloatComplex> ((gpuFloatComplex  *) hvb_dev, (gpuFloatComplex  *) a_dev, ld_hvb_in, lda_in, my_prow_in, np_rows_in, my_pcol_in, np_cols_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
+                                      int ld_hvb, int lda, int my_prow, int np_rows,
+                                      int my_pcol, int np_cols, int nblk, int ics, int ice, 
+                                      int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_hvb_a<double>((double *) hvb_dev, (double *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_copy_hvb_a<float> ((float  *) hvb_dev, (float  *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_hvb_a<gpuDoubleComplex>((gpuDoubleComplex *) hvb_dev, (gpuDoubleComplex *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_copy_hvb_a<gpuFloatComplex> ((gpuFloatComplex  *) hvb_dev, (gpuFloatComplex  *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
 }
 
 //_________________________________________________________________________________________________
 
 template <typename T>
-__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int ld_hvb, int my_prow, int np_rows,
+__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, 
+//__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, const T *tau_dev, 
+                                        int ld_hvm, int ld_hvb, int my_prow, int np_rows,
                                         int nstor, int nblk, int ics, int ice) {
   // nb = 0
   // NVTX_RANGE_PUSH("loop: copy hvm <- hvb")
   // do ic = ics, ice
   //   l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
-  //   hvm(1:l_rows,nstor+1) = hvb(nb+1:nb+l_rows)
-  //   if (useGPU) then
-  //     hvm_ubnd = l_rows
-  //   endif
+  //    ! if tau==0, reflector is identity => make this column inactive
+  //    if (tau(ic) == ZERO) then
+  //      hvm(1:l_rows, nstor+1) = 0 ! PETERDEBUG111: cleanup, it's already zero?
+  //    else
+  //      hvm(1:l_rows, nstor+1) = hvb(nb+1:nb+l_rows)
+  //    endif
   //   nstor = nstor+1
   //   nb = nb+l_rows
   // enddo
@@ -152,10 +145,17 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int 
   int ic_0 = blockIdx.x ;
 
   T Zero = elpaDeviceNumber<T>(0.0);
-
+  
   for (int ic = ic_0 + ics; ic <= ice; ic+=gridDim.x) {
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1);
     
+    // if (tau_dev[ic-1]==0) {
+    //   for (int i=i0; i < ld_hvm; i+=blockDim.x) {
+    //     hvm_dev[i + ld_hvm*col] = Zero; // ! PETERDEBUG111: cleanup, it's already zero?
+    //   }
+    //   continue;
+    // }
+
     for (int i=i0; i < l_rows; i+=blockDim.x) {
       hvm_dev[i + ld_hvm*(ic-ics+nstor)] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
     }
@@ -168,18 +168,10 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, T *hvb_dev, int ld_hvm, int 
 }
 
 template <typename T>
-void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, int *ld_hvm_in, int *ld_hvb_in, int *my_prow_in, int *np_rows_in,
-                      int *nstor_in, int *nblk_in, int *ics_in, int *ice_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  int ld_hvm = *ld_hvm_in;
-  int ld_hvb = *ld_hvb_in;
-  int my_prow = *my_prow_in;
-  int np_rows = *np_rows_in;
-  int nstor = *nstor_in;
-  int nblk = *nblk_in;
-  int ics = *ics_in;
-  int ice = *ice_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+//void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, T *tau_dev, 
+void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, 
+                      int ld_hvm, int ld_hvb, int my_prow, int np_rows,
+                      int nstor, int nblk, int ics, int ice, int SM_count, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
@@ -200,14 +192,15 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, int *ld_hvm_in, int *ld_hvb_in, in
   }
 }
 
+//extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev, intptr_t tau_dev,
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev,
-                                      int *ld_hvm_in, int *ld_hvb_in, int *my_prow_in, int *np_rows_in,
-                                      int *nstor_in, int *nblk_in, int *ics_in, int *ice_in, 
-                                      int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_copy_hvm_hvb<double>((double *) hvm_dev, (double *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_copy_hvm_hvb<gpuDoubleComplex>((gpuDoubleComplex *) hvm_dev, (gpuDoubleComplex *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_copy_hvm_hvb<gpuFloatComplex> ((gpuFloatComplex  *) hvm_dev, (gpuFloatComplex  *) hvb_dev, ld_hvm_in, ld_hvb_in, my_prow_in, np_rows_in, nstor_in, nblk_in, ics_in, ice_in, SM_count_in, debug_in, my_stream);
+                                      int ld_hvm, int ld_hvb, int my_prow, int np_rows,
+                                      int nstor, int nblk, int ics, int ice, 
+                                      int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_hvm_hvb<double>((double *) hvm_dev, (double *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_hvm_hvb<gpuDoubleComplex>((gpuDoubleComplex *) hvm_dev, (gpuDoubleComplex *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_copy_hvm_hvb<gpuFloatComplex> ((gpuFloatComplex  *) hvm_dev, (gpuFloatComplex  *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
 }
 
 //_________________________________________________________________________________________________
@@ -251,12 +244,7 @@ __global__ void gpu_update_tmat_kernel(T *tmat_dev, T *h_dev, T *tau_curr_dev, i
 }
 
 template <typename T>
-void gpu_update_tmat(T *tmat_dev, T *h_dev, T *tau_curr_dev, int *max_stored_rows_in, int *nc_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  int max_stored_rows = *max_stored_rows_in;
-  int nc = *nc_in;
-  int n = *n_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+void gpu_update_tmat(T *tmat_dev, T *h_dev, T *tau_curr_dev, int max_stored_rows, int nc, int n, int SM_count, int debug, gpuStream_t my_stream){
 
   // SM_count*MIN_THREADS_PER_BLOCK is the minimal GPU configuration that keeps the GPU busy
   dim3 blocks = dim3(SM_count, 1, 1);
@@ -279,11 +267,11 @@ void gpu_update_tmat(T *tmat_dev, T *h_dev, T *tau_curr_dev, int *max_stored_row
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _update_tmat_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t tau_curr_dev,
-                                      int *max_stored_rows_in, int *nc_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_update_tmat<double>((double *) tmat_dev, (double *) h_dev, (double *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_update_tmat<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_update_tmat<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_update_tmat<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, nc_in, n_in, SM_count_in, debug_in, my_stream);
+                                      int max_stored_rows, int nc, int n, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_update_tmat<double>((double *) tmat_dev, (double *) h_dev, (double *) tau_curr_dev, max_stored_rows, nc, n, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_update_tmat<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) tau_curr_dev, max_stored_rows, nc, n, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_update_tmat<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows, nc, n, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_update_tmat<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows, nc, n, SM_count, debug, my_stream);
 }
 
 //_________________________________________________________________________________________________
@@ -298,12 +286,8 @@ __global__ void gpu_set_tmat_diag_from_tau_kernel(T *tmat_dev, T *tau_dev, int m
 }
 
 template <typename T>
-void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int *max_stored_rows_in, int *nstor_in, int *tau_offset_in,
-                                int *SM_count_in, int *debug_in, gpuStream_t my_stream) {
-  int max_stored_rows = *max_stored_rows_in;
-  int nstor = *nstor_in;
-  int tau_offset = *tau_offset_in;
-  int debug = *debug_in;
+void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int max_stored_rows, int nstor, int tau_offset,
+                                int SM_count, int debug, gpuStream_t my_stream) {
 
   int threads = MAX_THREADS_PER_BLOCK;
   int blocks = (nstor + threads - 1) / threads;
@@ -327,12 +311,12 @@ void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int *max_stored_rows_in
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _set_tmat_diag_from_tau_FromC) (char dataType, intptr_t tmat_dev, intptr_t tau_dev,
-                                      int *max_stored_rows_in, int *nstor_in, int *tau_offset_in, int *SM_count_in,
-                                      int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_set_tmat_diag_from_tau<double>((double *) tmat_dev, (double *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_set_tmat_diag_from_tau<float> ((float  *) tmat_dev, (float  *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_set_tmat_diag_from_tau<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_set_tmat_diag_from_tau<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) tau_dev, max_stored_rows_in, nstor_in, tau_offset_in, SM_count_in, debug_in, my_stream);
+                                      int max_stored_rows, int nstor, int tau_offset, int SM_count,
+                                      int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_set_tmat_diag_from_tau<double>((double *) tmat_dev, (double *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_set_tmat_diag_from_tau<float> ((float  *) tmat_dev, (float  *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_set_tmat_diag_from_tau<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_set_tmat_diag_from_tau<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
 }
 
 //_________________________________________________________________________________________________
@@ -397,11 +381,7 @@ __global__ void gpu_trmv_kernel(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *
 }
 
 template <typename T>
-void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int *max_stored_rows_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  int max_stored_rows = *max_stored_rows_in;
-  int n = *n_in;
-  int SM_count = *SM_count_in;
-  int debug = *debug_in;
+void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int max_stored_rows, int n, int SM_count, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
@@ -423,21 +403,15 @@ void gpu_trmv(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int 
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _trmv_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev, intptr_t tau_curr_dev,
-                                      int *max_stored_rows_in, int *n_in, int *SM_count_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_trmv<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_trmv<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_trmv<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_trmv<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, n_in, SM_count_in, debug_in, my_stream);
+                                      int max_stored_rows, int n, int SM_count, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_trmv<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows, n, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_trmv<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows, n, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_trmv<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows, n, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_trmv<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows, n, SM_count, debug, my_stream);
 }
 
 template <typename T>
-void gpu_trmv_loop(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int *max_stored_rows_in, int *nstor_in, int *ice_in, int *SM_count_in, int *useCCL_in, int *debug_in, gpuStream_t my_stream){
-  int max_stored_rows = *max_stored_rows_in;
-  int nstor = *nstor_in;
-  int ice = *ice_in;
-  int SM_count = *SM_count_in;
-  int useCCL = *useCCL_in;
-  int debug = *debug_in;
+void gpu_trmv_loop(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev, int max_stored_rows, int nstor, int ice, int SM_count, int useCCL, int debug, gpuStream_t my_stream){
 
   dim3 blocks = dim3(SM_count, 1, 1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
@@ -475,9 +449,9 @@ void gpu_trmv_loop(T *tmat_dev, T *h_dev, T *result_buffer_dev, T *tau_curr_dev,
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _trmv_loop_FromC) (char dataType, intptr_t tmat_dev, intptr_t h_dev, intptr_t result_buffer_dev, intptr_t tau_curr_dev,
-                                      int *max_stored_rows_in, int *nstor_in, int *ice_in, int *SM_count_in, int *useCCL_in, int *debug_in, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_trmv_loop<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
-  else if (dataType=='S') gpu_trmv_loop<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
-  else if (dataType=='Z') gpu_trmv_loop<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
-  else if (dataType=='C') gpu_trmv_loop<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows_in, nstor_in, ice_in, SM_count_in, useCCL_in, debug_in, my_stream);
+                                      int max_stored_rows, int nstor, int ice, int SM_count, int useCCL, int debug, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_trmv_loop<double>((double *) tmat_dev, (double *) h_dev, (double *) result_buffer_dev, (double *) tau_curr_dev, max_stored_rows, nstor, ice, SM_count, useCCL, debug, my_stream);
+  else if (dataType=='S') gpu_trmv_loop<float> ((float  *) tmat_dev, (float  *) h_dev, (float  *) result_buffer_dev, (float  *) tau_curr_dev, max_stored_rows, nstor, ice, SM_count, useCCL, debug, my_stream);
+  else if (dataType=='Z') gpu_trmv_loop<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) h_dev, (gpuDoubleComplex *) result_buffer_dev, (gpuDoubleComplex *) tau_curr_dev, max_stored_rows, nstor, ice, SM_count, useCCL, debug, my_stream);
+  else if (dataType=='C') gpu_trmv_loop<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) h_dev, (gpuFloatComplex  *) result_buffer_dev, (gpuFloatComplex  *) tau_curr_dev, max_stored_rows, nstor, ice, SM_count, useCCL, debug, my_stream);
 }

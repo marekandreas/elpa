@@ -56,9 +56,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/mod_tridiag_gpu.F90 \
   src/elpa1/GPU/mod_trans_ev_gpu.F90 \
   src/elpa1/GPU/mod_elpa1_gpu.F90 \
-  src/elpa1/GPU/CUDA/mod_trans_ev_cuda.F90 \
-  src/elpa1/GPU/ROCm/mod_trans_ev_hip.F90 \
-  src/elpa1/GPU/SYCL/mod_trans_ev_sycl.F90 \
   src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_elpa1_hip.F90 \
   src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \

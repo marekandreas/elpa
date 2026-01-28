@@ -563,7 +563,9 @@ subroutine trans_ev_cpu_&
     if (useGPU) then
       call obj%timer%start("gpu_copy_hvm_hvb_kernel")
       NVTX_RANGE_PUSH("gpu_copy_hvm_hvb")
-      call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, max_local_rows, max_local_rows, my_prow, np_rows, &
+      !call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, tau_dev, &
+      call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, &
+                            max_local_rows, max_local_rows, my_prow, np_rows, &
                             nstor, nblk, ics, ice, SM_count, debug, my_stream)
       NVTX_RANGE_POP("gpu_copy_hvm_hvb")
       call obj%timer%stop("gpu_copy_hvm_hvb_kernel")
@@ -893,8 +895,9 @@ subroutine trans_ev_cpu_&
         ! HALF = ONE/(ONE+ONE)
         call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
 #elif COMPLEXCASE == 1
-        call gpu_set_tmat_diag_from_tau(PRECISION_CHAR, tmat_dev, tau_dev, int(max_stored_rows,kind=c_int), &
-                                        int(nstor,kind=c_int), int(ice-nstor,kind=c_int), int(SM_count,kind=c_int), &
+        call gpu_set_tmat_diag_from_tau(PRECISION_CHAR, tmat_dev, tau_dev, &
+                                        int(max_stored_rows,kind=c_int), int(nstor,kind=c_int), &
+                                        int(ice-nstor,kind=c_int), int(SM_count,kind=c_int), &
                                         int(debug,kind=c_int), my_stream)
 #endif
       else ! useGPU
