@@ -99,14 +99,14 @@ void gpu_copy_and_set_zeros (T *v_row_dev, T *u_col_dev, const T *a_dev,
             item_ct1.get_group(0) * item_ct1.get_local_range(0);
 
   if (isOurProcessCol_prev) {
-    for (int i_row = tid; i_row < l_rows; i_row += item_ct1.get_local_range(0) * item_ct1.get_group_range(0)) {
+    for (int i_row = tid; i_row < l_rows; i_row += item_ct1.get_local_range(0)*item_ct1.get_group_range(0)) {
       v_row_dev[i_row] = a_dev[i_row + matrixRows * l_cols];
     }
   }
 
   if (l_cols > l_rows) {
     T zero = elpaDeviceNumber<T>(0.0);
-    for (int i = l_rows + tid; i < l_cols; i += item_ct1.get_local_range(0) * item_ct1.get_group_range(0)) {
+    for (int i = l_rows + tid; i < l_cols; i += item_ct1.get_local_range(0)*item_ct1.get_group_range(0)) {
       u_col_dev[i] = zero;
     }
   }
@@ -136,19 +136,10 @@ void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
 
   auto queue = getQueueOrDefault(my_stream);
   int threads = MIN_THREADS_PER_BLOCK;
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  if (threads > maxWgSize) {
-    threads = maxWgSize;
-  }
   int blocks = SM_count;
 
-  if (blocks <= 0) {
-    errormessage("gpu_copy_and_set_zeros: SM_count must be greater than 0, but is %d\n", SM_count);
-    return;
-  }
-
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
+  sycl::range<1> blocksPerGrid(blocks);
+  sycl::range<1> threadsPerBlock(threads);
 
   queue.submit([&](sycl::handler &cgh)
     {
@@ -167,26 +158,26 @@ void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
 }
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t u_col_dev, intptr_t a_dev,
-                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev,
-                                                      int l_rows, int l_cols, int matrixRows, int istep,
-                                                      int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev,
-                                                      int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
+                            double *aux1_dev, double *vav_dev, double *d_vec_dev,
+                            int l_rows, int l_cols, int matrixRows, int istep,
+                            int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev,
+                            int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
   if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)u_col_dev, (double *)a_dev,
-                                                      (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev,
-                                                      l_rows, l_cols, matrixRows, istep,
-                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev,
+                            l_rows, l_cols, matrixRows, istep,
+                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='S') gpu_copy_and_set_zeros<float, float> ((float  *)v_row_dev, (float  *)u_col_dev, (float  *)a_dev,
-                                                      (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev,
-                                                      l_rows, l_cols, matrixRows, istep,
-                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev,
+                            l_rows, l_cols, matrixRows, istep,
+                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)u_col_dev, (gpuDoubleComplex *)a_dev,
-                                                      (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev,
-                                                      l_rows, l_cols, matrixRows, istep,
-                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev,
+                            l_rows, l_cols, matrixRows, istep,
+                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float> ((gpuFloatComplex *)v_row_dev, (gpuFloatComplex *)u_col_dev, (gpuFloatComplex *)a_dev,
-                                                      (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev,
-                                                      l_rows, l_cols, matrixRows, istep,
-                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev,
+                            l_rows, l_cols, matrixRows, istep,
+                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_copy_and_set_zeros_FromC: Unsupported data type\n");
   }
@@ -247,9 +238,8 @@ void gpu_dot_product (int n, T *x_dev, int incx, T *y_dev, int incy, T *result_d
   sycl::queue queue = getQueueOrDefault(my_stream);
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = SM_count;
-  sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
-
+  sycl::range<1> blocksPerGrid(blocks);
+  sycl::range<1> threadsPerBlock(maxWgSize);
 
 
   queue.submit([&](sycl::handler &cgh) {
@@ -1042,17 +1032,12 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
 
   int num_i = (nblks_tot - 1 - i0) / lcm_s_t + 1;
   int threads = MIN_THREADS_PER_BLOCK;
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  if (threads > maxWgSize) {
-    threads = maxWgSize;
-  }
 
-  int blocks_x = (nblk + threads - 1) / threads;
-  sycl::range<3> localRange(threads, 1, 1);
-  sycl::range<3> globalRange(blocks_x * threads, nvc, num_i);
-
+  sycl::range<3> blocksPerGrid((nblk+threads-1)/threads, nvc, num_i);
+  sycl::range<3> threadsPerBlock(threads, 1, 1);
+  
   queue.parallel_for(
-    sycl::nd_range<3>(globalRange, localRange),
+    sycl::nd_range<3>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
       [=](sycl::nd_item<3> it) {
       gpu_transpose_reduceadd_vectors_copy_block_kernel(
           aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip,
