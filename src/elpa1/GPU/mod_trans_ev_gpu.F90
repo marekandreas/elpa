@@ -111,7 +111,7 @@ module trans_ev_gpu
   end interface
 
   interface
-    subroutine gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+    subroutine gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
                                   ics, ice, SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                 bind(C, name="cuda_copy_hvm_hvb_FromC")
@@ -123,8 +123,8 @@ module trans_ev_gpu
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
-      integer(kind=c_int), value   :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev, tau_dev
+      integer(kind=c_int), value      :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
@@ -228,17 +228,17 @@ module trans_ev_gpu
 #endif
     end subroutine
 
-    subroutine gpu_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+    subroutine gpu_copy_hvm_hvb(dataType, hvb_dev, hvm_dev, tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
                                 ics, ice, SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev
+      integer(kind=c_intptr_t), value :: hvb_dev, hvm_dev, tau_dev
       integer(kind=c_int), value      :: ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
 
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
+      call gpu_copy_hvm_hvb_c(dataType, hvb_dev, hvm_dev, tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, &
                               ics, ice, SM_count, debug, my_stream)
 #endif
     end subroutine

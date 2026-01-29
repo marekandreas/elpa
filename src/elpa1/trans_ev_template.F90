@@ -563,8 +563,7 @@ subroutine trans_ev_cpu_&
     if (useGPU) then
       call obj%timer%start("gpu_copy_hvm_hvb_kernel")
       NVTX_RANGE_PUSH("gpu_copy_hvm_hvb")
-      !call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, tau_dev, &
-      call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, &
+      call gpu_copy_hvm_hvb(PRECISION_CHAR, hvm_dev, hvb_dev, tau_dev, &
                             max_local_rows, max_local_rows, my_prow, np_rows, &
                             nstor, nblk, ics, ice, SM_count, debug, my_stream)
       NVTX_RANGE_POP("gpu_copy_hvm_hvb")
@@ -891,15 +890,16 @@ subroutine trans_ev_cpu_&
       endif ! useCCL
 
       if (useGPU) then
-#if REALCASE == 1
-        ! HALF = ONE/(ONE+ONE)
-        call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
-#elif COMPLEXCASE == 1
+! PETERDEBUG111: cleanup
+! #if REALCASE == 1
+!         ! HALF = ONE/(ONE+ONE)
+!         call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
+! #elif COMPLEXCASE == 1
         call gpu_set_tmat_diag_from_tau(PRECISION_CHAR, tmat_dev, tau_dev, &
                                         int(max_stored_rows,kind=c_int), int(nstor,kind=c_int), &
                                         int(ice-nstor,kind=c_int), int(SM_count,kind=c_int), &
                                         int(debug,kind=c_int), my_stream)
-#endif
+! #endif
       else ! useGPU
         do n = 1, nstor
           ic = ice-nstor+n ! PETERDEBUG111: here and below: same as ic = ics + n - 1?
@@ -907,9 +907,9 @@ subroutine trans_ev_cpu_&
             tmat(n,n) = ONE
           else
 #ifdef REALCASE
-            tmat(n,n) = tmat(n,n)/2
+            tmat(n,n) = tmat(n,n)/2 ! a special trick for real case
 #elif COMPLEXCASE
-            tmat(n,n) = ONE / tau(ice-nstor+n)
+            tmat(n,n) = ONE / tau(ice-nstor+n) ! general for both real and complex
 #endif
           endif ! (tau(ic) == ZERO)
         enddo

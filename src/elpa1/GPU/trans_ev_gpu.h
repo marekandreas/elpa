@@ -123,8 +123,7 @@ extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvb_a_FromC) (char dataType, intptr
 //_________________________________________________________________________________________________
 
 template <typename T>
-__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, 
-//__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, const T *tau_dev, 
+__global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, const T *tau_dev, 
                                         int ld_hvm, int ld_hvb, int my_prow, int np_rows,
                                         int nstor, int nblk, int ics, int ice) {
   // nb = 0
@@ -148,28 +147,28 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev,
   
   for (int ic = ic_0 + ics; ic <= ice; ic+=gridDim.x) {
     int l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1);
-    
-    // if (tau_dev[ic-1]==0) {
-    //   for (int i=i0; i < ld_hvm; i+=blockDim.x) {
-    //     hvm_dev[i + ld_hvm*col] = Zero; // ! PETERDEBUG111: cleanup, it's already zero?
-    //   }
-    //   continue;
-    // }
+    int shift_hvm = ld_hvm*(ic-ics+nstor);
+
+    if (elpaDeviceEqualBool(tau_dev[ic-1], Zero)) {
+      for (int i=i0; i < ld_hvm; i+=blockDim.x) {
+        hvm_dev[i + shift_hvm] = Zero; // ! PETERDEBUG111: cleanup, it's already zero?
+      }
+      continue;
+    }
 
     for (int i=i0; i < l_rows; i+=blockDim.x) {
-      hvm_dev[i + ld_hvm*(ic-ics+nstor)] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
+      hvm_dev[i + shift_hvm] = hvb_dev[i + ld_hvb*(ic-ics)]; // nb -> ld_hvb*(ic-ics), no compression
     }
     
     for (int i=l_rows+i0; i < ld_hvm; i+=blockDim.x) {
-      hvm_dev[i + ld_hvm*(ic-ics+nstor)] = Zero; // since we're not compressing, we need to take extra care to clear from previous iterations
+      hvm_dev[i + shift_hvm] = Zero; // since we're not compressing, we need to take extra care to clear from previous iterations
     }
 
   }
 }
 
 template <typename T>
-//void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, T *tau_dev, 
-void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, 
+void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, const T *tau_dev,
                       int ld_hvm, int ld_hvb, int my_prow, int np_rows,
                       int nstor, int nblk, int ics, int ice, int SM_count, int debug, gpuStream_t my_stream){
 
@@ -177,9 +176,9 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev,
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK, 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvm_dev, hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
+  gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(hvm_dev, hvb_dev, tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
 #else
-  gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock>>>            (hvm_dev, hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
+  gpu_copy_hvm_hvb_kernel<<<blocks,threadsPerBlock>>>            (hvm_dev, hvb_dev, tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice);
 #endif
   
   if (debug)
@@ -192,15 +191,14 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev,
   }
 }
 
-//extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev, intptr_t tau_dev,
-extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev,
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev, intptr_t tau_dev,
                                       int ld_hvm, int ld_hvb, int my_prow, int np_rows,
                                       int nstor, int nblk, int ics, int ice, 
                                       int SM_count, int debug, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_copy_hvm_hvb<double>((double *) hvm_dev, (double *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
-  else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
-  else if (dataType=='Z') gpu_copy_hvm_hvb<gpuDoubleComplex>((gpuDoubleComplex *) hvm_dev, (gpuDoubleComplex *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
-  else if (dataType=='C') gpu_copy_hvm_hvb<gpuFloatComplex> ((gpuFloatComplex  *) hvm_dev, (gpuFloatComplex  *) hvb_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  if      (dataType=='D') gpu_copy_hvm_hvb<double>((double *) hvm_dev, (double *) hvb_dev, (double *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, (float  *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='Z') gpu_copy_hvm_hvb<gpuDoubleComplex>((gpuDoubleComplex *) hvm_dev, (gpuDoubleComplex *) hvb_dev, (gpuDoubleComplex *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
+  else if (dataType=='C') gpu_copy_hvm_hvb<gpuFloatComplex> ((gpuFloatComplex  *) hvm_dev, (gpuFloatComplex  *) hvb_dev, (gpuFloatComplex  *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
 }
 
 //_________________________________________________________________________________________________
@@ -281,7 +279,24 @@ __global__ void gpu_set_tmat_diag_from_tau_kernel(T *tmat_dev, T *tau_dev, int m
   int i = threadIdx.x + blockIdx.x*blockDim.x;
   if (i < nstor) { // PETERDEBUG111: grid-stride loop instead?
     T One = elpaDeviceNumber<T>(1.0);
-    tmat_dev[i + i*max_stored_rows] = elpaDeviceDivide(One, tau_dev[tau_offset + i]);
+    T Zero = elpaDeviceNumber<T>(0.0);
+    
+    // PETERDEBUG111: cleanup
+    //T mask = elpaDeviceNumber<T>(tau_dev[tau_offset + i] == Zero);
+    //tmat_dev[i + i*max_stored_rows] = elpaDeviceMultiply(elpaDeviceSubtract(One, mask), 
+    //                                                     elpaDeviceDivide(One, tau_dev[tau_offset + i]));
+    
+    T tau = tau_dev[i+tau_offset];
+    //T is_zero = elpaDeviceEqual(tau, Zero);          // returns 0 or 1 of type T
+
+    // If tau==0 -> tau_safe = 1
+    // If tau!=0 -> tau_safe = tau
+    
+    //T tau_safe = elpaDeviceAdd(tau, elpaDeviceMultiply(is_zero, One));
+
+    //tmat_dev[i + i*max_stored_rows] = elpaDeviceDivide(One, tau_safe);
+
+    tmat_dev[i + i*max_stored_rows] =  elpaDeviceEqualBool(tau, Zero) ? One : elpaDeviceDivide(One, tau);
   }
 }
 
