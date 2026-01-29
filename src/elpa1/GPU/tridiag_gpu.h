@@ -135,26 +135,26 @@ void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
 
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t u_col_dev, intptr_t a_dev, 
-                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev, 
-                                                      int l_rows, int l_cols, int matrixRows, int istep,
-                                                      int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, 
-                                                      int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
+                            double *aux1_dev, double *vav_dev, double *d_vec_dev, 
+                            int l_rows, int l_cols, int matrixRows, int istep,
+                            int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, 
+                            int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
   if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)u_col_dev, (double *)a_dev,
-                                                                  (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev, 
-                                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
-                                                                  isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='S') gpu_copy_and_set_zeros<float, float>   ((float  *)v_row_dev, (float  *)u_col_dev, (float  *)a_dev,
-                                                                  (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev, 
-                                                                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
-                                                                  isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)u_col_dev, (gpuDoubleComplex *)a_dev,
-                                                                            (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev, 
-                                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
-                                                                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float>   ((gpuFloatComplex  *)v_row_dev, (gpuFloatComplex  *)u_col_dev, (gpuFloatComplex  *)a_dev,
-                                                                            (gpuFloatComplex  *)aux1_dev, (gpuFloatComplex  *)vav_dev, (float  *)d_vec_dev, 
-                                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
-                                                                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (gpuFloatComplex  *)aux1_dev, (gpuFloatComplex  *)vav_dev, (float  *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_copy_and_set_zeros_FromC: Unsupported data type\n");
   }
@@ -989,7 +989,7 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
   int threads = MIN_THREADS_PER_BLOCK;
 
   dim3 blocksPerGrid = dim3((nblk+threads-1)/threads, nvc, num_i);
-  dim3 threadsPerBlock = dim3(threads,1,1);
+  dim3 threadsPerBlock = dim3(threads, 1, 1);
   
 #ifdef WITH_GPU_STREAMS
   gpu_transpose_reduceadd_vectors_copy_block_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 

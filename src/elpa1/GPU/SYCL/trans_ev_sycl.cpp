@@ -159,7 +159,7 @@ void gpu_copy_hvb_a(T *hvb_dev, T *a_dev, int ld_hvb, int lda, int my_prow, int 
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvb_a_FromC) (char dataType, intptr_t hvb_dev, intptr_t a_dev,
                                       int ld_hvb, int lda, int my_prow, int np_rows,
-                                      int my_pcol, int np_cols, int nblk, int ics, int ice, 
+                                      int my_pcol, int np_cols, int nblk, int ics, int ice,
                                       int SM_count, int debug, gpuStream_t my_stream){
   if      (dataType=='D') gpu_copy_hvb_a<double>((double *) hvb_dev, (double *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
   else if (dataType=='S') gpu_copy_hvb_a<float> ((float  *) hvb_dev, (float  *) a_dev, ld_hvb, lda, my_prow, np_rows, my_pcol, np_cols, nblk, ics, ice, SM_count, debug, my_stream);
@@ -232,7 +232,7 @@ void gpu_copy_hvm_hvb(T *hvm_dev, T *hvb_dev, const T *tau_dev,
 
 extern "C" void CONCATENATE(ELPA_GPU,  _copy_hvm_hvb_FromC) (char dataType, intptr_t hvm_dev, intptr_t hvb_dev, intptr_t tau_dev,
                                       int ld_hvm, int ld_hvb, int my_prow, int np_rows,
-                                      int nstor, int nblk, int ics, int ice, 
+                                      int nstor, int nblk, int ics, int ice,
                                       int SM_count, int debug, gpuStream_t my_stream){
   if      (dataType=='D') gpu_copy_hvm_hvb<double>((double *) hvm_dev, (double *) hvb_dev, (double *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
   else if (dataType=='S') gpu_copy_hvm_hvb<float> ((float  *) hvm_dev, (float  *) hvb_dev, (float  *) tau_dev, ld_hvm, ld_hvb, my_prow, np_rows, nstor, nblk, ics, ice, SM_count, debug, my_stream);
@@ -294,11 +294,10 @@ void gpu_set_tmat_diag_from_tau_kernel(T *tmat_dev, T *tau_dev, int max_stored_r
 template <typename T>
 void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int max_stored_rows, int nstor, int tau_offset,
                                 int SM_count, int debug, gpuStream_t my_stream) {
-  (void)SM_count;
+
   sycl::queue q = getQueueOrDefault(my_stream);
-  int maxWgSize = maxWorkgroupSize<1>(q)[0];
-  int threads = std::min(MAX_THREADS_PER_BLOCK, maxWgSize);
-  int blocks = (nstor + threads - 1) / threads;
+  int threads =  maxWorkgroupSize<1>(q)[0];
+  int blocks = (nstor+threads-1) / threads;
   if (blocks < 1) {
     blocks = 1;
   }
@@ -323,7 +322,8 @@ extern "C" void CONCATENATE(ELPA_GPU,  _set_tmat_diag_from_tau_FromC) (char data
   else if (dataType=='Z') gpu_set_tmat_diag_from_tau<gpuDoubleComplex>((gpuDoubleComplex *) tmat_dev, (gpuDoubleComplex *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
   else if (dataType=='C') gpu_set_tmat_diag_from_tau<gpuFloatComplex> ((gpuFloatComplex  *) tmat_dev, (gpuFloatComplex  *) tau_dev, max_stored_rows, nstor, tau_offset, SM_count, debug, my_stream);
 }
-// PETERDEBUG: delete result_buffer_dev
+
+// PETERDEBUG111: cleanup gpu_trmv_kernel and GET_POINTER macro
 
 #if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20240000
   #define GET_POINTER(x) x.get_pointer()
