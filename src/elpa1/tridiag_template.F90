@@ -357,7 +357,7 @@ subroutine tridiag_cpu_&
     return
   endif
 
-  print *, "ELPA tridiagonalization: using blocking_in_tridi = ", max_stored_uv ! PETERDEBUG111
+  if (wantDebug .and. obj%mpi_setup%myRank_comm_parent==0) print *, "ELPA tridiagonalization: blocking_in_tridi = ", max_stored_uv
 
   if (non_blocking_collectives_rows .eq. 1) then
     useNonBlockingCollectivesRows = .true.

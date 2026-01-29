@@ -306,9 +306,7 @@ void gpu_set_tmat_diag_from_tau(T *tmat_dev, T *tau_dev, int max_stored_rows, in
 
   int threads = MAX_THREADS_PER_BLOCK;
   int blocks = (nstor + threads - 1) / threads;
-  if (blocks < 1) { // PETERDEBUG111: or just return instead?
-    blocks = 1;
-  }
+  if (blocks <= 0) return;
 
 #ifdef WITH_GPU_STREAMS
   gpu_set_tmat_diag_from_tau_kernel<<<blocks,threads,0,my_stream>>>(tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset);

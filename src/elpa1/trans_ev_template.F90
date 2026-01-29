@@ -322,7 +322,7 @@ subroutine trans_ev_cpu_&
 
   max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
 
-  print *, "max_stored_rows=", max_stored_rows ! PETERDEBUG111 cleanup
+  if (wantDebug .and. obj%mpi_setup%myRank_comm_parent==0) print *, "ELPA trans_ev: max_stored_rows=", max_stored_rows
 
   if (.not. useGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -413,7 +413,6 @@ subroutine trans_ev_cpu_&
   if (useGPU) then
     num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(hvm_dev, 0, num, my_stream)
     check_memcpy_gpu("trans_ev: hvm_dev", successGPU)
 #else
@@ -424,7 +423,6 @@ subroutine trans_ev_cpu_&
   if (useGPU) then
     num = max_local_rows * nblk * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-    my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(hvb_dev, 0, num, my_stream)
     check_memcpy_gpu("trans_ev: hvb_dev", successGPU)
 #else
@@ -508,8 +506,6 @@ subroutine trans_ev_cpu_&
       check_memcpy_gpu("trans_ev", successGPU)
 #endif
     endif ! useGPU
-
-    print *, "myid=", obj%mpi_setup%nRanks_comm_parent, " before bcast", "nb=", nb ! PETERDEBUG111: cleanup
 
     if (nb > 0) then
       if (useCCL) then
@@ -625,7 +621,7 @@ subroutine trans_ev_cpu_&
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
         successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
 #else
         successGPU = gpu_memset(tmat_dev, 0, num_el*size_of_datatype)
 #endif
@@ -639,7 +635,7 @@ subroutine trans_ev_cpu_&
         if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
           NVTX_RANGE_PUSH("gpublas_syrk")
-#ifdef DEBUG_CUDA
+#ifdef DEBUG_CUDA /* PETERDEBUG111: cleanup DEBUG_CUDA; leave only #else branch */
           call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
 #else
           call gpublas_PRECISION_SYRK_HERK('L', BLAS_TRANS_OR_CONJ, &
@@ -647,7 +643,11 @@ subroutine trans_ev_cpu_&
                                            nstor, l_rows, ONE, &
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
 
           NVTX_RANGE_POP("gpublas_syrk")
           call obj%timer%stop("gpublas_syrk")
@@ -707,8 +707,12 @@ subroutine trans_ev_cpu_&
         nc = max_stored_rows*nstor
         if (nc>0) then
           if (wantDebug) call obj%timer%start("gpu_memcpy")
-          ! PETERDEBUG111: add streamed version
-          successGPU = gpu_memcpy(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else
+          successGPU = gpu_memcpy      (h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+#endif
           check_memcpy_gpu("elpa_trans_ev: h_dev <- tmat_dev", successGPU)
           if (wantDebug) call obj%timer%stop("gpu_memcpy")
         endif
@@ -797,7 +801,11 @@ subroutine trans_ev_cpu_&
         NVTX_RANGE_PUSH("gpu_trmv")
         call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
                       max_stored_rows, n, SM_count, debug, my_stream)
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
         NVTX_RANGE_POP("gpu_trmv")
 
         call obj%timer%start("gpu_trmv_kernel_loop")
@@ -818,12 +826,16 @@ subroutine trans_ev_cpu_&
 
           shift_dev = (ice-nstor+n)*size_of_datatype
           NVTX_RANGE_PUSH("gpu_trmv")
-          ! PETERDEBUG111: cleanup this kernel; modernize GPU interfaces
+          ! PETERDEBUG111: cleanup this kernel
           call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
                         max_stored_rows, n, SM_count, debug, my_stream)
           NVTX_RANGE_POP("gpu_trmv")
         enddo !   n = 1, nstor-1
-        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
         call obj%timer%stop("gpu_trmv_kernel_loop")
         NVTX_RANGE_POP("trmv_loop")
         
@@ -856,13 +868,17 @@ subroutine trans_ev_cpu_&
       print *, "DEBUG_CUDA codepath"
 #else /* DEBUG_CUDA */      
       ! Set ones on the diagonal of T matrix
-      if (useCCL) then ! PETERDEBUG111: TODO: take special care about (useGPU .and. .not. useCCL) case 
+      if (useCCL) then
         ! no compression
         nc = max_stored_rows*nstor
         if (nc>0) then
           if (wantDebug) call obj%timer%start("gpu_memcpy")
-          ! PETERDEBUG111: add streamed version
-          successGPU = gpu_memcpy(tmat_dev, h_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(tmat_dev, h_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else
+          successGPU = gpu_memcpy      (tmat_dev, h_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
+#endif
           check_memcpy_gpu("elpa_trans_ev: tmat_dev <- h_dev", successGPU)
           if (wantDebug) call obj%timer%stop("gpu_memcpy")
         endif
@@ -915,7 +931,6 @@ subroutine trans_ev_cpu_&
         enddo
       endif ! useGPU
 #endif  /* DEBUG_CUDA */ 
-      print *, "nstor=", nstor ! PETERDEBUG111: cleanup
 
       !PETERDEBUG111-printmat cleanup
       ! if (.not. useGPU) then
@@ -925,10 +940,7 @@ subroutine trans_ev_cpu_&
       !   end do
       ! endif
 
-! PETERDEBUG111: clean the sync up
-#if !defined(WITH_GPU_STREAMS)
-      if (useGPU) successGPU = gpu_DeviceSynchronize()
-#endif
+
       ! Q = Q - V * T * V**T * Q
 
       if (l_rows>0) then
@@ -940,7 +952,11 @@ subroutine trans_ev_cpu_&
                                       hvm_dev, max_local_rows,  &
                                       q_dev, ldq, ZERO, &
                                       tmp_dev, nstor, gpublasHandle)
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
           NVTX_RANGE_POP("gpublas_gemm")
           call obj%timer%stop("gpublas_gemm")
         else ! useGPU
@@ -960,13 +976,11 @@ subroutine trans_ev_cpu_&
         if (useGPU) then
           if (wantDebug) call obj%timer%start("gpu_memset")
 #ifdef WITH_GPU_STREAMS
-          my_stream = obj%gpu_setup%my_stream
           num = l_cols * nstor * size_of_datatype
           successGPU = gpu_memset_async(tmp_dev, 0, num, my_stream)
-          check_memcpy_gpu("trans_ev: tmp_dev", successGPU)
-          !successGPU = gpu_stream_synchronize(my_stream)
-          !check_stream_synchronize_gpu("trans_ev", successGPU)
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
 #else
           successGPU = gpu_memset(tmp_dev, 0, l_cols * nstor * size_of_datatype)
 #endif
@@ -995,8 +1009,7 @@ subroutine trans_ev_cpu_&
         check_memcpy_gpu("trans_ev", successGPU)
 #endif
       endif ! (useGPU .and. .not. useCCL)
-      
-      print *, "myid=", obj%mpi_setup%nRanks_comm_parent, " before allreduce" ! PETERDEBUG111: cleanup
+
 
       if (useCCL) then
         call obj%timer%start("ccl_allreduce")
@@ -1028,9 +1041,6 @@ subroutine trans_ev_cpu_&
         endif ! useNonBlockingCollectivesRows
       endif ! useCCL
 
-      !print *, "myid=", obj%mpi_setup%nRanks_comm_parent, ", after allreduce" ! PETERDEBUG111: cleanup
-
-
       ! copy back to tmp -> tmp_dev if needed
       if (useGPU .and. .not. useCCL) then
 #ifdef WITH_GPU_STREAMS
@@ -1051,21 +1061,26 @@ subroutine trans_ev_cpu_&
       if (l_rows > 0) then
         if (useGPU) then
           ! tmp_dev = tmat_dev*tmp_dev
-          call obj%timer%start("gpublas_trmm")
-          NVTX_RANGE_PUSH("gpublas_trmm")
+          call obj%timer%start("gpublas_trsm")
+          NVTX_RANGE_PUSH("gpublas_trsm")
 
-#ifdef DEBUG_CUDA          
+#ifdef DEBUG_CUDA
           call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N', &
           !call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',     &
 #else
           call gpublas_PRECISION_TRSM('L', 'L', 'N', 'N', &
 #endif
                                       nstor, l_cols, ONE, &
-                                      tmat_dev, max_stored_rows,  &
+                                      tmat_dev, max_stored_rows, &
                                       tmp_dev, nstor, gpublasHandle)
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
-          call obj%timer%stop("gpublas_trmm")
-          NVTX_RANGE_POP("gpublas_trmm")
+#endif
+          call obj%timer%stop("gpublas_trsm")
+          NVTX_RANGE_POP("gpublas_trsm")
+
           NVTX_RANGE_PUSH("gpublas_gemm")
           call obj%timer%start("gpublas_gemm")
           call gpublas_PRECISION_GEMM('N', 'N', &
@@ -1073,7 +1088,11 @@ subroutine trans_ev_cpu_&
                                       hvm_dev, max_local_rows, &
                                       tmp_dev, nstor, ONE, &
                                       q_dev, ldq, gpublasHandle)
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
           call obj%timer%stop("gpublas_gemm")
           NVTX_RANGE_POP("gpublas_gemm")
         else !useGPU
@@ -1136,8 +1155,6 @@ subroutine trans_ev_cpu_&
     NVTX_RANGE_POP("main_loop")
     call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
-
-  print *, "trans_ev: finished main loop over istep, myid=", obj%mpi_setup%nRanks_comm_parent ! PETERDEBUG111: cleanup
 
   ! PETERDEBUG111-printmat cleanup
   ! print *, "q_mat (transformed):"

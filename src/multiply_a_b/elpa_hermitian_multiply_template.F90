@@ -767,7 +767,6 @@
               call obj%timer%start("blas")
               if (multiply_at_a == 0) then ! C = A^T * B
                 ! tmp1 = aux_mat^T * b
-                print *, "nstor=",nstor,"lce-lcs+1=",lce-lcs+1,",lre-lrs+1=",lre-lrs+1 ! PETERDEBUG111
                 call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                   int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), ONE, &
                                   aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
