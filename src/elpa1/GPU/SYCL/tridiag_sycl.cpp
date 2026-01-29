@@ -90,23 +90,26 @@ struct is_pointer<T*> { static const bool value = true; };
 //________________________________________________________________
 
 template <typename T, typename T_real>
-void gpu_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int matrixRows, int istep,
-                                         T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
-                                         int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL,
-                                         sycl::nd_item<1> item_ct1){
+void gpu_copy_and_set_zeros (T *v_row_dev, T *u_col_dev, const T *a_dev,
+                             T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
+                             int l_rows, int l_cols, int matrixRows, int istep,
+                             int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL,
+                             sycl::nd_item<1> item_ct1){
   int tid = item_ct1.get_local_id(0) +
             item_ct1.get_group(0) * item_ct1.get_local_range(0);
 
-  if (isOurProcessCol_prev)
-    {
-    // copy v_row to a_dev
-    int i_row = tid;
-    while (i_row < l_rows)
-      {
-      v_row_dev[i_row] = a_dev[i_row + matrixRows*l_cols];
-      i_row += item_ct1.get_local_range(0) * item_ct1.get_group_range(0);
-      }
+  if (isOurProcessCol_prev) {
+    for (int i_row = tid; i_row < l_rows; i_row += item_ct1.get_local_range(0) * item_ct1.get_group_range(0)) {
+      v_row_dev[i_row] = a_dev[i_row + matrixRows * l_cols];
     }
+  }
+
+  if (l_cols > l_rows) {
+    T zero = elpaDeviceNumber<T>(0.0);
+    for (int i = l_rows + tid; i < l_cols; i += item_ct1.get_local_range(0) * item_ct1.get_group_range(0)) {
+      u_col_dev[i] = zero;
+    }
+  }
 
   // set zeros for aux1_dev and vav_dev to be summed with atomicAdd
   if (tid==0)
@@ -125,45 +128,65 @@ void gpu_copy_and_set_zeros (T *v_row_dev, T *a_dev, int l_rows, int l_cols, int
 }
 
 template <typename T, typename T_real>
-void gpu_copy_and_set_zeros(T *v_row_dev, T *a_dev, 
-                            int l_rows, int l_cols, int matrixRows, int istep, 
-                            T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
-                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev, 
-                            int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
+void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
+                            T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
+                            int l_rows, int l_cols, int matrixRows, int istep,
+                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev,
+                            int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
 
   auto queue = getQueueOrDefault(my_stream);
+  int threads = MIN_THREADS_PER_BLOCK;
   int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
+  if (threads > maxWgSize) {
+    threads = maxWgSize;
+  }
+  int blocks = SM_count;
+
+  if (blocks <= 0) {
+    errormessage("gpu_copy_and_set_zeros: SM_count must be greater than 0, but is %d\n", SM_count);
+    return;
+  }
+
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
+  sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
 
   queue.submit([&](sycl::handler &cgh)
     {
     cgh.parallel_for(
-      sycl::nd_range<1>(sycl::range<1>(blocks) * threadsPerBlock, threadsPerBlock),
+      sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
       [=](sycl::nd_item<1> item_ct1) {
         gpu_copy_and_set_zeros(
-            v_row_dev, a_dev, l_rows, l_cols, matrixRows, istep, aux1_dev,
-            vav_dev, d_vec_dev, isOurProcessRow, isOurProcessCol,
+            v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev,
+            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol,
             isOurProcessCol_prev, isSkewsymmetric, useCCL, item_ct1);
       });
     });
-  queue.wait_and_throw();
-
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t a_dev, int l_rows, int l_cols, int matrixRows, int istep,
-                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev, 
-                                                      int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, 
-                                                      int isSkewsymmetric, int useCCL, int wantDebug, gpuStream_t my_stream){
-  if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)a_dev, l_rows, l_cols, matrixRows, istep, 
-                                                      (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
-  else if (dataType=='S') gpu_copy_and_set_zeros<float, float> ((float  *)v_row_dev, (float  *)a_dev, l_rows, l_cols, matrixRows, istep,
-                                                      (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
-  else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)a_dev, l_rows, l_cols, matrixRows, istep,
-                                                      (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
-  else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float> ((gpuFloatComplex *)v_row_dev, (gpuFloatComplex *)a_dev, l_rows, l_cols, matrixRows, istep,
-                                                      (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev, isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, my_stream);
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t u_col_dev, intptr_t a_dev,
+                                                      double *aux1_dev, double *vav_dev, double *d_vec_dev,
+                                                      int l_rows, int l_cols, int matrixRows, int istep,
+                                                      int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev,
+                                                      int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
+  if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)u_col_dev, (double *)a_dev,
+                                                      (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev,
+                                                      l_rows, l_cols, matrixRows, istep,
+                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros<float, float> ((float  *)v_row_dev, (float  *)u_col_dev, (float  *)a_dev,
+                                                      (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev,
+                                                      l_rows, l_cols, matrixRows, istep,
+                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+  else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)u_col_dev, (gpuDoubleComplex *)a_dev,
+                                                      (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev,
+                                                      l_rows, l_cols, matrixRows, istep,
+                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float> ((gpuFloatComplex *)v_row_dev, (gpuFloatComplex *)u_col_dev, (gpuFloatComplex *)a_dev,
+                                                      (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev,
+                                                      l_rows, l_cols, matrixRows, istep,
+                                                      isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_copy_and_set_zeros_FromC: Unsupported data type\n");
   }
@@ -239,7 +262,9 @@ void gpu_dot_product (int n, T *x_dev, int incx, T *y_dev, int incy, T *result_d
                                   item_ct1, cache_acc_ct1);
         });
   });
-  queue.wait_and_throw();
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _dot_product_FromC)(char dataType, int n, intptr_t x_dev, int incx, intptr_t y_dev, int incy, intptr_t result_dev, 
@@ -348,7 +373,9 @@ work-group size if needed.
                                   item_ct1, cache_acc_ct1);
         });
   });
-  queue.wait_and_throw();
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 
 }
 
@@ -460,7 +487,9 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
                 l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
           });
       });
-    queue.wait_and_throw();
+    if (wantDebug) {
+      queue.wait_and_throw();
+    }
   }
  else if (memoryType == sycl::usm::alloc::device)
    {
@@ -474,7 +503,9 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
                   l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
             });
         });
-      queue.wait_and_throw();
+      if (wantDebug) {
+        queue.wait_and_throw();
+      }
 
     }
   else 
@@ -613,7 +644,9 @@ void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_r
               l_rows, l_cols, n_stored_vecs, max_local_rows,
               max_local_cols, istep, useCCL, it);
         });
-    queue.wait_and_throw();
+    if (wantDebug) {
+      queue.wait_and_throw();
+    }
    }
 
   else if (memoryType == sycl::usm::alloc::device)
@@ -628,7 +661,9 @@ void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_r
               l_rows, l_cols, n_stored_vecs, max_local_rows,
               max_local_cols, istep, useCCL, it);
         });
-    queue.wait_and_throw();
+    if (wantDebug) {
+      queue.wait_and_throw();
+    }
     }
   else 
     {
@@ -767,7 +802,9 @@ void gpu_update_matrix_element_add (T *vu_stored_rows_dev, T *uv_stored_cols_dev
                                   item_ct1, cache_acc_ct1);
         });
   });
-  queue.wait_and_throw();
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 
 }
 
@@ -910,7 +947,9 @@ void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev,
         [=](sycl::nd_item<1> it) {
         gpu_hh_transform_kernel(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
       });
-  queue.wait_and_throw();
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 
 }
 
@@ -930,8 +969,7 @@ template <typename T>
 void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
                                               int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
                                               int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd,
-                                              sycl::nd_item<1> it){
-  int tid_x = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+                                              sycl::nd_item<3> it){
 
 /*
   ! direction = 1
@@ -959,26 +997,32 @@ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *
   enddo
 */
 
-  T sign = elpaDeviceNumber<T>(1.0);
-  if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
+  int lc0 = it.get_group(1); // lc0 = lc-1, 0-based index
+  int i = nblks_skip + n_block + it.get_group(2) * lcm_s_t; // 1-based index
+  if (i > nblks_tot - 1) {
+    return;
+  }
 
-  int k, ns, nl;
-  for (int lc=1; lc <= nvc; lc += 1)
-    {
-    for (int i = nblks_skip+n_block; i <= nblks_tot-1; i += lcm_s_t)
-      {
-      k = (i - nblks_skip - n_block)/lcm_s_t * nblk + (lc - 1) * auxstride;
-      ns = (i/np_st)*nblk; // local start of block i
-      nl = MIN(nvr-i*nblk, nblk); // length
-      for (int j = tid_x; j < nl;
-           j += it.get_local_range(0) * it.get_group_range(0))
-        {
-        if (direction==1)                 aux_transpose_dev[k+1+j-1]            = vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st];
-        if (direction==2 && !isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceMultiply(sign, aux_transpose_dev[k+1+j-1]);
-        if (direction==2 &&  isReduceadd) vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st]  = elpaDeviceAdd(vmat_st_dev[ns+1+j-1 + (lc-1)*ld_st] , aux_transpose_dev[k+1+j-1]);
-        }
-      }
-    }
+  int nl = MIN(nvr - i * nblk, nblk);
+  int k = (i - nblks_skip - n_block) / lcm_s_t * nblk + lc0 * auxstride;
+  int ns_plus_lc0_ld_st = (i / np_st) * nblk + lc0 * ld_st;
+
+  int j = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+  if (j >= nl) {
+    return;
+  }
+
+  if (direction == 1) {
+    aux_transpose_dev[k + j] = vmat_st_dev[ns_plus_lc0_ld_st + j];
+  }
+  if (direction == 2 && !isReduceadd) {
+    T sign = elpaDeviceNumber<T>(1.0);
+    if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
+    vmat_st_dev[ns_plus_lc0_ld_st + j] = elpaDeviceMultiply(sign, aux_transpose_dev[k + j]);
+  }
+  if (direction == 2 && isReduceadd) {
+    vmat_st_dev[ns_plus_lc0_ld_st + j] = elpaDeviceAdd(vmat_st_dev[ns_plus_lc0_ld_st + j], aux_transpose_dev[k + j]);
+  }
 
 }
 
@@ -991,18 +1035,33 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
 
   sycl::queue queue = getQueueOrDefault(my_stream);
 
-  sycl::range<1> blocksPerGrid = sycl::range<1>(SM_count);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(nblk);
+  int i0 = nblks_skip + n_block;
+  if (nblks_tot - 1 - i0 < 0 || nvc <= 0) {
+    return;
+  }
+
+  int num_i = (nblks_tot - 1 - i0) / lcm_s_t + 1;
+  int threads = MIN_THREADS_PER_BLOCK;
+  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+  if (threads > maxWgSize) {
+    threads = maxWgSize;
+  }
+
+  int blocks_x = (nblk + threads - 1) / threads;
+  sycl::range<3> localRange(threads, 1, 1);
+  sycl::range<3> globalRange(blocks_x * threads, nvc, num_i);
 
   queue.parallel_for(
-    sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-      [=](sycl::nd_item<1> it) {
+    sycl::nd_range<3>(globalRange, localRange),
+      [=](sycl::nd_item<3> it) {
       gpu_transpose_reduceadd_vectors_copy_block_kernel(
           aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip,
           nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction,
           isSkewsymmetric, isReduceadd, it);
     });
-  queue.wait_and_throw();
+  if (wantDebug) {
+    queue.wait_and_throw();
+  }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_FromC)(char dataType, intptr_t aux_transpose_dev, intptr_t vmat_st_dev, 
