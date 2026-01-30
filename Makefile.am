@@ -1111,9 +1111,7 @@ EXTRA_DIST = \
   src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclsolver_template.F90 \
-  src/GPU/SYCL/syclUtils.cpp \
-  src/GPU/SYCL/syclCommon.cpp \
-  src/GPU/SYCL/syclFunctions.cpp \
+  src/GPU/SYCL/syclCommon.hpp \
   src/GPU/SYCL/oneccl_template.F90 \
   src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa_api_math_template.F90 \

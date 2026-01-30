@@ -177,7 +177,7 @@ program test
   type(c_ptr)                            :: a_dev
 #endif
 #if TEST_GPU_SET_ID == 1
-  TEST_INT_TYPE                          :: numberOfDevices
+  integer(kind=c_int)                    :: numberOfDevices
   TEST_INT_TYPE                          :: gpuID
 #endif
    
@@ -343,7 +343,7 @@ program test
   assert_elpa_ok(e%setup_gpu())
 #endif 
 
-#if TEST_GPU_SET_ID == 1 && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
+#if TEST_GPU_SET_ID == 1
 #ifdef DEBUG_SYCL_ON_CPU
 ! for SYCL on CPU case: gpu_id and device_pointer_api tests don't make sense and are disabled
 #ifdef WITH_MPI
@@ -390,13 +390,11 @@ program test
   endif
 
   ! Set device
-#if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
   successGPU = gpu_setdevice(gpuID)
   if (.not.(successGPU)) then
     print *,"Cannot set GPU device. Aborting..."
     stop 1
   endif
-#endif
 
   ! create device pointers for a,q, ev; copy a to device
   successGPU = gpu_malloc(a_dev, na_rows*na_cols*size_of_datatype)

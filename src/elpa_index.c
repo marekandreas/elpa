@@ -138,7 +138,7 @@ int nvidia_gpu_count();
 int amd_gpu_count();
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
-int sycl_gpu_count(int);
+int sycl_gpu_count();
 #endif
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 int openmp_offload_gpu_count();
@@ -167,7 +167,7 @@ static int output_build_config_is_valid(elpa_index_t index, int n, int new_value
 static int nvidia_gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int amd_gpu_is_valid(elpa_index_t index, int n, int new_value);
 static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value);
-static int expose_all_sycl_devices_is_valid(elpa_index_t index, int n, int new_value);
+static int gpu_sycl_backend_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_elpa1_is_valid(elpa_index_t index, int n, int new_value);
 static int nbc_elpa2_is_valid(elpa_index_t index, int n, int new_value);
@@ -365,8 +365,8 @@ static const elpa_index_int_entry_t int_entries[] = {
 #endif
 
         // For SYCL, currently ELPA ignores non-GPU devices.
-        INT_ENTRY("sycl_show_all_devices", "Utilize ALL SYCL devices, not just level zero GPUs.", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
-                        cardinality_bool, enumerate_identity, expose_all_sycl_devices_is_valid, NULL, PRINT_YES),
+        INT_ENTRY("gpu_sycl_backend", "SYCL Backend to use, 0 = Level Zero, 1 = OpenCL, 2 = all. ALL => Set ONEAPI_DEVICE_SELECTOR!", 0, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
+                        cardinality_bool, enumerate_identity, gpu_sycl_backend_is_valid, NULL, PRINT_YES),
         //default of gpu usage for individual phases is 1. However, it is only evaluated, if GPU is used at all, which first has to be determined
         //by the parameter gpu and presence of the device
         INT_ENTRY("gpu_cannon", "Use GPU acceleration for Cannon's algorithm", 1, ELPA_AUTOTUNE_NOT_TUNABLE, ELPA_AUTOTUNE_GPU, ELPA_AUTOTUNE_DOMAIN_ANY, ELPA_AUTOTUNE_PART_ANY, \
@@ -1098,9 +1098,9 @@ static int intel_gpu_is_valid(elpa_index_t index, int n, int new_value) {
 #endif
 }
 
-static int expose_all_sycl_devices_is_valid(elpa_index_t index, int n, int new_value) {
+static int gpu_sycl_backend_is_valid(elpa_index_t index, int n, int new_value) {
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-        return new_value == 0 || new_value == 1;
+        return new_value == 0 || new_value == 1 || new_value == 2;
 #else
         return new_value == 0;
 #endif
@@ -1430,8 +1430,7 @@ static int use_gpu_id_cardinality(elpa_index_t index) {
 	return count;
 #elif WITH_SYCL_GPU_VERSION
 	int count;
-        int show_all_sycl_devices = elpa_index_get_int_value(index, "sycl_show_all_devices", NULL);
-	count = sycl_gpu_count(show_all_sycl_devices);
+	count = sycl_gpu_count();
         if (count == -1000) {
           fprintf(stderr, "Querrying GPUs failed! Set GPU count = 0\n");
 	return 0;

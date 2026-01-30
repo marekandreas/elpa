@@ -116,7 +116,7 @@ class SyclState {
 #ifdef WITH_ONEAPI_ONECCL
   std::unordered_map<void *, cclKvsHandle> kvsMap;
 #endif
-  bool isManagingOnlyL0Gpus;
+//  bool isManagingOnlyL0Gpus;
   public:
   bool isDebugEnabled;
   private:
@@ -124,7 +124,7 @@ class SyclState {
   std::unordered_map<int, DeviceSelection> deviceData;
   int defaultDevice;
   
-  SyclState(bool onlyL0Gpus = false, bool isDebugEnabled = false);
+  SyclState();
   DeviceSelection& getDeviceHandle(int deviceNum);
   
   public:
@@ -136,7 +136,6 @@ class SyclState {
   size_t getNumDevices();
 
   static SyclState& defaultState();
-  static bool initialize(bool onlyL0Gpus = false, bool isDebugEnabled = false);
 
 #ifdef WITH_ONEAPI_ONECCL
   void registerKvs(void *kvsAddr, cclKvsHandle kvs);

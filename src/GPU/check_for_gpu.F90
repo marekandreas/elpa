@@ -81,11 +81,7 @@ module mod_check_for_gpu
       integer(kind=ik)                           :: error, mpi_comm_all, use_gpu_id, min_use_gpu_id
       integer(kind=ik)                           :: maxThreads, thread
       integer(kind=c_int)                        :: cublas_version
-      integer(kind=c_int)                        :: syclShowOnlyIntelGpus
-      integer(kind=ik)                           :: syclShowAllDevices
       integer(kind=c_intptr_t)                   :: handle_tmp
-      !integer(kind=c_intptr_t)                   :: stream
-      !character(len=1024)           :: envname
       character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)

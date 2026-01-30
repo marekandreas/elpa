@@ -265,6 +265,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 
   call self%get("solver", solver,error_l)
   if (solver .eq. ELPA_SOLVER_1STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -272,7 +273,9 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
             &PRECISION&
             &_impl(self, a, ev, q)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else if (solver .eq. ELPA_SOLVER_2STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -280,6 +283,7 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
             &PRECISION&
             &_impl(self, a, ev, q)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else ! (solver .eq. ELPA_SOLVER_..STAGE)
     write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
@@ -497,6 +501,7 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
 
   call self%get("solver", solver,error_l)
   if (solver .eq. ELPA_SOLVER_1STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -504,7 +509,9 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
             &PRECISION&
             &_impl(self, aDev, evDev, qDev)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else if (solver .eq. ELPA_SOLVER_2STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -512,6 +519,7 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
             &PRECISION&
             &_impl(self, aDev, evDev, qDev)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else ! (solver .eq. ELPA_SOLVER_..STAGE)
     write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
@@ -830,6 +838,7 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
 
       call self%get("solver", solver,error_l)
       if (solver .eq. ELPA_SOLVER_1STAGE) then
+        call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
@@ -837,7 +846,9 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
                 &PRECISION&
                 &_impl(self, a, ev)
 #endif
+        call self%autotune_timer%stop("accumulator")
       else if (solver .eq. ELPA_SOLVER_2STAGE) then
+        call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
         success_l = elpa_solve_evp_&
                 &MATH_DATATYPE&
@@ -845,6 +856,7 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
                 &PRECISION&
                 &_impl(self, a, ev)
 #endif
+        call self%autotune_timer%stop("accumulator")
       else
         write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008
@@ -1056,6 +1068,7 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
 
   call self%get("solver", solver,error_l)
   if (solver .eq. ELPA_SOLVER_1STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -1063,7 +1076,9 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
             &PRECISION&
             &_impl(self, aDev, evDev)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else if (solver .eq. ELPA_SOLVER_2STAGE) then
+    call self%autotune_timer%start("accumulator")
 #if defined(INCLUDE_ROUTINES)
     success_l = elpa_solve_evp_&
             &MATH_DATATYPE&
@@ -1071,6 +1086,7 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
             &PRECISION&
             &_impl(self, aDev, evDev)
 #endif
+    call self%autotune_timer%stop("accumulator")
   else
     write(error_unit,'(a)') "Unknown solver: Aborting!"
 #ifdef USE_FORTRAN2008

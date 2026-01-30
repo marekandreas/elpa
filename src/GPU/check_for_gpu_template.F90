@@ -224,25 +224,6 @@
       endif
 #endif
 #endif
-#ifdef WITH_SYCL_GPU_VERSION
-      if (.not. (OBJECT%gpu_setup%gpuAlreadySet)) then
-        call OBJECT%get("sycl_show_all_devices", syclShowAllDevices, error)
-        if (error .ne. ELPA_OK) then
-          write(error_unit,*) "Problem getting option for sycl_show_all_devices. Aborting..."
-          stop 1
-        endif
-        if (syclShowAllDevices == 1) then
-          syclShowOnlyIntelGpus = 0
-        else
-          syclShowOnlyIntelGpus = 1
-        endif
-        success = sycl_state_initialize(syclShowOnlyIntelGpus, wantDebugMessage)
-        if (.not. success) then
-          write(error_unit, *) "sycl_state_initialize: inconsistent SYCL setup. Aborting..."
-          stop 1
-        endif
-      endif
-#endif
 
       success = gpu_getdevicecount(numberOfDevices)
 
@@ -259,14 +240,8 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
         if (myid == 0 .and. wantDebugMessage) then
-          write(error_unit,*) "SYCL: syclShowOnlyIntelGpus =  ", syclShowOnlyIntelGpus
-          write(error_unit,*) "SYCL: numberOfDevices =  ", numberOfDevices
           call sycl_printdevices()
         endif
-        !TODO  I'd also like to check that all the chosen devices have the same platform, 
-        !TODO  as mixing platforms and thus also different devices will probably performace
-        !TODO  extremely poorly. This will need another Function in syclCommon, and the
-        !TODO  interfaces that that brings with it.
 #endif
 
       if (numberOfDevices==0) then

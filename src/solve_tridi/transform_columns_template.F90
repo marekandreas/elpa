@@ -202,7 +202,7 @@ subroutine transform_columns_cpu_&
         successGPU = successGPU .and. ccl_recv (tmp_dev, int(l_rows,kind=c_size_t), &
                                                 cclDataType, pc2, ccl_comm_cols_self, my_stream)
 
-        successGPU = ccl_group_end()
+        successGPU = successGPU .and. ccl_group_end()
 
         if (.not. successGPU) then
           print *,"Error in ccl_group_start/ccl_group_end/ccl_send/ccl_recv!"

@@ -247,7 +247,7 @@ program test
                                         do_test_multiply
   logical                             :: ignoreError, successGPU
 #if TEST_GPU == 1
-  TEST_INT_TYPE                       :: numberOfDevices
+  integer(kind=c_int)                 :: numberOfDevices
 #endif
 #ifdef WITH_OPENMP_TRADITIONAL
   TEST_INT_TYPE                       :: max_threads, threads_caller
@@ -855,12 +855,12 @@ program test
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
   call e%set("intel-gpu", TEST_GPU, error_elpa)
   assert_elpa_ok(error_elpa)
-  call e%set("sycl_show_all_devices", 0, error_elpa)
+  call e%set("gpu_sycl_backend", 0, error_elpa) ! By default, use Level Zero backend for Intel GPUs.
   assert_elpa_ok(error_elpa)
 #endif
 
 
-#if TEST_GPU_SET_ID == 1 && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
+#if TEST_GPU_SET_ID == 1
 #ifdef DEBUG_SYCL_ON_CPU
 ! for SYCL on CPU case: gpu_id and device_pointer_api tests don't make sense and are disabled
 #ifdef WITH_MPI
@@ -903,13 +903,11 @@ program test
   endif
 
   ! Set device
-#if (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
   successGPU = gpu_setdevice(gpuID)
   if (.not.(successGPU)) then
     print *,"Cannot set GPU device. Aborting..."
     stop 1
   endif
-#endif
 
   ! create device pointers for a,q, ev; copy a to device
 #if defined(TEST_EIGENVECTORS) && defined(TEST_MATRIX_RANDOM)

@@ -48,9 +48,13 @@
 
 #include "syclCommon.hpp"
 
+#include <cstdlib>
 #include <vector>
 #include <optional>
 #include <unordered_map>
+#include <string>
+#include <charconv>
+#include <string_view>
 
 #ifdef WITH_MPI
 #include <mpi.h>
@@ -62,32 +66,48 @@
 
 using namespace sycl_be;
 
+
+//--------------------------------------------------------------------------------------------
+// Auxiliary functions
+//--------------------------------------------------------------------------------------------
+
+std::optional<int> getEnvInt(std::string_view name) {
+  const char* value = std::getenv(std::string(name).c_str());
+  if (!value) {
+    return std::nullopt;
+  }
+  
+  int result{};
+  auto [ptr, ec] = std::from_chars(value, value + std::strlen(value), result);
+  
+  if (ec != std::errc{} || ptr != value + std::strlen(value)) {
+    return std::nullopt;  // Parse failed or trailing characters
+  }
+  
+  return result;
+}
+
+int getDebugEnvVar() {
+  using namespace std::string_literals;
+  auto debugForceEnvVar = getEnvInt("ELPA_FORCE_debug"s);
+  auto debugDefaultEnvVar = getEnvInt("ELPA_DEFAULT_debug"s);
+  return (debugForceEnvVar.has_value())   ? debugForceEnvVar.value() :
+         (debugDefaultEnvVar.has_value()) ? debugDefaultEnvVar.value() : 0;
+}
+
+int getBackendEnvVar() {
+  using namespace std::string_literals;
+  auto backendForceEnvVar = getEnvInt("ELPA_FORCE_gpu_sycl_backend"s);
+  auto backendDefaultEnvVar = getEnvInt("ELPA_DEFAULT_gpu_sycl_backend"s);
+  return (backendForceEnvVar.has_value())   ? backendForceEnvVar.value() :
+         (backendDefaultEnvVar.has_value()) ? backendDefaultEnvVar.value() : 0;
+} 
+
 //--------------------------------------------------------------------------------------------
 // SyclState
 //--------------------------------------------------------------------------------------------
 
 std::optional<SyclState> SyclState::_staticState;
-
-bool SyclState::initialize(bool onlyL0Gpus, bool isDebugEnabled) {
-  if (SyclState::_staticState && onlyL0Gpus != SyclState::_staticState->isManagingOnlyL0Gpus) {
-    std::cout << "SyclStaticState already initialized " 
-              << ((SyclState::_staticState->isManagingOnlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices") << "."
-              << " You are trying to re-initialize with " << ((onlyL0Gpus) ? "with only L0 GPUs" : "all SYCL devices")
-              << " which doesn't match the previous selection. " << std::endl;
-    return false;
-  } else if (SyclState::_staticState && isDebugEnabled != SyclState::_staticState->isDebugEnabled) {
-    std::cout << "SyclStaticState already initialized " 
-              << ((SyclState::_staticState->isDebugEnabled) ? "with debug enabled" : "with debug disabled") << "."
-              << " You are trying to re-initialize with " << ((isDebugEnabled) ? "with debug enabled" : "with debug disabled")
-              << " which doesn't match the previous selection. " << std::endl;
-    return false;
-  } else if (SyclState::_staticState) {
-    return true;     // SyclState already initialized, but with the same parameters.
-  } else {
-    SyclState::_staticState = std::make_optional(SyclState(onlyL0Gpus, isDebugEnabled));
-    return true;
-  }
-}
 
 /**
  * @param onlyL0Gpus: ELPA is a library, and hence we cannot assume the user's environment.
@@ -99,17 +119,31 @@ bool SyclState::initialize(bool onlyL0Gpus, bool isDebugEnabled) {
  * all available devices. The displayed devices can then be limited through SYCL device filters
  * expressed in SYCL env variables.
  */
-SyclState::SyclState(bool onlyL0Gpus, bool isDebugEnabled)
-  : isManagingOnlyL0Gpus(onlyL0Gpus), isDebugEnabled(isDebugEnabled), defaultDevice(-1) {
+SyclState::SyclState() : isDebugEnabled(false), defaultDevice(-1) {
+  int constexpr syclBackendL0 = 0;
+  int constexpr syclBackendOpenCl = 1;
+  int constexpr syclBackendAll = 2;
+
   namespace si = sycl::info;
+  int debugValue = getDebugEnvVar();
+  this->isDebugEnabled = (debugValue != 0); 
+  
+  int backendValue = getBackendEnvVar();
   auto platforms = sycl::platform::get_platforms();
-  if (onlyL0Gpus) {
+  if (backendValue == syclBackendL0) {
     for (auto &p : platforms) {
         if (p.get_info<si::platform::name>().find("Level-Zero") != std::string::npos) {
           devices = p.get_devices(sycl::info::device_type::gpu);
           break;
         }
     }    
+  } else if (backendValue == syclBackendOpenCl) {
+    for (auto &p : platforms) {
+        if (p.get_info<si::platform::name>().find("OpenCL") != std::string::npos) {
+          devices = p.get_devices(sycl::info::device_type::gpu);
+          break;
+        }
+    }
   } else {
     for (auto &p : platforms) {
       auto platformDevices = p.get_devices(sycl::info::device_type::all);
@@ -119,11 +153,10 @@ SyclState::SyclState(bool onlyL0Gpus, bool isDebugEnabled)
 }
 
 SyclState& SyclState::defaultState() {
-  if (_staticState) {
-    return *_staticState;
-  } else {
-    throw std::runtime_error("ELPA GPU SYCL Backend (This is likely a programming error in ELPA.): SyclState not initialized!");
+  if (!_staticState) {
+    SyclState::_staticState = SyclState();
   }
+  return _staticState.value();
 }
 
 size_t SyclState::getNumDevices() {
