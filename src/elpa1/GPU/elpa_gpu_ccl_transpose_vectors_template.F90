@@ -50,6 +50,7 @@
 #include "config-f90.h"
 #include "../../general/sanity.F90"
 #include "../../general/error_checking.inc"
+#include "../../general/nvtx_labels.h"
 
 #undef USE_CCL_TRANSPOSE
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
@@ -184,13 +185,15 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
     
     if (myps==mypt) then
       ! vmat_t(1:ld_st,1:nvc) = vmat_s(1:ld_st,1:nvc)
-#ifdef WITH_NVTX
-      call nvtxRangePush("memcpy new D-D vmat_s_dev->vmat_t_dev")
+      NVTX_RANGE_PUSH("memcpy D-D vmat_s_dev->vmat_t_dev")
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+      if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else
+      successGPU = gpu_memcpy      (vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice)
 #endif
-      successGPU = gpu_memcpy(vmat_t_dev, vmat_s_dev, (ld_st*nvc)* size_of_datatype, gpuMemcpyDeviceToDevice)
-#ifdef WITH_NVTX
-      call nvtxRangePop()
-#endif
+      check_memcpy_gpu("elpa_gpu_ccl_transpose_vectors: vmat_t_dev", successGPU)
+      NVTX_RANGE_POP("memcpy D-D vmat_s_dev->vmat_t_dev")
     else
       call obj%get("matrix_order", matrix_order, error)
 
@@ -251,7 +254,14 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
       endif
     endif
 
+    if (wantDebug) then
+      call obj%timer%start("MPI_Barrier")
+      call MPI_Barrier(mpi_comm_all, mpierr)
+      call obj%timer%stop("MPI_Barrier")
+    endif
+
     if (wantDebug) call obj%timer%stop("elpa_gpu_ccl_transpose_vectors")
+
     return
   endif ! isSquareGridGPU
 
@@ -277,25 +287,12 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   ! successGPU = gpu_malloc(aux_transpose_dev, ((nblks_tot-nblks_skip+lcm_s_t-1)/lcm_s_t) * nblk * nvc * size_of_datatype)
   ! check_alloc_gpu("tridiag: aux_transpose_dev", successGPU)
 
-! #ifdef WITH_OPENMP_TRADITIONAL
-!   !$omp parallel num_threads(nrThreads) &
-!   !$omp default(none) &
-!   !$omp private(lc, i, k, ns, nl, nblks_comm, aux_stride, ips, ipt, n, bcast_request1) &
-!   !$omp shared(nps, npt, lcm_s_t, mypt, nblk, myps, vmat_t, mpierr, comm_s, &
-!   !$omp&       obj, vmat_s, aux, nblks_skip, nblks_tot, nvc, nvr, &
-! #ifdef WITH_MPI
-!   !$omp&       MPI_STATUS_IGNORE, &
-! #endif
-!   !$omp&       useNonBlockingCollectives)
-! #endif
-
 
   ! for non-square grid this becomes super inefficient
   ! what about 2x1 grid?
   ! we could circumvent the problem if it was possible to use nccl from inside the gpu kernel and then rework the whole procedure to one big kernel
   ! alternatively we could make aux_transpose_dev bigger by factor lcm_s_t and break main do-loop into 3 parts
   ! this would also help for CPU version. but maybe elpa_transpose_vectors is not a bottleneck there.
-  ! !? work through the cycle once with a pen and paper (or rather do it in a txt file)
 
   do n = 0, lcm_s_t-1
 
@@ -309,19 +306,18 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
 
       if (nblks_comm .ne. 0) then
         if (myps == ips) then
-          !sm_count = 32
           sm_count = obj%gpu_setup%gpuSMcount
-          call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_s_dev, & 
+          call obj%timer%start("gpu_transpose_reduceadd_1")
+          call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux_transpose_dev, vmat_s_dev, & 
                                                 nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, nps, ld_s, &
                                                 1, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
+          call obj%timer%stop("gpu_transpose_reduceadd_1")
         endif ! (myps == ips)
-
-        ! call mpi_bcast(aux, int(nblks_comm*nblk*nvc,kind=MPI_KIND),  MPI_REAL_PRECISION,    &
-        ! int(ips,kind=MPI_KIND), int(comm_s,kind=MPI_KIND),  mpierr)
 
         if (nps>1) then
           if (wantDebug) call obj%timer%start("ccl_bcast")
 
+          ! use Allgather instead? less wasteful?
           aux_size = aux_stride*nvc
           successGPU = ccl_Bcast(aux_transpose_dev, aux_transpose_dev, int(k_datatype*aux_size, kind=c_size_t), &
                                   cclDataType, int(ips, kind=c_int), ccl_comm_s, my_stream)
@@ -330,17 +326,21 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
             print *,"Error in nccl_Bcast"
             stop 1
           endif
-
-          successGPU = gpu_stream_synchronize(my_stream)
-          check_stream_synchronize_gpu("ccl_Bcast aux_transpose_dev", successGPU)
+          
+          if (wantDebug) then
+            successGPU = gpu_stream_synchronize(my_stream)
+            check_stream_synchronize_gpu("ccl_Bcast aux_transpose_dev", successGPU)
+          endif
 
           if (wantDebug) call obj%timer%stop("ccl_bcast")
         endif ! (nps>1)
-        !sm_count = 32
+
         sm_count = obj%gpu_setup%gpuSMcount
-        call gpu_transpose_reduceadd_vectors_copy_block_PRECISION (aux_transpose_dev, vmat_t_dev, &
+        call obj%timer%start("gpu_transpose_reduceadd_2")
+        call gpu_transpose_reduceadd_vectors_copy_block (PRECISION_CHAR, aux_transpose_dev, vmat_t_dev, &
                                               nvc, nvr, n, nblks_skip, nblks_tot, lcm_s_t, nblk, aux_stride, npt, ld_t, & 
                                               2, isSkewsymmetric, .false., wantDebug, sm_count, my_stream)
+        call obj%timer%stop("gpu_transpose_reduceadd_2")
       endif ! (nblks_comm .ne. 0)
     endif ! (mypt == ipt)
 

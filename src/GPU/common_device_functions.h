@@ -288,6 +288,48 @@ INLINE_DEVICE float elpaDeviceImagPart(float_complex number) {
 #endif
 }
 
+INLINE_DEVICE double elpaDeviceEqual(double a, double b) { return (double)(a == b); }
+INLINE_DEVICE float  elpaDeviceEqual(float  a, float  b) { return (float)(a == b); }
+INLINE_DEVICE double_complex elpaDeviceEqual(double_complex a, double_complex b) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuDoubleComplex((a.x == b.x) && (a.y == b.y) ? 1.0 : 0.0, 0.0);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipDoubleComplex((a.x == b.x) && (a.y == b.y) ? 1.0 : 0.0, 0.0);
+#else
+  return std::complex<double>(( (a.real() == b.real()) && (a.imag() == b.imag()) ) ? 1.0 : 0.0, 0.0);
+#endif
+}
+INLINE_DEVICE float_complex elpaDeviceEqual(float_complex a, float_complex b) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return make_cuFloatComplex((a.x == b.x) && (a.y == b.y) ? 1.0f : 0.0f, 0.0f);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return make_hipFloatComplex((a.x == b.x) && (a.y == b.y) ? 1.0f : 0.0f, 0.0f);
+#else
+  return std::complex<float>(( (a.real() == b.real()) && (a.imag() == b.imag()) ) ? 1.0f : 0.0f, 0.0f);
+#endif
+}
+
+INLINE_DEVICE bool elpaDeviceEqualBool(double a, double b) { return a == b; }
+INLINE_DEVICE bool elpaDeviceEqualBool(float  a, float  b) { return a == b; }
+INLINE_DEVICE bool elpaDeviceEqualBool(double_complex a, double_complex b) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return (a.x == b.x) && (a.y == b.y);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return (a.x == b.x) && (a.y == b.y);
+#else
+  return ( (a.real() == b.real()) && (a.imag() == b.imag()) );
+#endif
+}
+INLINE_DEVICE bool elpaDeviceEqualBool(float_complex a, float_complex b) {
+#if defined(WITH_NVIDIA_GPU_VERSION)
+  return (a.x == b.x) && (a.y == b.y);
+#elif defined(WITH_AMD_GPU_VERSION)
+  return (a.x == b.x) && (a.y == b.y);
+#else
+  return ( (a.real() == b.real()) && (a.imag() == b.imag()) );
+#endif
+}
+
 // Device function to convert a pointer to a value
 template <typename T>
 INLINE_DEVICE T convert_to_device(T* x, std::true_type) { return *x;}

@@ -165,6 +165,10 @@
 
   success = .true.
   useGPU = .false.
+  useCCL = .false.
+#if defined(USE_CCL_HERMITIAN_MULTIPLY)
+    useCCL = obj%gpu_setup%useCCL
+#endif
 
   call obj%get("debug", debug, error)
   if (error .ne. ELPA_OK) then
@@ -257,7 +261,7 @@
     l_rows = local_index(ncb, my_prow, np_rows, nblk, -1) ! Local rows of b (=a)
     l_cols = local_index(na,  my_pcol, np_cols, nblk, -1) ! Local cols of b (=a)
   endif
-
+  
   ! Block factor for matrix multiplications, must be a multiple of nblk
 
   if (obj%is_set("blocking_in_multiply") == 1) then
@@ -289,8 +293,7 @@
   endif ! is_set
   
   if (wantDebug .and. myid==0) print *, "blocking_in_multiply=", blocking, "nblk_mult=", nblk_mult
-  
-  useCCL = .false.
+
   if (useGPU) then
     call obj%timer%start("check_for_gpu")
     if (check_for_gpu(obj, myid, numGPU, wantDebug)) then
@@ -310,8 +313,6 @@
 #endif
 
 #if defined(USE_CCL_HERMITIAN_MULTIPLY)
-    useCCL = obj%gpu_setup%useCCL
-
     ccl_comm_rows = obj%gpu_setup%ccl_comm_rows
     ccl_comm_cols = obj%gpu_setup%ccl_comm_cols
 
@@ -776,7 +777,7 @@
                 call PRECISION_GEMM(BLAS_TRANS_OR_CONJ, 'N', int(nstor,kind=BLAS_KIND), &
                                   int(lce-lcs+1,kind=BLAS_KIND), int(lre-lrs+1,kind=BLAS_KIND), ONE, &
                                   aux_mat(lrs:lre,1:nstor), int(lre-lrs+1,kind=BLAS_KIND), &
-                                  a(lrs,lcs), int(ldb,kind=BLAS_KIND), ZERO, &
+                                  a(lrs,lcs), int(matrixRows,kind=BLAS_KIND), ZERO, &
                                   tmp1, int(nstor,kind=BLAS_KIND))
               endif
               call obj%timer%stop("blas")
