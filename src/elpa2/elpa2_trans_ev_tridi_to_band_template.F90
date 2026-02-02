@@ -1767,25 +1767,27 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
-      successGPU = gpu_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
-                    stripe_width*nbw* stripe_count * size_of_datatype,&
-                    gpuHostRegisterDefault)
-      check_host_register_gpu("tridi_to_band: top_border_send_buffer", successGPU)
+      if (stripe_width > 0) then
+        successGPU = gpu_host_register(int(loc(top_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      gpuHostRegisterDefault)
+        check_host_register_gpu("tridi_to_band: top_border_send_buffer", successGPU)
 
-      successGPU = gpu_host_register(int(loc(top_border_recv_buffer),kind=c_intptr_t), &
-                    stripe_width*nbw* stripe_count * size_of_datatype,&
-                    gpuHostRegisterDefault)
-      check_host_register_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
+        successGPU = gpu_host_register(int(loc(top_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      gpuHostRegisterDefault)
+        check_host_register_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
 
-      successGPU = gpu_host_register(int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
-                    stripe_width*nbw* stripe_count * size_of_datatype,&
-                    gpuHostRegisterDefault)
-      check_host_register_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
+        successGPU = gpu_host_register(int(loc(bottom_border_send_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      gpuHostRegisterDefault)
+        check_host_register_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
 
-      successGPU = gpu_host_register(int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
-                    stripe_width*nbw* stripe_count * size_of_datatype,&
-                    gpuHostRegisterDefault)
-      check_host_register_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
+        successGPU = gpu_host_register(int(loc(bottom_border_recv_buffer),kind=c_intptr_t), &
+                      stripe_width*nbw* stripe_count * size_of_datatype,&
+                      gpuHostRegisterDefault)
+        check_host_register_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
+      end if
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     endif
 #endif
@@ -4904,17 +4906,19 @@ subroutine trans_ev_tridi_to_band_&
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
 #endif
-      successGPU = gpu_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("tridi_to_band: top_border_send_buffer", successGPU)
+      if (stripe_width > 0) then
+        successGPU = gpu_host_unregister(int(loc(top_border_send_buffer),kind=c_intptr_t))
+        check_host_unregister_gpu("tridi_to_band: top_border_send_buffer", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(top_border_recv_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
+        successGPU = gpu_host_unregister(int(loc(top_border_recv_buffer),kind=c_intptr_t))
+        check_host_unregister_gpu("tridi_to_band: top_border_recv_buffer", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(bottom_border_send_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
+        successGPU = gpu_host_unregister(int(loc(bottom_border_send_buffer),kind=c_intptr_t))
+        check_host_unregister_gpu("tridi_to_band: bottom_border_send_buffer", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
-      check_host_unregister_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
+        successGPU = gpu_host_unregister(int(loc(bottom_border_recv_buffer),kind=c_intptr_t))
+        check_host_unregister_gpu("tridi_to_band: bottom_border_recv_buffer", successGPU)
+      endif
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
     endif
 #endif
