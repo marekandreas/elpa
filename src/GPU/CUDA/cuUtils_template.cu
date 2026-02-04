@@ -195,6 +195,8 @@ extern "C" void launch_my_pack_c_cuda_kernel_complex_single(const int row_count,
 #endif
 #endif
 {
+    if (stripe_width <= 0) return;
+
     cudaError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
@@ -320,6 +322,8 @@ extern "C" void launch_my_unpack_c_cuda_kernel_complex_single(const int row_coun
 #endif
 #endif
 {
+    if (stripe_width <= 0) return;
+
     cudaError_t err;
     dim3 grid_size = dim3(row_count, stripe_count, 1);
     int blocksize = stripe_width > MAX_BLOCK_SIZE ? MAX_BLOCK_SIZE : stripe_width;
