@@ -776,7 +776,7 @@ subroutine tridiag_cpu_&
 #else                                    
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
-          NVTX_RANGE_POP("gpublas gemv skinny  v_row_dev+=vu_stored_rows_dev*uv_stored_cols_dev")
+          NVTX_RANGE_POP("gpublas gemv skinny v_row_dev+=vu_stored_rows_dev*uv_stored_cols_dev")
           if (wantDebug) call obj%timer%stop("gpublas_gemv_skinny")
 
         else ! useGPU
@@ -804,7 +804,6 @@ subroutine tridiag_cpu_&
       if (useGPU) then
         isOurProcessRow = (my_prow == prow(istep-1, nblk, np_rows))
 
-        my_stream = obj%gpu_setup%my_stream
         if (wantDebug) call obj%timer%start("gpu_dot_product_and_assign_kernel")
         NVTX_RANGE_PUSH("gpu_dot_product_and_assign_kernel")
         call gpu_dot_product_and_assign(PRECISION_CHAR, v_row_dev, l_rows, isOurProcessRow, aux1_dev, wantDebug, SM_count, my_stream)
@@ -978,7 +977,7 @@ subroutine tridiag_cpu_&
 
 
 #ifdef WITH_MPI
-    if (useCCL .and. np_cols>1) then
+    if (useCCL) then
 #ifdef USE_CCL_TRIDIAG
       call obj%timer%start("ccl_bcast")
       NVTX_RANGE_PUSH("ccl_bcast")
@@ -994,6 +993,14 @@ subroutine tridiag_cpu_&
       NVTX_RANGE_POP("ccl_bcast")
 #endif /* USE_CCL_TRIDIAG */
     else ! useCCL
+      if (useGPU) then
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_stream_synchronize(my_stream)
+#else
+        successGPU = gpu_DeviceSynchronize()
+#endif
+      endif ! useGPU
+
       if (useNonBlockingCollectivesCols) then
         if (wantDebug) call obj%timer%start("mpi_nbc_communication")
         ! Broadcast the Householder Vector (and tau) along columns
