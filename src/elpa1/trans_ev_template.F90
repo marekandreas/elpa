@@ -188,27 +188,13 @@ subroutine trans_ev_cpu_&
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
-  integer(kind=ik)                              :: i,j ! PETERDEBUG: only for debugging, cleanup
+  integer(kind=ik)                              :: i,j ! PETERDEBUG111: only for debugging, cleanup
   ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
   logical :: is_sycl_cpu
   is_sycl_cpu = .false.
 #if defined(WITH_SYCL_GPU_VERSION)
   success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
-
-! PETERDEBUG111-printmat cleanup
-! print *, "q_mat:"
-! do i = 1, size(q_mat,1)
-!   print '(*(g0,1x))', q_mat(i,:)
-! end do
-
-! print *, "a_mat"
-! do i = 1, size(a_mat,1)
-!   print '(*(g0,1x))', a_mat(i,:)
-! end do
-
-! print *, "tau"
-! print '(*(g0,1x))', tau(:)
 
   success = .true.
 
@@ -309,7 +295,7 @@ subroutine trans_ev_cpu_&
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  call obj%get("max_stored_rows",max_stored_rows_fac, error)  ! PETERDEBUG: default 256. 
+  call obj%get("max_stored_rows",max_stored_rows_fac, error)  ! PETERDEBUG111: default 256. 
                                                               ! check whether for GPU it should be increased
                                                               ! size for GEMM should be at least 5000 (A100)
 
@@ -405,11 +391,11 @@ subroutine trans_ev_cpu_&
   endif  ! useGPU
 
   if (.not. useCCL) then
-    hvb = 0   ! Safety only ! PETERDEBUG: check whether it is really needed
+    hvb = 0   ! Safety only ! PETERDEBUG111: check whether it is really needed
     hvm = 0   ! Must be set to 0 !!!
   endif
 
-  ! PETERDEBUG: check whether it is really needed
+  ! PETERDEBUG111: check whether it is really needed
   if (useGPU) then
     num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -419,7 +405,7 @@ subroutine trans_ev_cpu_&
     successGPU = gpu_memset(hvm_dev, 0, num)
 #endif
   endif
-  ! PETERDEBUG: check whether it is really needed
+  ! PETERDEBUG111: check whether it is really needed
   if (useGPU) then
     num = max_local_rows * nblk * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -475,7 +461,7 @@ subroutine trans_ev_cpu_&
     else ! useGPU
       NVTX_RANGE_PUSH("loop: copy hvb <- a_mat")
       nb = 0
-      ! PETERDEBUG: typically, ice-ics = nblk-1, hence nblk steps
+      ! PETERDEBUG111: typically, ice-ics = nblk-1, hence nblk steps
       do ic = ics, ice
         l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder Vector
         l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
@@ -492,7 +478,7 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvb <- a_mat")
     endif
 
-    ! PETERDEBUG: do we need at all this compression-decompression?
+    ! PETERDEBUG111: do we need at all this compression-decompression?
 
 #ifdef WITH_MPI
     if (useGPU .and. .not. useCCL) then
@@ -586,7 +572,7 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvm <- hvb")
     endif ! useGPU
 
-    ! PETERDEBUG: this memcopy can be cleaned up?
+    ! PETERDEBUG111: this memcopy can be cleaned up?
     if (useGPU .and. .not. useCCL) then
       num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -599,17 +585,8 @@ subroutine trans_ev_cpu_&
       check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
 #endif
     endif ! useGPU
-
-    ! PETERDEBUG: print array
-  !   print *, "istep=", istep, "nstor=", nstor, "max_stored_rows=", max_stored_rows ! PETEDEBUG
-  !   do i = 1, size(hvm, 1)
-  !     do j = 1, MIN(size(hvm, 2), na)
-  !        write(*,'(F8.2)', advance='no') hvm(i,j)
-  !     end do
-  !     write(*,*)  ! move to next line
-  !  end do
-    
-    ! PETERDEBUG: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
+   
+    ! PETERDEBUG111: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
     ! Please note: for smaller matix sizes (na/np_rows<=256), a value of 32 for nstor is enough!
     if (nstor+nblk > max_stored_rows .or. istep+nblk > na .or. (na/np_rows <= 256 .and. nstor >= 32)) then
 
@@ -617,7 +594,7 @@ subroutine trans_ev_cpu_&
       ! This can be done in different ways, we use dsyrk or zherk
       if (useGPU) then
         call obj%timer%start("gpu_memset")
-        ! PETERDEBUG: is this really needed for GPU?
+        ! PETERDEBUG111: is this really needed for GPU?
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
         successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
@@ -635,17 +612,14 @@ subroutine trans_ev_cpu_&
         if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
           NVTX_RANGE_PUSH("gpublas_syrk")
-#ifdef DEBUG_CUDA /* PETERDEBUG111: cleanup DEBUG_CUDA; leave only #else branch */
-          call gpublas_PRECISION_SYRK_HERK('U', BLAS_TRANS_OR_CONJ, &
-#else
+
           call gpublas_PRECISION_SYRK_HERK('L', BLAS_TRANS_OR_CONJ, &
-#endif
                                            nstor, l_rows, ONE, &
                                            hvm_dev, max_local_rows, ZERO, &
                                            tmat_dev, max_stored_rows, gpublasHandle)
 #ifdef WITH_GPU_STREAMS
           if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
+#else
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
 
@@ -667,11 +641,7 @@ subroutine trans_ev_cpu_&
 #elif COMPLEXCASE == 1
           call PRECISION_HERK &
 #endif
-#ifdef DEBUG_CUDA
-                            ('U', BLAS_TRANS_OR_CONJ, &
-#else
                             ('L', BLAS_TRANS_OR_CONJ, &
-#endif
                             int(nstor,kind=BLAS_KIND), int(l_rows,kind=BLAS_KIND), ONE, &
                             hvm, int(ubound(hvm,dim=1),kind=BLAS_KIND), ZERO, &
                             tmat, int(max_stored_rows,kind=BLAS_KIND))
@@ -694,7 +664,7 @@ subroutine trans_ev_cpu_&
                 ("trans_ev: tmat_dev -> tmat", tmat_dev, 0_c_intptr_t, &
                 tmat(1:max_stored_rows,1:max_stored_rows), &
                 1, 1, num_el*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else              
+#else
         successGPU = gpu_memcpy(int(loc(tmat(1,1)),kind=c_intptr_t), tmat_dev, num_el*size_of_datatype, gpuMemcpyDeviceToHost)
         check_memcpy_gpu("trans_ev", successGPU)
 #endif
@@ -719,17 +689,10 @@ subroutine trans_ev_cpu_&
       else  ! useCCL
         ! compression
         nc = 0
-#ifdef DEBUG_CUDA
-        do n = 1, nstor-1
-          h(nc+1:nc+n) = tmat(1:n,n+1) ! upper triangular part, ignores diagonal
-          nc = nc+n
-        enddo
-#else
         do n = 1, nstor
           h(nc+1:nc+n) = tmat(n,1:n) ! lower triangular part, takes into account diagonal
-          nc = nc+n ! PETERDEBUG: on GPU: nc += max_stored_rows 
+          nc = nc+n ! PETERDEBUG111: on GPU: nc += max_stored_rows 
         enddo
-#endif
       endif ! useCCL
 
 #ifdef WITH_MPI
@@ -781,93 +744,6 @@ subroutine trans_ev_cpu_&
 
       ! Calculate triangular matrix T. 
       ! What was previously stored in (upper part of) tmat is now stored in h, old values of tmat are not needed anymore
-
-#ifdef DEBUG_CUDA      
-!       ! PETERDEBUG: we can write a kernel here
-!       ! Also, we can use another stream for this, which can be completely hidden by other operations
-      if (useGPU) then
-        ! PETERDEBUG: check whether this can be cleaned up after testing gpu_update_h_trmv_kernel
-        call obj%timer%start("gpu_memset")
-        successGPU = gpu_memset(tmat_dev, 0, max_stored_rows*max_stored_rows * size_of_datatype)
-        call obj%timer%stop("gpu_memset")
-
-        nc = 0
-        n = 0
-        shift_dev = (ice-nstor+n)*size_of_datatype
-        shift_h_dev = 0
-        call gpu_update_tmat(PRECISION_CHAR, tmat_dev, h_dev, tau_dev + shift_dev, &
-                             max_stored_rows, nc, n, SM_count, debug, my_stream)
-        !NVTX_RANGE_PUSH("gpublas_trmv+gpu_update_tmat loop")
-        NVTX_RANGE_PUSH("gpu_trmv")
-        call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
-                      max_stored_rows, n, SM_count, debug, my_stream)
-#ifdef WITH_GPU_STREAMS
-          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#endif
-        NVTX_RANGE_POP("gpu_trmv")
-
-        call obj%timer%start("gpu_trmv_kernel_loop")
-        NVTX_RANGE_PUSH("trmv_loop")
-        ! call gpu_trmv_loop(PRECISION_CHAR, tmat_dev, h_dev, h1_buffer_dev, tau_dev, &
-        !                   max_stored_rows, nstor, ice, SM_count, useCCL_int, debug, my_stream)
-
-        do n = 1, nstor-1
-          !shift_dev = nc*size_of_datatype
-          !h_dev <- tmat_dev*h_dev
-
-          if (useCCL) then
-            shift_h_dev = n*max_stored_rows*size_of_datatype
-          else
-            shift_h_dev = nc*size_of_datatype
-            nc = nc+n
-          endif
-
-          shift_dev = (ice-nstor+n)*size_of_datatype
-          NVTX_RANGE_PUSH("gpu_trmv")
-          ! PETERDEBUG111: cleanup this kernel
-          call gpu_trmv(PRECISION_CHAR, tmat_dev, h_dev+shift_h_dev, h1_buffer_dev, tau_dev+shift_dev, &
-                        max_stored_rows, n, SM_count, debug, my_stream)
-          NVTX_RANGE_POP("gpu_trmv")
-        enddo !   n = 1, nstor-1
-#ifdef WITH_GPU_STREAMS
-          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#endif
-        call obj%timer%stop("gpu_trmv_kernel_loop")
-        NVTX_RANGE_POP("trmv_loop")
-        
-        !NVTX_RANGE_POP("gpublas_trmv+gpu_update_tmat loop")
-      else ! useGPU
-        nc = 0
-        tmat(1,1) = tau(ice-nstor+1)
-        do n = 1, nstor-1
-          ! h = tmat*h
-          call obj%timer%start("blas")
-          NVTX_RANGE_PUSH("blas_trmv") ! PETERDEBUG: transform, similarly to GPU branch, if doesn't lose performance
-          call PRECISION_TRMV('L', BLAS_TRANS_OR_CONJ, 'N', int(n,kind=BLAS_KIND), &
-                              tmat, int(max_stored_rows,kind=BLAS_KIND), &
-                              h(nc+1), 1_BLAS_KIND)
-          NVTX_RANGE_POP("blas_trmv")
-          call obj%timer%stop("blas")
-
-          ! update tmat for next iteration
-#if REALCASE == 1
-          tmat(n+1,1:n) = -h(nc+1:nc+n) *tau(ice-nstor+n+1)
-#elif COMPLEXCASE == 1
-          tmat(n+1,1:n) = -conjg(h(nc+1:nc+n)) *tau(ice-nstor+n+1)
-#endif
-          
-          tmat(n+1,n+1) = tau(ice-nstor+n+1)
-          nc = nc+n
-        enddo
-      endif ! useGPU
-      
-      print *, "DEBUG_CUDA codepath"
-#else /* DEBUG_CUDA */      
-      ! Set ones on the diagonal of T matrix
       if (useCCL) then
         ! no compression
         nc = max_stored_rows*nstor
@@ -885,10 +761,6 @@ subroutine trans_ev_cpu_&
       else ! useCCL
         ! decompression
         nc = 0
-        ! do n = 1, nstor-1  ! PETERDEBUG111: cleanup        
-        !   tmat(1:n,n+1) = h(nc+1:nc+n)
-        !   nc = nc+n
-        ! enddo
 
         do n = 1, nstor
           tmat(n,1:n) = h(nc+1:nc+n)
@@ -906,16 +778,10 @@ subroutine trans_ev_cpu_&
       endif ! useCCL
 
       if (useGPU) then
-! PETERDEBUG111: cleanup
-! #if REALCASE == 1
-!         ! HALF = ONE/(ONE+ONE)
-!         call gpublas_PRECISION_SCAL(gpublasHandle, nstor, ONE/2, tmat_dev, max_stored_rows+1)
-! #elif COMPLEXCASE == 1
         call gpu_set_tmat_diag_from_tau(PRECISION_CHAR, tmat_dev, tau_dev, &
                                         int(max_stored_rows,kind=c_int), int(nstor,kind=c_int), &
                                         int(ice-nstor,kind=c_int), int(SM_count,kind=c_int), &
                                         int(debug,kind=c_int), my_stream)
-! #endif
       else ! useGPU
         do n = 1, nstor
           ic = ice-nstor+n ! PETERDEBUG111: here and below: same as ic = ics + n - 1?
@@ -930,16 +796,6 @@ subroutine trans_ev_cpu_&
           endif ! (tau(ic) == ZERO)
         enddo
       endif ! useGPU
-#endif  /* DEBUG_CUDA */ 
-
-      !PETERDEBUG111-printmat cleanup
-      ! if (.not. useGPU) then
-      !   print *, "tmat:"
-      !   do i = 1, size(tmat,1)
-      !     print '(*(g0,1x))', tmat(i,:)
-      !   end do
-      ! endif
-
 
       ! Q = Q - V * T * V**T * Q
 
@@ -954,7 +810,7 @@ subroutine trans_ev_cpu_&
                                       tmp_dev, nstor, gpublasHandle)
 #ifdef WITH_GPU_STREAMS
           if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
+#else
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
           NVTX_RANGE_POP("gpublas_gemm")
@@ -995,6 +851,7 @@ subroutine trans_ev_cpu_&
       if (useGPU .and. .not. useCCL) then
         ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
         ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
+        ! PETERDEBUG111. consider the comment above
 
         ! copy tmp_dev -> tmp if needed
 #ifdef WITH_GPU_STREAMS
@@ -1064,18 +921,13 @@ subroutine trans_ev_cpu_&
           call obj%timer%start("gpublas_trsm")
           NVTX_RANGE_PUSH("gpublas_trsm")
 
-#ifdef DEBUG_CUDA
-          call gpublas_PRECISION_TRMM('L', 'L', 'N', 'N', &
-          !call gpublas_PRECISION_TRMM('L', 'U', BLAS_TRANS_OR_CONJ, 'N',     &
-#else
           call gpublas_PRECISION_TRSM('L', 'L', 'N', 'N', &
-#endif
                                       nstor, l_cols, ONE, &
                                       tmat_dev, max_stored_rows, &
                                       tmp_dev, nstor, gpublasHandle)
 #ifdef WITH_GPU_STREAMS
           if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
+#else
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
           call obj%timer%stop("gpublas_trsm")
@@ -1090,7 +942,7 @@ subroutine trans_ev_cpu_&
                                       q_dev, ldq, gpublasHandle)
 #ifdef WITH_GPU_STREAMS
           if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
+#else
           if (wantDebug) successGPU = gpu_DeviceSynchronize()
 #endif
           call obj%timer%stop("gpublas_gemm")
@@ -1098,33 +950,11 @@ subroutine trans_ev_cpu_&
         else !useGPU
           call obj%timer%start("blas")
 
-          ! PETERDEBUG111-printmat cleanup
-          ! if (.not. useGPU) then
-          !   print *, "tmp (before applyting tmat):"
-          !   do i = 1, 4
-          !     print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
-          !   end do
-          ! endif
-
-#ifdef DEBUG_CUDA
-          ! tmp = tmat * tmp
-          call PRECISION_TRMM('L', 'L', 'N', 'N', &
-                              int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, &
-                              tmat, int(max_stored_rows,kind=BLAS_KIND), &
-                              tmp, int(nstor,kind=BLAS_KIND))
-#else          
           ! tmp = tmat^{-1} * tmp
           call PRECISION_TRSM('L', 'L', 'N', 'N', &
                               int(nstor,kind=BLAS_KIND), int(l_cols,kind=BLAS_KIND), ONE, &
                               tmat, int(max_stored_rows,kind=BLAS_KIND), &
                               tmp, int(nstor,kind=BLAS_KIND))
-#endif
-
-          ! PETERDEBUG111-printmat cleanup
-          ! print *, "tmp (after applyting tmat):"
-          ! do i = 1, 4
-          !   print '(*(g0,1x))', tmp(i), tmp(i+4), tmp(i+8), tmp(i+12)
-          ! end do
 
           !q_mat = q_mat - hvm*tmp
           call PRECISION_GEMM('N', 'N', &
@@ -1140,27 +970,9 @@ subroutine trans_ev_cpu_&
       nstor = 0
     endif  ! (nstor+nblk>max_stored_rows .or. istep+nblk>na .or. (na/np_rows<=256 .and. nstor>=32))
 
-    ! PETERDEBUG q_mat: ldq,matrixCols
-    ! if (my_prow==0 .and. my_pcol==0) then
-    !   print *, "istep=", istep, "nstor=", nstor, "max_stored_rows=", max_stored_rows ! PETEDEBUG
-    !   do i = 1, size(q_mat, 1)
-    !     !do j = 1, MIN(size(q_mat, 2), na)
-    !     do j = 1, size(q_mat, 2)
-    !         write(*,'(F8.2)', advance='no') q_mat(i,j)
-    !     end do
-    !     write(*,*)  ! move to next line
-    !   end do
-    ! endif
-
     NVTX_RANGE_POP("main_loop")
     call obj%timer%stop("main_loop_trans_ev")
   enddo ! istep = 1, na, blockStep
-
-  ! PETERDEBUG111-printmat cleanup
-  ! print *, "q_mat (transformed):"
-  ! do i = 1, size(q_mat,1)
-  !   print '(*(g0,1x))', q_mat(i,:)
-  ! end do
 
   if (.not. useCCL) then
     deallocate(h, hvb, hvm, stat=istat, errmsg=errorMessage)
