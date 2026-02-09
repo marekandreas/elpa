@@ -107,15 +107,10 @@ subroutine hh_transform_complex_&
 
 #if REALCASE == 1
   if ( XNORM_SQ==0.0_rk ) then
-#endif
-#if COMPLEXCASE == 1
-  if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
-#endif
-
-#if REALCASE == 1
     if ( ALPHA>=0.0_rk ) then
 #endif
 #if COMPLEXCASE == 1
+  if ( XNORM_SQ==0.0_rk .AND. ALPHI==0.0_rk ) then
     if ( ALPHR>=0.0_rk ) then
 #endif
       TAU = 0.0_rk
@@ -125,39 +120,33 @@ subroutine hh_transform_complex_&
     endif
     XF = 0.0_rk
 
-  else
+  else ! ( XNORM_SQ==0.0_rk )
 
 #if REALCASE == 1
     BETA = SIGN( SQRT( ALPHA**2 + XNORM_SQ ), ALPHA )
-#endif
-#if COMPLEXCASE == 1
+#elif COMPLEXCASE == 1
     BETA = SIGN( SQRT( ALPHR**2 + ALPHI**2 + XNORM_SQ ), ALPHR )
 #endif
     ALPHA = ALPHA + BETA
     IF ( BETA<0 ) THEN
       BETA = -BETA
       TAU  = -ALPHA / BETA
-    ELSE
+    ELSE ! ( BETA<0 )
 #if REALCASE == 1
       ALPHA = XNORM_SQ / ALPHA
-#endif
-#if COMPLEXCASE == 1
-      ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
-      ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
-#endif
-
-#if REALCASE == 1
       TAU = ALPHA / BETA
       ALPHA = -ALPHA
-#endif
-#if COMPLEXCASE == 1
+#elif COMPLEXCASE == 1
+      ALPHR = ALPHI * (ALPHI/real( ALPHA , kind=rk))
+      ALPHR = ALPHR + XNORM_SQ/real( ALPHA, kind=rk )
       TAU = PRECISION_CMPLX( ALPHR/BETA, -ALPHI/BETA )
       ALPHA = PRECISION_CMPLX( -ALPHR, ALPHI )
 #endif
-    END IF
+    END IF ! ( BETA<0 )
+
     XF = 1.0_rk/ALPHA
     ALPHA = BETA
-  endif
+  endif ! ( XNORM_SQ==0.0_rk )
 
   if (wantDebug) call obj%timer%stop("hh_transform_&
   &MATH_DATATYPE&
