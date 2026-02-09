@@ -114,6 +114,17 @@ module test_prepare_matrix
 #endif
   end interface
 
+  interface prepare_matrix_noisytridi
+    module procedure prepare_matrix_noisytridi_complex_double
+    module procedure prepare_matrix_noisytridi_real_double
+#ifdef WANT_SINGLE_PRECISION_REAL
+    module procedure prepare_matrix_noisytridi_real_single
+#endif
+#ifdef WANT_SINGLE_PRECISION_COMPLEX
+    module procedure prepare_matrix_noisytridi_complex_single
+#endif
+  end interface
+
   interface prepare_matrix_unit
     module procedure prepare_matrix_unit_complex_double
     module procedure prepare_matrix_unit_real_double
