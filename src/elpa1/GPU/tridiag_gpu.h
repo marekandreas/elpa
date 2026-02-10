@@ -1,4 +1,4 @@
-//    Copyright 2023, P. Karpov
+//    Copyright 2025, P. Karpov
 //
 //    This file is part of ELPA.
 //
@@ -44,72 +44,42 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by P. Karpov, MPCDF and A. Poeppl, Intel Corporation
-
-#include <sycl/sycl.hpp>
-#include "src/GPU/SYCL/syclCommon.hpp"
-#include <cstdio>
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <alloca.h>
-#include <cstdint>
-#include <cstdbool>
-#include <iostream>
-#include <algorithm>
-#include <cmath>
-#include <type_traits>
-#include <complex>
-#include <atomic>
-
-#include "config-f90.h"
-
-#include "../../../GPU/common_device_functions.h"
-#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
+//    This file was written by P. Karpov, MPCDF
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-using namespace sycl_be;
 
-#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20230000
-template <typename T> using local_buffer = sycl::accessor<T, 1, sycl::access_mode::read_write, sycl::access::target::local>;
-#else
-template <typename T> using local_buffer = sycl::local_accessor<T>;
-#endif
-
-// Define a helper struct to determine if a type is a pointer
+// A helper struct to determine if a type is a pointer
 template <typename T>
 struct is_pointer { static const bool value = false; };
 
 template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
 
-//________________________________________________________________
+//_________________________________________________________________________________________________
 
 template <typename T, typename T_real>
-void gpu_copy_and_set_zeros (T *v_row_dev, T *u_col_dev, const T *a_dev,
-                             T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
-                             int l_rows, int l_cols, int matrixRows, int istep,
-                             int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL,
-                             sycl::nd_item<1> item_ct1){
-  int tid = item_ct1.get_local_id(0) +
-            item_ct1.get_group(0) * item_ct1.get_local_range(0);
+__global__ void gpu_copy_and_set_zeros_kernel(T *v_row_dev, T *u_col_dev, T const *a_dev,
+                                              T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
+                                              int l_rows, int l_cols, int matrixRows, int istep,
+                                              int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, int isSkewsymmetric, int useCCL){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
-  if (isOurProcessCol_prev) {
-    for (int i_row = tid; i_row < l_rows; i_row += item_ct1.get_local_range(0)*item_ct1.get_group_range(0)) {
-      v_row_dev[i_row] = a_dev[i_row + matrixRows * l_cols];
+  if (isOurProcessCol_prev)
+    {
+    for (int i_row=tid; i_row<l_rows; i_row+=blockDim.x*gridDim.x)
+      v_row_dev[i_row] = a_dev[i_row + matrixRows*l_cols];
     }
-  }
 
-  if (l_cols > l_rows) {
+  //u_col_dev
+  if (l_cols>l_rows)
+    {
     T zero = elpaDeviceNumber<T>(0.0);
-    for (int i = l_rows + tid; i < l_cols; i += item_ct1.get_local_range(0)*item_ct1.get_group_range(0)) {
+    for (int i=l_rows+tid; i<l_cols; i+=blockDim.x*gridDim.x)
       u_col_dev[i] = zero;
     }
-  }
 
   // set zeros for aux1_dev and vav_dev to be summed with atomicAdd
   if (tid==0)
@@ -128,132 +98,129 @@ void gpu_copy_and_set_zeros (T *v_row_dev, T *u_col_dev, const T *a_dev,
 }
 
 template <typename T, typename T_real>
-void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev,
-                            T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
-                            int l_rows, int l_cols, int matrixRows, int istep,
-                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev,
+void gpu_copy_and_set_zeros(T *v_row_dev, T *u_col_dev, T *a_dev, 
+                            T *aux1_dev, T *vav_dev, T_real *d_vec_dev, 
+                            int l_rows, int l_cols, int matrixRows, int istep, 
+                            int isOurProcessRow,  int isOurProcessCol, int isOurProcessCol_prev, 
                             int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
 
-  auto queue = getQueueOrDefault(my_stream);
-  int threads = MIN_THREADS_PER_BLOCK;
-  int blocks = SM_count;
+  int threads, blocks;
 
-  sycl::range<1> blocksPerGrid(blocks);
-  sycl::range<1> threadsPerBlock(threads);
+  threads = MIN_THREADS_PER_BLOCK;
+  blocks = SM_count;
 
-  queue.submit([&](sycl::handler &cgh)
-    {
-    cgh.parallel_for(
-      sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-      [=](sycl::nd_item<1> item_ct1) {
-        gpu_copy_and_set_zeros(
-            v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev,
-            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol,
-            isOurProcessCol_prev, isSkewsymmetric, useCCL, item_ct1);
-      });
-    });
-  if (wantDebug) {
-    queue.wait_and_throw();
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(threads,1,1);
+
+#ifdef WITH_GPU_STREAMS
+  gpu_copy_and_set_zeros_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, 
+                                                                        l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                                                                        isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#else
+  gpu_copy_and_set_zeros_kernel<<<blocks,threadsPerBlock>>>             (v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, 
+                                                                        l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                                                                        isOurProcessCol_prev, isSkewsymmetric, useCCL);
+#endif
+
+  if (wantDebug){
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t gpuerr = gpuGetLastError();
+    if (gpuerr != gpuSuccess) printf("Error in executing gpu_copy_and_set_zeros: %s\n", gpuGetErrorString(gpuerr));
   }
 }
 
-extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t u_col_dev, intptr_t a_dev,
-                            double *aux1_dev, double *vav_dev, double *d_vec_dev,
+
+extern "C" void CONCATENATE(ELPA_GPU,  _copy_and_set_zeros_FromC)(char dataType, intptr_t v_row_dev, intptr_t u_col_dev, intptr_t a_dev, 
+                            double *aux1_dev, double *vav_dev, double *d_vec_dev, 
                             int l_rows, int l_cols, int matrixRows, int istep,
-                            int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev,
+                            int isOurProcessRow, int isOurProcessCol, int isOurProcessCol_prev, 
                             int isSkewsymmetric, int useCCL, int wantDebug, int SM_count, gpuStream_t my_stream){
   if      (dataType=='D') gpu_copy_and_set_zeros<double, double> ((double *)v_row_dev, (double *)u_col_dev, (double *)a_dev,
-                            (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev,
-                            l_rows, l_cols, matrixRows, istep,
-                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
-  else if (dataType=='S') gpu_copy_and_set_zeros<float, float> ((float  *)v_row_dev, (float  *)u_col_dev, (float  *)a_dev,
-                            (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev,
-                            l_rows, l_cols, matrixRows, istep,
-                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (double *)aux1_dev, (double *)vav_dev, (double *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+  else if (dataType=='S') gpu_copy_and_set_zeros<float, float>   ((float  *)v_row_dev, (float  *)u_col_dev, (float  *)a_dev,
+                            (float  *)aux1_dev, (float  *)vav_dev, (float  *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else if (dataType=='Z') gpu_copy_and_set_zeros<gpuDoubleComplex, double> ((gpuDoubleComplex *)v_row_dev, (gpuDoubleComplex *)u_col_dev, (gpuDoubleComplex *)a_dev,
-                            (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev,
-                            l_rows, l_cols, matrixRows, istep,
-                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
-  else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float> ((gpuFloatComplex *)v_row_dev, (gpuFloatComplex *)u_col_dev, (gpuFloatComplex *)a_dev,
-                            (gpuFloatComplex *)aux1_dev, (gpuFloatComplex *)vav_dev, (float *)d_vec_dev,
-                            l_rows, l_cols, matrixRows, istep,
-                            isOurProcessRow, isOurProcessCol, isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+                            (gpuDoubleComplex *)aux1_dev, (gpuDoubleComplex *)vav_dev, (double *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
+  else if (dataType=='C') gpu_copy_and_set_zeros<gpuFloatComplex, float>   ((gpuFloatComplex  *)v_row_dev, (gpuFloatComplex  *)u_col_dev, (gpuFloatComplex  *)a_dev,
+                            (gpuFloatComplex  *)aux1_dev, (gpuFloatComplex  *)vav_dev, (float  *)d_vec_dev, 
+                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, isOurProcessCol, 
+                            isOurProcessCol_prev, isSkewsymmetric, useCCL, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_copy_and_set_zeros_FromC: Unsupported data type\n");
   }
 }
 
-//________________________________________________________________
+//_________________________________________________________________________________________________
 // device syncronization is needed afterwards, e.g. gpu_memcpy
+// the kernel used only in NCCL codepath
+
+// result_dev[0] must be initialized to zero before calling the kernel
+// Initializing result_dev[0]=0 inside the kernel can be unsafe: 
+// if block-0 is already finished, but block-1 (or block-n) is just starting, it will overwrite the result of block-0
 
 template <typename T>
-void gpu_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev,
-                             sycl::nd_item<1> it, local_buffer<T>  cache){
-   // extra space of fixed size is reserved for a speedup
-  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+__global__ void gpu_dot_product_kernel(int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev){
+  __shared__ T cache[MAX_THREADS_PER_BLOCK]; // extra space of fixed size is reserved for a speedup
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   T temp = elpaDeviceNumber<T>(0.0);
-
   int i = tid;
   while (i < n) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(x_dev[i*incx]), y_dev[i*incy])); // temp += x_dev[i*incx] * y_dev[i*incy];
-    i += it.get_local_range(0) * it.get_group_range(0);
+    i += blockDim.x * gridDim.x;
   }
 
   // set the cache values
-  cache[it.get_local_id(0)] = temp;
+  cache[threadIdx.x] = temp;
   // synchronize threads in this block
-  /*
-DPCT1065:0: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-*/
-  it.barrier();
+  __syncthreads();
 
   // for reductions, threadsPerBlock=blockDim.x must be a power of 2
-  i = it.get_local_range(0) / 2;
+  i = blockDim.x/2;
   while (i > 0) {
-    if (it.get_local_id(0) < i) cache[it.get_local_id(0)] =
-        elpaDeviceAdd(cache[it.get_local_id(0)],
-                      cache[it.get_local_id(0) + i]);
-    /*
-DPCT1065:1: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-    */
-    it.barrier();
+    if (threadIdx.x < i) cache[threadIdx.x] = elpaDeviceAdd(cache[threadIdx.x], cache[threadIdx.x + i]);
+    __syncthreads();
     i /= 2;
   }
 
-  if (it.get_local_id(0) == 0)
-    {
-    atomicAdd(&result_dev[0], cache[0]);
-    }
+  if (threadIdx.x==0) atomicAdd(&result_dev[0], cache[0]);
+  
 }
 
 template <typename T>
 void gpu_dot_product (int n, T *x_dev, int incx, T *y_dev, int incy, T *result_dev, 
                       int wantDebug, int SM_count, gpuStream_t my_stream){
 
-  sycl::queue queue = getQueueOrDefault(my_stream);
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
   int blocks = SM_count;
-  sycl::range<1> blocksPerGrid(blocks);
-  sycl::range<1> threadsPerBlock(maxWgSize);
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); 
 
+#ifdef WITH_GPU_STREAMS
+  gpu_dot_product_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(n, x_dev, incx, y_dev, incy, result_dev);
+#else
+  gpu_dot_product_kernel<<<blocks,threadsPerBlock>>>            (n, x_dev, incx, y_dev, incy, result_dev);
+#endif
 
-  queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
-
-    cgh.parallel_for(
-        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-          [=](sycl::nd_item<1> item_ct1) {
-          gpu_dot_product_kernel(n, x_dev, incx, y_dev, incy, result_dev,
-                                  item_ct1, cache_acc_ct1);
-        });
-  });
-  if (wantDebug) {
-    queue.wait_and_throw();
+  if (wantDebug){
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t cuerr = gpuGetLastError();
+    if (cuerr != gpuSuccess){
+      printf("Error in executing gpu_dot_product_kernel: %s\n",gpuGetErrorString(cuerr));
+    }
   }
 }
 
@@ -268,14 +235,13 @@ extern "C" void CONCATENATE(ELPA_GPU, _dot_product_FromC)(char dataType, int n, 
   }
 }
 
-//________________________________________________________________
+//_________________________________________________________________________________________________
 
 template <typename T>
-void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev,
-                                        sycl::nd_item<1> it, local_buffer<T>  cache){
-  const int threadsPerBlock = it.get_local_range(0);
-
-  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+__global__ void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev){
+  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+  __shared__ T cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
   if (isOurProcessRow) {
@@ -292,39 +258,27 @@ void gpu_dot_product_and_assign_kernel(T *v_row_dev, int l_rows, int isOurProces
   int index_global = tid;
   while (index_global < l_rows-1) {
     temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(v_row_dev[index_global]), v_row_dev[index_global])); // temp += v_row_dev[index_global]*v_row_dev[index_global];
-    index_global += it.get_local_range(0) * it.get_group_range(0);
+    index_global += blockDim.x * gridDim.x;
   }
 
   // set the cache values
-  cache[it.get_local_id(0)] = temp;
+  cache[threadIdx.x] = temp;
   // synchronize threads in this block
-  /*
-DPCT1065:5: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-*/
-  it.barrier();
+  __syncthreads();
 
   // for reductions, threadsPerBlock must be a power of 2
-  int i = it.get_local_range(0) / 2;
+  int i = blockDim.x/2;
   while (i > 0) {
-    if (it.get_local_id(0) < i) cache[it.get_local_id(0)] =
-        elpaDeviceAdd(cache[it.get_local_id(0)],
-                      cache[it.get_local_id(0) + i]);
-    /*
-DPCT1065:6: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-*/
-    it.barrier();
+    if (threadIdx.x < i) cache[threadIdx.x] = elpaDeviceAdd(cache[threadIdx.x], cache[threadIdx.x + i]);
+    __syncthreads();
     i /= 2;
   }
 
-  if (it.get_local_id(0) == 0)  atomicAdd(&aux1_dev[0], cache[0]);
-
+  if (threadIdx.x==0) atomicAdd(&aux1_dev[0], cache[0]);
+  
   if (tid==0)
     {
-    if (isOurProcessRow)
+    if (isOurProcessRow) 
       {
       aux1_dev[1] = v_row_dev[l_rows-1];
       }
@@ -339,32 +293,26 @@ performance if there is no access to global memory.
 template <typename T>
 void gpu_dot_product_and_assign(T *v_row_dev, int l_rows, int isOurProcessRow, T *aux1_dev, 
                                 int wantDebug, int SM_count, gpuStream_t my_stream){
+  
+  dim3 blocksPerGrid = dim3(SM_count,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
-  sycl::queue queue = getQueueOrDefault(my_stream);
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
+#ifdef WITH_GPU_STREAMS
+  gpu_dot_product_and_assign_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(v_row_dev, l_rows, isOurProcessRow, aux1_dev);
+#else
+  gpu_dot_product_and_assign_kernel<<<blocksPerGrid,threadsPerBlock>>>            (v_row_dev, l_rows, isOurProcessRow, aux1_dev);
+#endif
 
-
-  sycl::range<1> blocksPerGrid = sycl::range<1>(SM_count);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
-
-  /*
-DPCT1049:7: The work-group size passed to the SYCL kernel may exceed the limit.
-To get the device limit, query info::device::max_work_group_size. Adjust the
-work-group size if needed.
-*/
-
-  queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize), cgh);
-
-    cgh.parallel_for(
-        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-          [=](sycl::nd_item<1> item_ct1) {
-          gpu_dot_product_and_assign_kernel(v_row_dev, l_rows, isOurProcessRow, aux1_dev,
-                                  item_ct1, cache_acc_ct1);
-        });
-  });
-  if (wantDebug) {
-    queue.wait_and_throw();
+  if (wantDebug){
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t cuerr = gpuGetLastError();
+    if (cuerr != gpuSuccess){
+      printf("Error in executing gpu_dot_product_and_assign_kernel: %s\n",gpuGetErrorString(cuerr));
+    }
   }
 
 }
@@ -379,14 +327,12 @@ extern "C" void CONCATENATE(ELPA_GPU, _dot_product_and_assign_FromC)(char dataTy
   }
 }
 
-//________________________________________________________________
+//_________________________________________________________________________________________________
 
 template <typename T, typename T_real, typename T_value_or_pointer>
-void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
-                                                      int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL,
-                                                      sycl::nd_item<1> it){
-  int tid = it.get_local_id(0) +
-            it.get_group(0) * it.get_local_range(0);
+__global__ void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_dev, T *a_dev, T *v_row_dev, T *tau_dev, T_value_or_pointer xf_host_or_dev, 
+                                                      int l_rows, int l_cols,  int matrixRows, int istep, int isOurProcessRow, int useCCL){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
   if (my_prow == prow(istep-1, nblk, np_rows)) then
@@ -416,7 +362,7 @@ void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_de
   call nvtxRangePop()
 
   if (.not. useCCL) then
-    ! add tau after the end of actual v_row, to be broadcasted with it
+    ! add tau after the end of actuall v_row, to be broadcasted with it
     v_row(l_rows+1) = tau(istep)
   endif
 */
@@ -432,19 +378,20 @@ void gpu_set_e_vec_scale_set_one_store_v_row_kernel(T_real *e_vec_dev, T *vrl_de
   int index_global = tid;
   while (index_global < l_rows) {
     v_row_dev[index_global] = elpaDeviceMultiply(v_row_dev[index_global], xf);
-    index_global += it.get_local_range(0) * it.get_group_range(0);
+    index_global += blockDim.x * gridDim.x;
   }
 
-  if (isOurProcessRow && (index_global - it.get_local_range(0)*it.get_group_range(0) ==  l_rows - 1)) // last element
+  if (isOurProcessRow && (index_global - blockDim.x*gridDim.x == l_rows-1)) // last element
     {
     v_row_dev[l_rows-1] = elpaDeviceNumber<T>(1.0);
     }
-
+    
   int i_row = tid;
-  while (i_row < l_rows) {
+  while (i_row < l_rows) 
+    {
     a_dev[i_row + matrixRows*l_cols] = v_row_dev[i_row];
-    i_row += it.get_local_range(0) * it.get_group_range(0);
-  }
+    i_row += blockDim.x * gridDim.x;
+    }
 
 }
 
@@ -454,54 +401,66 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
                                               int l_rows, int l_cols,  int matrixRows, int istep, 
                                               int isOurProcessRow, int useCCL, int wantDebug, gpuStream_t my_stream){
 
-  sycl::queue queue = getQueueOrDefault(my_stream);
+  int blocks = std::max((l_rows+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 1);
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1); // TODO_23_11: change to NB?
 
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  int blocks = std::max((l_rows+maxWgSize-1)/maxWgSize, 1);
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11 change to NB
+  gpuPointerAttributes attributes;
+  gpuError_t error = gpuPointerGetAttributes(&attributes, xf_host_or_dev);
 
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
-
-  if (memoryType == sycl::usm::alloc::host) {
-    T xf_host_value = *xf_host_or_dev;
-
-    queue.submit([&](sycl::handler &cgh)
+  if (error == gpuSuccess) 
+    {
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
+    if (attributes.memoryType == gpuMemoryTypeHost)
+#else
+    if (attributes.type == gpuMemoryTypeHost)
+#endif
       {
-      cgh.parallel_for(
-          sycl::nd_range<1> ( blocksPerGrid * threadsPerBlock, threadsPerBlock),
-                [=](sycl::nd_item<1> it) {
-            gpu_set_e_vec_scale_set_one_store_v_row_kernel(
-                e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
-                l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
-          });
-      });
-    if (wantDebug) {
-      queue.wait_and_throw();
-    }
-  }
- else if (memoryType == sycl::usm::alloc::device)
-   {
-    queue.submit([&](sycl::handler &cgh)
+      T xf_host_value = *xf_host_or_dev;
+#ifdef WITH_GPU_STREAMS
+      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
+                                                                                             l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#else 
+      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>            (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
+                                                                                            l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#endif
+      if (wantDebug)
         {
-        cgh.parallel_for(
-            sycl::nd_range<1> ( blocksPerGrid * threadsPerBlock, threadsPerBlock),
-                  [=](sycl::nd_item<1> it) {
-              gpu_set_e_vec_scale_set_one_store_v_row_kernel(
-                  e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
-                  l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL, it);
-            });
-        });
-      if (wantDebug) {
-        queue.wait_and_throw();
+        gpuError_t cuerr = gpuGetLastError();
+        if (cuerr != gpuSuccess) printf("Error in executing gpu_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",gpuGetErrorString(cuerr));
+        }
       }
-
-    }
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
+    else if (attributes.memoryType == gpuMemoryTypeDevice)
+#else
+    else if (attributes.type == gpuMemoryTypeDevice)
+#endif
+      {
+#ifdef WITH_GPU_STREAMS
+      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+                                                                                             l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#else
+      gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock>>>            (e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_or_dev,
+                                                                                             l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
+#endif
+      if (wantDebug)
+        {
+#ifdef WITH_GPU_STREAMS
+        gpuStreamSynchronize(my_stream);
+#else
+        gpuDeviceSynchronize();
+#endif
+        gpuError_t cuerr = gpuGetLastError();
+        if (cuerr != gpuSuccess) printf("Error in executing gpu_set_e_vec_scale_set_one_store_v_row_kernel: %s\n",gpuGetErrorString(cuerr));
+        }
+      }
+    } 
+  
   else 
     {
     printf("Error: Pointer type is unknown\n");
     }
+
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _set_e_vec_scale_set_one_store_v_row_FromC) (char dataType, intptr_t e_vec_dev, intptr_t vrl_dev, intptr_t a_dev, intptr_t v_row_dev, intptr_t tau_dev, intptr_t xf_host_or_dev, 
@@ -515,19 +474,17 @@ extern "C" void CONCATENATE(ELPA_GPU, _set_e_vec_scale_set_one_store_v_row_FromC
   }
 }
 
-//________________________________________________________________
-
+//_________________________________________________________________________________________________
 
 template <typename T, typename T_value_or_pointer>
-void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
+__global__ void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                 T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T_value_or_pointer vav_host_or_dev, T_value_or_pointer tau_host_or_dev,
-                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL,
-                sycl::nd_item<1> it){
-  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+                int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, int istep, int useCCL){
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
   T conjg_tau = convert_to_device(tau_host_or_dev, typename std::conditional<std::is_pointer<T_value_or_pointer>::value, std::true_type, std::false_type>::type());
   conjg_tau = elpaDeviceComplexConjugate(conjg_tau);
-
+  
   T conjg_tau_v_row_dev, conjg_tau_v_col_dev;
 
   // recover tau_dev(istep) after broadcasting
@@ -565,8 +522,8 @@ void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+0)] = conjg_tau_v_row_dev;
     conjg_tau_v_row_dev = elpaDeviceMultiply(conjg_tau_v_row_dev, elpaDeviceNumber<T>(0.5));
     vu_stored_rows_dev[i_row + max_local_rows*(2*n_stored_vecs+1)] =  elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_row_dev, vav) , u_row_dev[i_row] );
-
-    i_row += it.get_local_range(0) * it.get_group_range(0);
+    
+    i_row += blockDim.x * gridDim.x;
     }
 
   int i_col = tid;
@@ -577,22 +534,21 @@ void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
     conjg_tau_v_col_dev = elpaDeviceMultiply(conjg_tau_v_col_dev, elpaDeviceNumber<T>(0.5));
     uv_stored_cols_dev[i_col + max_local_cols*(2*n_stored_vecs+0)] = elpaDeviceSubtract( elpaDeviceMultiply(conjg_tau_v_col_dev, vav) , u_col_dev[i_col] );
 
-    i_col += it.get_local_range(0) * it.get_group_range(0);
+    i_col += blockDim.x * gridDim.x;
     }
 
-
-  if ((std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value) && l_cols>0)
+  if ((std::is_same<T, gpuDoubleComplex>::value || std::is_same<T, gpuFloatComplex>::value) && l_cols>0)
     {
     int j = tid;
     while (j < 2*(n_stored_vecs+0)) // whole vector aux_complex_dev has to be copied and not two last elements only because l_cols has changed since last istep
       {
       aux_complex_dev[j] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*j]);
-      j += it.get_local_range(0) * it.get_group_range(0);
+      j += blockDim.x * gridDim.x;
       }
-
+    
     // two last elements should be treated by the respective threads inorder to avoid sync problems
-    i_col -= it.get_local_range(0) * it.get_group_range(0);
-    if (i_col == l_cols-1)
+    i_col -= blockDim.x * gridDim.x;
+    if (i_col == l_cols-1) 
       {
       aux_complex_dev[2*n_stored_vecs+0] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+0)]);
       aux_complex_dev[2*n_stored_vecs+1] = elpaDeviceComplexConjugate(uv_stored_cols_dev[l_cols-1 + max_local_cols*(2*n_stored_vecs+1)]);
@@ -601,66 +557,84 @@ void gpu_store_u_v_in_uv_vu_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev,
 
 }
 
+
 template <typename T>
 void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_row_dev, T *u_row_dev,
                             T *v_col_dev, T *u_col_dev, T *tau_dev, T *aux_complex_dev, T *vav_host_or_dev, T *tau_host_or_dev,
                             int l_rows, int l_cols, int n_stored_vecs, int max_local_rows, int max_local_cols, 
                             int istep, int useCCL, int wantDebug, gpuStream_t my_stream){
   
-  sycl::queue queue = getQueueOrDefault(my_stream);
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  int threads = maxWgSize/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
+  int threads = MAX_THREADS_PER_BLOCK/2; // the kernel has many local variables, for which we need memory registers. So we use less threads here to save memory.
   int blocks = std::max({(l_rows+threads-1)/threads, (l_cols+threads-1)/threads, 1});
+  
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(threads,1,1);
 
+  gpuPointerAttributes attributes;
+  gpuError_t error = gpuPointerGetAttributes(&attributes, vav_host_or_dev);
 
-  sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
-
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
-
-  if (memoryType == sycl::usm::alloc::host)
+  if (error == gpuSuccess) 
     {
-    T vav_host_value = *vav_host_or_dev;
-    T tau_host_value = *tau_host_or_dev;
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
+    if (attributes.memoryType == gpuMemoryTypeHost)
+#else
+    if (attributes.type == gpuMemoryTypeHost)
+#endif
+      {
+      T vav_host_value = *vav_host_or_dev;
+      T tau_host_value = *tau_host_or_dev;
+#ifdef WITH_GPU_STREAMS
+      gpu_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#else
+      gpu_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>            (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#endif
+      if (wantDebug)
+        {
+        gpuError_t gpuerr = gpuGetLastError();
+        if (gpuerr != gpuSuccess) printf("Error in executing gpu_store_u_v_in_uv_vu_kernel: %s\n",gpuGetErrorString(gpuerr));
+        }
+      } 
+    
+#ifdef HAVE_OLD_HIP_TYPESTRUCTURE
+    else if (attributes.memoryType == gpuMemoryTypeDevice) 
+#else
+    else if (attributes.type == gpuMemoryTypeDevice) 
+#endif
+      {
+#ifdef WITH_GPU_STREAMS
+      gpu_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#else
+      gpu_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock>>>            (vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
+                                       v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_or_dev, tau_host_or_dev, 
+                                       l_rows, l_cols, n_stored_vecs, max_local_rows, max_local_cols, istep, useCCL);
+#endif
 
-    queue.parallel_for(
-        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-        [=](sycl::nd_item<1> it) {
-          gpu_store_u_v_in_uv_vu_kernel(
-              vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,
-              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, 
-              vav_host_value, tau_host_value, 
-              l_rows, l_cols, n_stored_vecs, max_local_rows,
-              max_local_cols, istep, useCCL, it);
-        });
-    if (wantDebug) {
-      queue.wait_and_throw();
-    }
-   }
-
-  else if (memoryType == sycl::usm::alloc::device)
-    {
-    queue.parallel_for(
-        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-        [=](sycl::nd_item<1> it) {
-          gpu_store_u_v_in_uv_vu_kernel(
-              vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev,
-              v_col_dev, u_col_dev, tau_dev, aux_complex_dev, 
-              vav_host_or_dev, tau_host_or_dev,
-              l_rows, l_cols, n_stored_vecs, max_local_rows,
-              max_local_cols, istep, useCCL, it);
-        });
-    if (wantDebug) {
-      queue.wait_and_throw();
-    }
-    }
+      if (wantDebug)
+        {
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+        gpuError_t gpuerr = gpuGetLastError();
+        if (gpuerr != gpuSuccess) printf("Error in executing gpu_store_u_v_in_uv_vu_kernel: %s\n",gpuGetErrorString(gpuerr));
+        }
+      } 
+    
+    } 
+  
   else 
     {
     printf("Error: Pointer type is unknown\n");
     }
-}
 
+}
 
 extern "C" void CONCATENATE(ELPA_GPU, _store_u_v_in_uv_vu_FromC) (char dataType, intptr_t vu_stored_rows_dev, intptr_t uv_stored_cols_dev, intptr_t v_row_dev, intptr_t u_row_dev,
                                                       intptr_t v_col_dev, intptr_t u_col_dev, intptr_t tau_dev, intptr_t aux_complex_dev, intptr_t vav_host_or_dev, intptr_t tau_host_or_dev,
@@ -678,16 +652,15 @@ extern "C" void CONCATENATE(ELPA_GPU, _store_u_v_in_uv_vu_FromC) (char dataType,
   }
 }
 
-//________________________________________________________________
+//_________________________________________________________________________________________________
 
 template <typename T, typename T_real>
-void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
-                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric,
-                                                      sycl::nd_item<1> it, local_buffer<T>  cache){
+__global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
+                                                      int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
   
-  const int threadsPerBlock = it.get_local_range(0);
-
-  int tid = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
+  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+  __shared__ T cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
 
 /*
       if (n_stored_vecs > 0) then
@@ -707,61 +680,42 @@ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_co
 #endif
 */
 
-  // if (it.get_local_id(0) == 0)
-  //   {
-  //   if (isSkewsymmetric)
+  // if (threadIdx.x==0)
+  //   { 
+  //   if (isSkewsymmetric) 
   //     d_vec_dev[istep-1-1] = 0.0;
-  //   else
-  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to other kernel for thread safety
+  //   else 
+  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to the previous kernel for thread safety
   //   }
   if (n_stored_vecs > 0)
     {
 
     T temp =  elpaDeviceNumber<T>(0.0);
     int index_n = tid;
-    while (index_n < 2*n_stored_vecs)
+    while (index_n < 2*n_stored_vecs) 
       {
       temp = elpaDeviceAdd(temp, elpaDeviceMultiply(elpaDeviceComplexConjugate(vu_stored_rows_dev[(l_rows-1)+max_local_rows*index_n]), uv_stored_cols_dev[(l_cols-1)+max_local_cols*index_n]) ); // temp += vu_stored_rows_dev[(l_rows-1)+max_local_rows*index_n] * uv_stored_cols_dev[(l_cols-1)+max_local_cols*index_n]
-      index_n += it.get_local_range(0) * it.get_group_range(0);
+      index_n += blockDim.x * gridDim.x;
       }
 
     // set the cache values
-    cache[it.get_local_id(0)] = temp;
+    cache[threadIdx.x] = temp;
     // synchronize threads in this block
-    /*
-DPCT1065:22: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-*/
-    it.barrier();
+    __syncthreads();
 
     // for reductions, threadsPerBlock must be a power of 2
-    int i = it.get_local_range(0) / 2;
-    while (i > 0)
+    int i = blockDim.x/2;
+    while (i > 0) 
       {
-      if (it.get_local_id(0) < i) cache[it.get_local_id(0)] =
-          elpaDeviceAdd( cache[it.get_local_id(0)], cache[it.get_local_id(0) + i]); // cache[threadIdx.x] += cache[threadIdx.x + i];
-      /*
-DPCT1065:23: Consider replacing sycl::nd_item::barrier() with
-sycl::nd_item::barrier(sycl::access::fence_space::local_space) for better
-performance if there is no access to global memory.
-*/
-      it.barrier();
+      if (threadIdx.x < i) cache[threadIdx.x] = elpaDeviceAdd(cache[threadIdx.x] , cache[threadIdx.x + i]); // cache[threadIdx.x] += cache[threadIdx.x + i];
+      __syncthreads();
       i /= 2;
       }
 
-    if (it.get_local_id(0) == 0)
+    if (threadIdx.x==0) 
       {
       atomicAdd(&a_dev[(l_rows-1) + matrixRows*(l_cols-1)], cache[0]);
-      //sycl::atomic_ref<T, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum (a_dev[(l_rows-1) + matrixRows*(l_cols-1)]);
-      //atomic_sum += cache[0];
-
-      if (!isSkewsymmetric)
-        {
-        atomicAdd( &d_vec_dev[istep-1-1] , elpaDeviceRealPart(cache[0]) );
-        //sycl::atomic_ref<T_real, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> atomic_sum_real (d_vec_dev[istep-1-1]);
-        //atomic_sum_real += elpaDeviceRealPart(cache[0]);
-        }
+      if (!isSkewsymmetric) atomicAdd( &d_vec_dev[istep-1-1] , elpaDeviceRealPart(cache[0]) );
       }
     }
 }
@@ -771,31 +725,31 @@ void gpu_update_matrix_element_add (T *vu_stored_rows_dev, T *uv_stored_cols_dev
                                     int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, 
                                     int isSkewsymmetric, int wantDebug, gpuStream_t my_stream){
 
-  sycl::queue queue = getQueueOrDefault(my_stream);
-  int maxWgSize = maxWorkgroupSize<1>(queue)[0];
-  int blocks = std::min((2*n_stored_vecs+maxWgSize-1)/maxWgSize, 32);
+  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32); // PETERDEBUG111: 32 --> SM_count
   if (n_stored_vecs==0) blocks=1;
+  dim3 blocksPerGrid = dim3(blocks,1,1);
+  dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
 
-
-  sycl::range<1> blocksPerGrid   = sycl::range<1>(blocks);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize);
-
-  queue.submit([&](sycl::handler &cgh) {
-    local_buffer<T> cache_acc_ct1(sycl::range<1>(maxWgSize /*1024*/), cgh);
-
-    cgh.parallel_for(
-        sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-          [=](sycl::nd_item<1> item_ct1) {
-          gpu_update_matrix_element_add_kernel(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, l_rows,
-                                  l_cols, matrixRows, max_local_rows, max_local_cols, istep,
-                                  n_stored_vecs, isSkewsymmetric,
-                                  item_ct1, cache_acc_ct1);
-        });
-  });
-  if (wantDebug) {
-    queue.wait_and_throw();
+#ifdef WITH_GPU_STREAMS
+  gpu_update_matrix_element_add_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,
+                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs,
+                                                  isSkewsymmetric);
+#else
+  gpu_update_matrix_element_add_kernel<<<blocks,threadsPerBlock>>>            (vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, 
+                                                  l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, 
+                                                  isSkewsymmetric);
+#endif
+  if (wantDebug){
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t cuerr = gpuGetLastError();
+    if (cuerr != gpuSuccess){
+      printf("Error in executing gpu_update_matrix_element_add_kernel: %s\n",gpuGetErrorString(cuerr));
+    }
   }
-
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _update_matrix_element_add_FromC) (char dataType, intptr_t vu_stored_rows_dev, intptr_t uv_stored_cols_dev, intptr_t a_dev, intptr_t d_vec_dev, 
@@ -813,10 +767,11 @@ extern "C" void CONCATENATE(ELPA_GPU, _update_matrix_element_add_FromC) (char da
     printf("Error in gpu_update_matrix_element_add_FromC: Unsupported data type\n");
   }
 }
-//________________________________________________________________
+
+//_________________________________________________________________________________________________
 
 template <typename T>
-void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, int wantDebug_in){
+__global__ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev){
 
 /*
 #if complexcase == 1
@@ -890,7 +845,7 @@ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_de
       *tau_dev = elpaDeviceNumber<T>(2.0);
       *alpha_dev = elpaDeviceMultiply(*alpha_dev, elpaDeviceNumber<T>(-1.0)); // (*alpha_dev) *= -1
       }
-
+    
     *xf_dev = elpaDeviceNumber<T>(0.0);
     }
 
@@ -900,7 +855,7 @@ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_de
                                           elpaDeviceRealPart(*xnorm_sq_dev) ), elpaDeviceRealPart(*alpha_dev) ));
 
     *alpha_dev = elpaDeviceAdd(*alpha_dev, beta);
-
+    
     if (elpaDeviceRealPart(beta)<0)
       {
       *tau_dev  = elpaDeviceDivide(*alpha_dev, beta);
@@ -925,22 +880,26 @@ template <typename T>
 void gpu_hh_transform(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_dev, 
                       int wantDebug, gpuStream_t my_stream){
 
+  dim3 blocks = dim3(1,1,1);
+  dim3 threadsPerBlock = dim3(1,1,1);
 
-  sycl::queue queue = getQueueOrDefault(my_stream);
+#ifdef WITH_GPU_STREAMS
+  gpu_hh_transform_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev);
+#else  
+  gpu_hh_transform_kernel<<<blocks,threadsPerBlock>>>            (alpha_dev, xnorm_sq_dev, xf_dev, tau_dev);
+#endif
 
-  sycl::range<1> blocksPerGrid   = sycl::range<1>(1);
-  sycl::range<1> threadsPerBlock = sycl::range<1>(1);
-
-  // trivial single-thread kernel, streams can't be used here
-  queue.parallel_for(
-      sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-        [=](sycl::nd_item<1> it) {
-        gpu_hh_transform_kernel(alpha_dev, xnorm_sq_dev, xf_dev, tau_dev, wantDebug);
-      });
-  if (wantDebug) {
-    queue.wait_and_throw();
+  if (wantDebug){
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t cuerr = gpuGetLastError();
+    if (cuerr != gpuSuccess){
+      printf("Error in executing gpu_hh_transform_kernel: %s\n",gpuGetErrorString(cuerr));
+    }
   }
-
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _hh_transform_FromC) (char dataType, intptr_t alpha_dev, intptr_t xnorm_sq_dev, intptr_t xf_dev, intptr_t tau_dev, int wantDebug, gpuStream_t my_stream){
@@ -953,13 +912,7 @@ extern "C" void CONCATENATE(ELPA_GPU, _hh_transform_FromC) (char dataType, intpt
   }
 }
 
-//________________________________________________________________
-
-template <typename T>
-void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
-                                              int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
-                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd,
-                                              sycl::nd_item<3> it){
+//_________________________________________________________________________________________________
 
 /*
   ! direction = 1
@@ -987,33 +940,39 @@ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *
   enddo
 */
 
-  int lc0 = it.get_group(1); // lc0 = lc-1, 0-based index
-  int i = nblks_skip + n_block + it.get_group(2) * lcm_s_t; // 1-based index
-  if (i > nblks_tot - 1) {
-    return;
-  }
+// this kernel has too low occupancy, small amount of work per thread
+// generalize special square-grid codepath to rectangular grids?
 
-  int nl = MIN(nvr - i * nblk, nblk);
-  int k = (i - nblks_skip - n_block) / lcm_s_t * nblk + lc0 * auxstride;
-  int ns_plus_lc0_ld_st = (i / np_st) * nblk + lc0 * ld_st;
+template <typename T>
+__global__ void gpu_transpose_reduceadd_vectors_copy_block_kernel(T *aux_transpose_dev, T *vmat_st_dev, 
+                                              int nvc, int nvr, int n_block, int nblks_skip, int nblks_tot, 
+                                              int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, int direction, int isSkewsymmetric, int isReduceadd){
 
-  int j = it.get_local_id(0) + it.get_group(0) * it.get_local_range(0);
-  if (j >= nl) {
-    return;
-  }
+  //for (int lc=1; lc <= nvc; lc += 1)
+  int lc0 = blockIdx.y; // lc0 = lc-1, 0-based index
+  
+  //for (int i = nblks_skip+n_block; i <= nblks_tot-1; i += lcm_s_t)
+  int i = nblks_skip+n_block + blockIdx.z * lcm_s_t; // 1-based index
+  if (i > nblks_tot-1) return;
 
-  if (direction == 1) {
-    aux_transpose_dev[k + j] = vmat_st_dev[ns_plus_lc0_ld_st + j];
-  }
-  if (direction == 2 && !isReduceadd) {
+  int nl = MIN(nvr-i*nblk, nblk); // length
+  int k = (i - nblks_skip - n_block)/lcm_s_t * nblk + lc0*auxstride;
+  int ns_plus_lc0_ld_st = (i/np_st)*nblk + lc0*ld_st; // ns(local start of block i) + lc0*ld_st
+
+  //for (int j=tid_x; j<nl; j+=blockDim.x*gridDim.x){
+  int j = threadIdx.x + blockIdx.x*blockDim.x; // 0-based index
+  if (j >= nl) return;
+    
+  if (direction==1) aux_transpose_dev[k+j] = vmat_st_dev[ns_plus_lc0_ld_st + j];
+  if (direction==2 && !isReduceadd) {
     T sign = elpaDeviceNumber<T>(1.0);
     if (isSkewsymmetric) sign = elpaDeviceNumber<T>(-1.0);
-    vmat_st_dev[ns_plus_lc0_ld_st + j] = elpaDeviceMultiply(sign, aux_transpose_dev[k + j]);
+    vmat_st_dev[ns_plus_lc0_ld_st + j]  = elpaDeviceMultiply(sign, aux_transpose_dev[k+j]);
   }
-  if (direction == 2 && isReduceadd) {
-    vmat_st_dev[ns_plus_lc0_ld_st + j] = elpaDeviceAdd(vmat_st_dev[ns_plus_lc0_ld_st + j], aux_transpose_dev[k + j]);
+  if (direction==2 &&  isReduceadd) {
+    vmat_st_dev[ns_plus_lc0_ld_st + j]  = elpaDeviceAdd(vmat_st_dev[ns_plus_lc0_ld_st + j] , aux_transpose_dev[k+j]);
   }
-
+  //}
 }
 
 template <typename T>
@@ -1022,31 +981,34 @@ void gpu_transpose_reduceadd_vectors_copy_block(T *aux_transpose_dev, T *vmat_st
                                                 int lcm_s_t, int nblk, int auxstride, int np_st, int ld_st, 
                                                 int direction, int isSkewsymmetric, int isReduceadd, 
                                                 int wantDebug, int SM_count, gpuStream_t my_stream){
-
-  sycl::queue queue = getQueueOrDefault(my_stream);
-
-  int i0 = nblks_skip + n_block;
-  if (nblks_tot - 1 - i0 < 0 || nvc <= 0) {
-    return;
-  }
-
-  int num_i = (nblks_tot - 1 - i0) / lcm_s_t + 1;
+  
+  int i0    = nblks_skip + n_block;
+  if (nblks_tot-1-i0 < 0) return;
+  
+  int num_i = (nblks_tot-1 - i0) / lcm_s_t + 1;
   int threads = MIN_THREADS_PER_BLOCK;
 
-  sycl::range<3> blocksPerGrid((nblk+threads-1)/threads, nvc, num_i);
-  sycl::range<3> threadsPerBlock(threads, 1, 1);
+  dim3 blocksPerGrid = dim3((nblk+threads-1)/threads, nvc, num_i);
+  dim3 threadsPerBlock = dim3(threads, 1, 1);
   
-  queue.parallel_for(
-    sycl::nd_range<3>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
-      [=](sycl::nd_item<3> it) {
-      gpu_transpose_reduceadd_vectors_copy_block_kernel(
-          aux_transpose_dev, vmat_st_dev, nvc, nvr, n_block, nblks_skip,
-          nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction,
-          isSkewsymmetric, isReduceadd, it);
-    });
-  if (wantDebug) {
-    queue.wait_and_throw();
-  }
+#ifdef WITH_GPU_STREAMS
+  gpu_transpose_reduceadd_vectors_copy_block_kernel<<<blocksPerGrid,threadsPerBlock,0,my_stream>>>(aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd);
+#else
+  gpu_transpose_reduceadd_vectors_copy_block_kernel<<<blocksPerGrid,threadsPerBlock>>>            (aux_transpose_dev, vmat_st_dev, 
+                          nvc, nvr, n_block, nblks_skip, nblks_tot, lcm_s_t, nblk, auxstride, np_st, ld_st, direction, isSkewsymmetric, isReduceadd);
+#endif
+
+  if(wantDebug)
+    {
+#ifdef WITH_GPU_STREAMS
+    gpuStreamSynchronize(my_stream);
+#else
+    gpuDeviceSynchronize();
+#endif
+    gpuError_t cuerr = gpuGetLastError();
+    if (cuerr != gpuSuccess) printf("Error in executing gpu_transpose_reduceadd_vectors_copy_block_kernel: %s\n",gpuGetErrorString(cuerr));
+    }
 }
 
 extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_FromC)(char dataType, intptr_t aux_transpose_dev, intptr_t vmat_st_dev, 
@@ -1061,3 +1023,6 @@ extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_Fr
     printf("Error in gpu_transpose_reduceadd_vectors_copy_block_FromC: Unsupported data type\n");
   }
 }
+
+//_________________________________________________________________________________________________
+

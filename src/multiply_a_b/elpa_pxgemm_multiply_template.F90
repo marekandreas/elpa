@@ -309,6 +309,12 @@
 #endif
 #endif /* defined(USE_CCL_PXGEMM) */
 
+  if (useCCL) then
+    if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply: Using CCL for communication"
+  else
+    if (wantDebug .and. myid==0) print *, "elpa_pxgemm_multiply: Not using CCL for communication"
+  endif
+
 
 #if defined(DEVICE_POINTER)
     a_dev = transfer(aDev, a_dev)

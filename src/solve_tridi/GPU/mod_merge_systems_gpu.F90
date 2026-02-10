@@ -48,7 +48,7 @@
 #include "config-f90.h"
 
 
-module merge_systems_gpu_new
+module merge_systems_gpu
   use, intrinsic :: iso_c_binding
   use precision
   implicit none

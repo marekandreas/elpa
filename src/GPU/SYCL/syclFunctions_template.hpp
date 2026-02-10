@@ -68,9 +68,7 @@ using namespace sycl_be;
 
 extern "C" {
 
-static void collectGpuDevices(bool onlyGpus) {
-  SyclState::initialize(onlyGpus);
-}
+
 
 bool isCPU=0;
 
@@ -144,12 +142,6 @@ static oneapi::mkl::side sideFromChar(char c) {
   }
   int syclMemcpyDeviceToHostFromC(){
     return syclMemcpyDeviceToHost;
-  }
-
-  int syclStateInitializeFromC(int onlyL0Gpus, int wantDebugInt) {
-    bool isDebugEnabled = (wantDebugInt == 1);
-    bool isInitializedSuccessfully = SyclState::initialize(onlyL0Gpus != 0, isDebugEnabled);
-    return isInitializedSuccessfully ? 1 : 0;
   }
 
   int syclGetDeviceCountFromC(int *count) {

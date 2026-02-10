@@ -5,13 +5,13 @@
 NOTE: this document is getting deprecated and in the near future all documentation to ELPA will be only
 available as [PDF-version](https://elpa.mpcdf.mpg.de/documentation/userguide/ELPA_USERGUIDE.html).
 
-This file provides documentation on how to build the *ELPA* library in **version ELPA-2025.06.002**.
+This file provides documentation on how to build the *ELPA* library in **version ELPA-2026.02.001.rc1**.
 With release of **version ELPA-2017.05.001** the build process has been significantly simplified,
 which makes it easier to install the *ELPA* library.
 
 As anounced, with the the release 2021.11.001 the **legacy interface has been removed**.
 
-The release of ELPA 2025.06.002 does not change the API and ABI compared to the release 2022.11.001.
+The release of ELPA 2026.02.001.rc1 does not change the API and ABI compared to the release 2022.11.001.
 
 ## 1. How to install *ELPA* ##
 

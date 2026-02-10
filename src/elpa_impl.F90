@@ -885,7 +885,6 @@ module elpa_impl
       self%mpi_setup%myRankExternal_comm_cols   = -9999
 
       self%gpu_setup%gpuAlreadySet=.false.
-      self%gpu_setup%gpuIsAssigned=.false.
 
       error = ELPA_OK
 

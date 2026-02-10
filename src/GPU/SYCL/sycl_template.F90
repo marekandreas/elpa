@@ -180,17 +180,6 @@
   end interface
 
   interface
-    function sycl_state_initialize_c(onlyL0Gpus, wantDebug) result(istat) &
-             bind(C, name="syclStateInitializeFromC")
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=C_INT), intent(in), value   :: onlyL0Gpus
-      integer(kind=C_INT), intent(in), value   :: wantDebug
-      integer(kind=C_INT)                      :: istat
-    end function
-  end interface
-
-  interface
     function sycl_getdevicecount_c(n) result(istat) &
              bind(C, name="syclGetDeviceCountFromC")
       use, intrinsic :: iso_c_binding
@@ -2055,28 +2044,6 @@
 #endif
     end function
 
-    function sycl_state_initialize(onlyL0Gpus, wantDebug) result(success)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=c_int)  :: onlyL0Gpus
-      logical              :: success
-      logical, optional    :: wantDebug
-      integer(kind=c_int)  :: wantDebugInt
-#ifdef WITH_SYCL_GPU_VERSION
-      if (present(wantDebug)) then
-        if (wantDebug) then
-          wantDebugInt = 1
-        else
-          wantDebugInt = 0
-        end if
-      else
-        wantDebugInt = 0
-      end if
-      success = sycl_state_initialize_c(onlyL0Gpus, wantDebugInt) /=0
-#else
-      success = .true.
-#endif
-    end function
 
     function sycl_getdevicecount(n) result(success)
       use, intrinsic :: iso_c_binding

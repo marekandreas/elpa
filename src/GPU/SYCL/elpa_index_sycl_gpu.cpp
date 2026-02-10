@@ -54,7 +54,6 @@ extern "C" {
     using namespace sycl_be;
     int count = -1000;
     bool all = static_cast<bool>(show_all_sycl_devices);
-    SyclState::initialize(!all);
     count = SyclState::defaultState().getNumDevices();
     return count;
   }

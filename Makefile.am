@@ -56,12 +56,6 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/elpa1/GPU/mod_tridiag_gpu.F90 \
   src/elpa1/GPU/mod_trans_ev_gpu.F90 \
   src/elpa1/GPU/mod_elpa1_gpu.F90 \
-  src/elpa1/GPU/CUDA/mod_tridiag_cuda.F90 \
-  src/elpa1/GPU/ROCm/mod_tridiag_hip.F90 \
-  src/elpa1/GPU/SYCL/mod_tridiag_sycl.F90 \
-  src/elpa1/GPU/CUDA/mod_trans_ev_cuda.F90 \
-  src/elpa1/GPU/ROCm/mod_trans_ev_hip.F90 \
-  src/elpa1/GPU/SYCL/mod_trans_ev_sycl.F90 \
   src/elpa1/GPU/CUDA/mod_elpa1_cuda.F90 \
   src/elpa1/GPU/ROCm/mod_elpa1_hip.F90 \
   src/elpa1/GPU/SYCL/mod_elpa1_sycl.F90 \
@@ -1117,9 +1111,7 @@ EXTRA_DIST = \
   src/GPU/OpenMP/openmp_offload_solver_template.F90 \
   src/GPU/SYCL/sycl_template.F90 \
   src/GPU/SYCL/syclsolver_template.F90 \
-  src/GPU/SYCL/syclUtils.cpp \
-  src/GPU/SYCL/syclCommon.cpp \
-  src/GPU/SYCL/syclFunctions.cpp \
+  src/GPU/SYCL/syclCommon.hpp \
   src/GPU/SYCL/oneccl_template.F90 \
   src/GPU/SYCL/onecclFunctions_template.h \
   src/elpa_api_math_template.F90 \
@@ -1171,6 +1163,7 @@ EXTRA_DIST = \
   src/elpa1/GPU/elpa_gpu_ccl_transpose_vectors_template.F90 \
   src/elpa1/GPU/elpa_gpu_ccl_reduce_add_vectors_template.F90 \
   src/elpa1/GPU/trans_ev_gpu.h \
+  src/elpa1/GPU/tridiag_gpu.h \
   src/elpa2/compute_hh_trafo.F90 \
   src/elpa2/elpa2_bandred_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \

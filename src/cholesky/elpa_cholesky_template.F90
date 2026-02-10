@@ -204,6 +204,10 @@
 
   if(useGPU) then
     gpuString = "_gpu"
+
+#ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+#endif
   else
     gpuString = ""
   endif

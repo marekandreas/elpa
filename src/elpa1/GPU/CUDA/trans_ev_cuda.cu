@@ -97,9 +97,7 @@ __global__ void cuda_scale_qmat_double_complex_kernel(cuDoubleComplex *q, cuDoub
     }
 }
 
-extern "C" void cuda_scale_qmat_double_complex_FromC(int *ldq_in, int *l_cols_in, double _Complex *q_dev, double _Complex *tau_dev, cudaStream_t  my_stream){
-  int ldq = *ldq_in;
-  int l_cols = *l_cols_in;
+extern "C" void cuda_scale_qmat_double_complex_FromC(int ldq, int l_cols, double _Complex *q_dev, double _Complex *tau_dev, cudaStream_t  my_stream){
 
   cuDoubleComplex* q_casted = (cuDoubleComplex*) q_dev;
   cuDoubleComplex* tau_casted = (cuDoubleComplex*) tau_dev;
@@ -136,10 +134,7 @@ __global__ void cuda_scale_qmat_float_complex_kernel(cuFloatComplex *q, cuFloatC
 
 }
 
-extern "C" void cuda_scale_qmat_float_complex_FromC(int *ldq_in, int *l_cols_in, float _Complex *q_dev, float _Complex *tau_dev, cudaStream_t  my_stream){
-  int ldq = *ldq_in;
-  int l_cols = *l_cols_in;
-
+extern "C" void cuda_scale_qmat_float_complex_FromC(int ldq, int l_cols, float _Complex *q_dev, float _Complex *tau_dev, cudaStream_t  my_stream){
   cuFloatComplex* q_casted = (cuFloatComplex*) q_dev;
   cuFloatComplex* tau_casted = (cuFloatComplex*) tau_dev;
 

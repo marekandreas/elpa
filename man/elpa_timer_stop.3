@@ -1,4 +1,4 @@
-.TH "elpa_print_times" 3 "Thu Nov 28 2024" "ELPA" \" -*- nroff -*-
+.TH "elpa_timer_stop" 3 "Thu Nov 28 2025" "ELPA" \" -*- nroff -*-
 .ad l
 .nh
 .ss 12 0
@@ -14,7 +14,7 @@ use elpa
 class(elpa_t), pointer :: elpa_handle
 .br
 
-call elpa_handle%\fBtimer_start\fP (name)
+call elpa_handle%\fBtimer_stop\fP (name)
 .sp
 With the definitions of the input and output variables:
 .TP
@@ -31,7 +31,7 @@ The name of the ELPA procedure for which the timings should be recorded.
 elpa_t elpa_handle;
 
 .br
-void\fB elpa_timer_start\fP(\fBelpa_t\fP elpa_handle,\fB char\fP *name);
+void\fB elpa_timer_stop\fP(\fBelpa_t\fP elpa_handle,\fB char\fP *name);
 .sp
 With the definitions of the input and output variables:
 .TP

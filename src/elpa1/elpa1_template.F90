@@ -996,10 +996,10 @@ function elpa_solve_evp_&
 
 #ifdef DEBUG_CUDA     
      if (wantDebug .and. useGPU) then
-       my_stream = obj%gpu_setup%my_stream
-
        num = (matrixRows*matrixCols) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
+        my_stream = obj%gpu_setup%my_stream
+
         successGPU = gpu_memcpy_async(int(loc(buffer_debug(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
         successGPU = gpu_stream_synchronize(my_stream)
 #else

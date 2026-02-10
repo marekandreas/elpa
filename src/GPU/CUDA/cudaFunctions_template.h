@@ -600,6 +600,7 @@ void cublasDgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char tran
   }
 }
 
+
 void cublasSgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char transb, int m, int n, int k,
                               float alpha, const float *A, int lda,
                               const float *B, int ldb, float beta,

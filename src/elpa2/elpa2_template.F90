@@ -210,6 +210,7 @@
    integer(kind=c_intptr_t), parameter                                :: size_of_real_datatype = size_of_&
                                                                                                  &PRECISION&
                                                                                                  &_real
+   integer(kind=c_intptr_t)                                           :: my_stream
    integer(kind=ik)                                                   :: na, nev, nblk, matrixCols, &
                                                                          mpi_comm_rows, mpi_comm_cols,        &
                                                                          mpi_comm_all, check_pd, error, matrixRows
@@ -1254,9 +1255,7 @@
          num = (matrixRows*matrixCols) * size_of_datatype
          successGPU = gpu_malloc(q_dev_actual, num)
          check_alloc_gpu("elpa1_template e_dev", successGPU)
-#endif
-
-#if COMPLEXCASE == 1
+#elif COMPLEXCASE == 1
          num = (matrixRows*matrixCols) * size_of_real_datatype
          successGPU = gpu_malloc(q_dev_real, num)
          check_alloc_gpu("elpa1_template e_dev", successGPU)
@@ -1278,9 +1277,7 @@
          successGPU = gpu_memcpy(q_dev_actual, int(loc(q_actual(1,1)),kind=c_intptr_t), &
                  num, gpuMemcpyHostToDevice) 
          check_memcpy_gpu("elpa1_template ev_dev -> ev", successGPU)
-#endif
-
-#if COMPLEXCASE == 1
+#elif COMPLEXCASE == 1
          num = (matrixRows*matrixCols) * size_of_real_datatype
          successGPU = gpu_memcpy(q_dev_real, int(loc(q_real(1,1)),kind=c_intptr_t),  &
                  num, gpuMemcpyHostToDevice) 
@@ -1292,8 +1289,7 @@
          (obj, na, nev, ev_dev, e_dev, &
 #if REALCASE == 1
          q_dev_actual, matrixRows,   &
-#endif
-#if COMPLEXCASE == 1
+#elif COMPLEXCASE == 1
          q_dev_real, ubound(q_real,dim=1), &
 #endif
          nblk, matrixCols, mpi_comm_all, mpi_comm_rows, mpi_comm_cols, wantDebug, &
@@ -1709,19 +1705,30 @@
 
 #ifdef DEVICE_POINTER
    !copy qIntern and ev to provided device pointers
-#ifdef WITH_GPU_STREAMS
-   print *,"elpa2_template: not yet implemented"
-   stop 77
-#endif
+   my_stream = obj%gpu_setup%my_stream
+
    if (present(qExtern)) then
-   successGPU = gpu_memcpy(qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &
-                             gpuMemcpyHostToDevice)
-   endif
-   check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
-   successGPU = gpu_memcpy(evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
-                             gpuMemcpyHostToDevice)
-   check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
+#ifdef WITH_GPU_STREAMS
+     successGPU = gpu_memcpy_async(qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &
+                                   gpuMemcpyHostToDevice, my_stream)
+     successGPU = gpu_stream_synchronize(my_stream)
+#else
+     successGPU = gpu_memcpy      (qExtern, c_loc(qIntern(1,1)), obj%local_nrows*obj%local_ncols*size_of_datatype, &
+                                   gpuMemcpyHostToDevice)
 #endif
+     check_memcpy_gpu("elpa1: qIntern -> qExtern", successGPU)
+   endif
+
+#ifdef WITH_GPU_STREAMS
+   successGPU = gpu_memcpy_async(evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
+                                 gpuMemcpyHostToDevice, my_stream)
+   successGPU = gpu_stream_synchronize(my_stream)
+#else
+   successGPU = gpu_memcpy       (evExtern, c_loc(ev(1)), obj%na*size_of_real_datatype, &
+                                  gpuMemcpyHostToDevice)
+#endif
+   check_memcpy_gpu("elpa1: ev -> evExtern", successGPU)
+#endif /* DEVICE_POINTER */
 
 #if defined(REDISTRIBUTE_MATRIX)
    if (doRedistributeMatrix) then

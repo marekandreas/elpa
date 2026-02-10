@@ -46,7 +46,7 @@
 
       gpuAvailable = .false.
 
-      if (OBJECT%gpu_setup%gpuIsAssigned) then
+      if (OBJECT%gpu_setup%gpuAlreadySet) then
         gpuAvailable = .true.
 
         ! print warning if NVIDIA or AMD without streams
@@ -107,7 +107,7 @@
 #endif /* WITH_GPU_STREAMS */
 #endif /* WITH_SYCL_GPU_VERSION */
         return
-      endif ! (OBJECT%gpu_setup%gpuIsAssigned)
+      endif ! (OBJECT%gpu_setup%gpuAlreadySet)
 
 #ifdef ADDITIONAL_OBJECT_CODE
       wantDebugMessage = wantDebug
@@ -224,240 +224,111 @@
       endif
 #endif
 #endif
+
+      success = gpu_getdevicecount(numberOfDevices)
+
+      if (.not.(success)) then
+        write(error_unit,*) "error in gpu_getdevicecount"
+        stop 1
+      endif
+
+      if (wantDebugMessage .and. myid==0) then
+        print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
+      endif
+
+      OBJECT%gpu_setup%gpusPerNode = numberOfDevices
+
 #ifdef WITH_SYCL_GPU_VERSION
-      if (.not. (OBJECT%gpu_setup%gpuAlreadySet)) then
-        call OBJECT%get("sycl_show_all_devices", syclShowAllDevices, error)
+        if (myid == 0 .and. wantDebugMessage) then
+          call sycl_printdevices()
+        endif
+#endif
+
+      if (numberOfDevices==0) then
+        return
+      endif
+
+      if (OBJECT%is_set("use_gpu_id") == 1) then ! useGPUid
+        call OBJECT%get("use_gpu_id", use_gpu_id, error)
         if (error .ne. ELPA_OK) then
-          write(error_unit,*) "Problem getting option for sycl_show_all_devices. Aborting..."
+          write(error_unit,*) "check_for_gpu: cannot query use_gpu_id. Aborting..."
           stop 1
         endif
-        if (syclShowAllDevices == 1) then
-          syclShowOnlyIntelGpus = 0
+        if (use_gpu_id == -99) then
+          write(error_unit,*) "Problem you did not set which gpu id this task should use"
+        endif
+
+        ! check whether gpu id has been set for each proces
+#ifdef WITH_MPI
+        call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MIN, mpi_comm_all, mpierr)
+
+        if (min_use_gpu_id .lt. 0) then
+          write(error_unit,*) "Not all tasks have set which GPU id should be used! GPU usage switched off!"
+          gpuAvailable = .false.
+          return
+        endif
+#endif
+
+        deviceNumber = use_gpu_id
+      else ! useGPUid not set (by user)
+        ! make sure that all nodes have the same number of GPU's, otherwise
+        ! we run into loadbalancing trouble
+#ifdef WITH_MPI
+        call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
+
+        if (maxNumberOfDevices .ne. numberOfDevices) then
+          write(error_unit,*) "Different number of GPU devices for some MPI tasks!"
+          write(error_unit,*) "GPUs will NOT be used!"
+          return
+        endif
+#endif
+
+        deviceNumber = mod(myid, numberOfDevices)
+      endif ! useGPUid not set (by user)
+
+#include "./device_arrays_template.F90"
+#include "./handle_creation_template.F90"
+
+      OBJECT%gpu_setup%gpuAlreadySET = .true.
+      gpuAvailable = .true.
+
+
+      ! Check if there is one MPI task per GPU and enable CCL
+#ifdef WITH_MPI
+      call mpi_comm_split_type(int(mpi_comm_all,kind=MPI_KIND), MPI_COMM_TYPE_SHARED, keyMPI, MPI_INFO_NULL, & !mpi_infoMPI, &
+                                mpi_comm_all_per_nodeMPI, mpierr)
+
+      call mpi_comm_size(mpi_comm_all_per_nodeMPI, np_total_per_nodeMPI, mpierr)
+      OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
+
+      OBJECT%gpu_setup%useCCL=.false.  
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+      if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
+        call OBJECT%get("use_ccl", useCCLCOMM, error)
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem getting 'use_ccl' option. Aborting..."
+          stop 1
+        endif
+        if (useCCLCOMM .eq. 1) then
+          OBJECT%gpu_setup%useCCL=.true.
         else
-          syclShowOnlyIntelGpus = 1
-        endif
-        success = sycl_state_initialize(syclShowOnlyIntelGpus, wantDebugMessage)
-        if (.not. success) then
-          write(error_unit, *) "sycl_state_initialize: inconsistent SYCL setup. Aborting..."
-          stop 1
+          OBJECT%gpu_setup%useCCL=.false.
         endif
       endif
 #endif
-      if (OBJECT%is_set("use_gpu_id") == 1) then ! useGPUid
-        if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
-          call OBJECT%get("use_gpu_id", use_gpu_id, error)
-          if (error .ne. ELPA_OK) then
-            write(error_unit,*) "check_for_gpu: cannot querry use_gpu_id. Aborting..."
-            stop 1
-          endif
-          if (use_gpu_id == -99) then
-            write(error_unit,*) "Problem you did not set which gpu id this task should use"
-          endif
- 
-          ! check whether gpu id has been set for each proces
-#ifdef WITH_MPI
-          call mpi_allreduce(use_gpu_id, min_use_gpu_id, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
 
-          if (min_use_gpu_id .lt. 0) then
-            write(error_unit,*) "Not all tasks have set which GPU id should be used! GPU usage switched off!"
-            gpuAvailable = .false.
-            return
-          endif
-#endif
-          gpuAvailable = .true.
-
-          if (myid==0) then
-            if (wantDebugMessage) then
-              print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-            endif
-          endif
-
-          success = .true.
-          if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
-            deviceNumber = use_gpu_id
-#include "./device_arrays_template.F90"
-
-#include "./handle_creation_template.F90"
-
-          endif ! alreadySET
-          OBJECT%gpu_setup%gpuAlreadySET = .true.
-          OBJECT%gpu_setup%gpuIsAssigned =.true.
-          !gpuIsInitialized = .true.
-
-          if (OBJECT%gpu_setup%useCCL) then
+      if (myid == 0 .and. wantDebugMessage) then
+        write(error_unit,*) "GPUs per node", OBJECT%gpu_setup%gpusPerNode, &
+                            "Ranks per node", OBJECT%mpi_setup%nRanks_comm_parent_per_node
+        write(error_unit,*) "Using ccl:", OBJECT%gpu_setup%useCCL
+      endif
+      
+      if (OBJECT%gpu_setup%useCCL) then
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #include "./ccl_communicators_template.F90"
 #endif
-          endif
-        endif ! .not.(OBJECT%gpu_setup%gpuAlreadySet)) 
-      else ! useGPUid not set (by user)
-
-        ! make sure GPU setup is only done once (per ELPA OBJECTect)
-
-        if (.not.(OBJECT%gpu_setup%gpuAlreadySet)) then
-
-          !TODO: have to set this somewhere
-          !if (gpuIsInitialized) then
-          !  gpuAvailable = .true.
-          !  numberOfDevices = -1
-          !  if (myid == 0 .and. wantDebugMessage) then
-          !    write(error_unit,*)  "Skipping GPU init, should have already been initialized "
-          !  endif
-          !  return
-          !else
-            if (myid == 0 .and. wantDebugMessage) then
-              write(error_unit,*) "Initializing the GPU devices"
-            endif
-          !endif
-
-
-          success = .true.
-          success = gpu_getdevicecount(numberOfDevices)
-
-          if (.not.(success)) then
-#ifdef WITH_NVIDIA_GPU_VERSION
-            write(error_unit,*) "error in cuda_getdevicecount"
-#endif
-#ifdef WITH_AMD_GPU_VERSION
-            write(error_unit,*) "error in hip_getdevicecount"
-#endif
-#ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
-            write(error_unit,*) "error in openmp_offload_getdevicecount"
-#endif
-#ifdef WITH_SYCL_GPU_VERSION
-            write(error_unit,*) "error in sycl_getdevicecount"
-#endif
-            stop 1
-          endif
-#ifdef WITH_SYCL_GPU_VERSION
-          if (myid == 0 .and. wantDebugMessage) then
-            write(error_unit,*) "SYCL: syclShowOnlyIntelGpus =  ", syclShowOnlyIntelGpus
-            write(error_unit,*) "SYCL: numberOfDevices =  ", numberOfDevices
-            call sycl_printdevices()
-          endif
-          !TODO  I'd also like to check that all the chosen devices have the same platform, 
-          !TODO  as mixing platforms and thus also different devices will probably performace
-          !TODO  extremely poorly. This will need another Function in syclCommon, and the
-          !TODO  interfaces that that brings with it.
-#endif
-
-          ! make sure that all nodes have the same number of GPU's, otherwise
-          ! we run into loadbalancing trouble
-#ifdef WITH_MPI
-          call mpi_allreduce(numberOfDevices, maxNumberOfDevices, 1, MPI_INTEGER, MPI_MAX, mpi_comm_all, mpierr)
-
-          if (maxNumberOfDevices .ne. numberOfDevices) then
-            write(error_unit,*) "Different number of GPU devices for some MPI tasks!"
-            write(error_unit,*) "GPUs will NOT be used!"
-            gpuAvailable = .false.
-            return
-          endif
-#endif
-          if (numberOfDevices .ne. 0) then
-            gpuAvailable = .true.
-            ! Usage of GPU is possible since devices have been detected
-
-            if (myid==0) then
-              if (wantDebugMessage) then
-                print '(3(a,i0))','Found ', numberOfDevices, ' GPUs'
-              endif
-            endif
-
-            OBJECT%gpu_setup%gpusPerNode = numberOfDevices
-
-            fmt = '(I5.5)'
-
-            write (gpu_string,fmt) numberOfDevices
-
-
-#ifdef WITH_MPI
-            ! one MPI task per GPU ?
-            ! use MPI_COMM_SPLIT_TYPE with MPI_COMM_TYPE_SHARED
-
-
-            !keyMPI = 0
-            !key = 0
-            !call mpi_comm_rank(int(mpi_comm_all,kind=MPI_KIND), keyMPI, mpierr)
-            !key = int(keyMPI,kind=ik)
-
-
-            !print *,"Before info_create "
-            !call mpi_info_create(mpi_infoMPI, mpierr)
-            !print *,"After info_create "
-            !print *,"Before split_type ",MPI_COMM_TYPE_SHARED
-
-            call mpi_comm_split_type(int(mpi_comm_all,kind=MPI_KIND), MPI_COMM_TYPE_SHARED, keyMPI, MPI_INFO_NULL, & !mpi_infoMPI, &
-                                     mpi_comm_all_per_nodeMPI, mpierr)
-            !print *,"After split_type "
-            call mpi_comm_size(mpi_comm_all_per_nodeMPI, np_total_per_nodeMPI, mpierr)
-            OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
-
-
-            OBJECT%gpu_setup%useCCL=.false.            
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
-            if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
-              call OBJECT%get("use_ccl", useCCLCOMM, error)
-              if (error .ne. ELPA_OK) then
-                write(error_unit,*) "Problem getting option for 'ccl-communication'. Aborting..."
-                stop 1
-              endif
-              if (useCCLCOMM .eq. 1) then
-                OBJECT%gpu_setup%useCCL=.true.
-              else
-                OBJECT%gpu_setup%useCCL=.false.
-              endif
-            endif
-#endif
-
-            if (myid == 0 .and. wantDebugMessage) then
-              write(error_unit,*) "GPUs per node", OBJECT%gpu_setup%gpusPerNode, &
-                                  "Ranks per node", OBJECT%mpi_setup%nRanks_comm_parent_per_node
-              write(error_unit,*) "Using ccl:", OBJECT%gpu_setup%useCCL
-            endif
-#endif
-
-#ifdef ADDITIONAL_OBJECT_CODE
-            call OBJECT%timer%start("check_gpu_"//gpu_string)
-#endif
-            deviceNumber = mod(myid, numberOfDevices)
-#ifdef ADDITIONAL_OBJECT_CODE
-            call OBJECT%timer%start("set_device")
-#endif
-
-            !include device arrays here
-#include "./device_arrays_template.F90"
-
-#ifdef ADDITIONAL_OBJECT_CODE
-            call OBJECT%timer%stop("set_device")
-#endif
-
-            call OBJECT%set("use_gpu_id",deviceNumber, error)
-            if (error .ne. ELPA_OK) then
-              write(error_unit,*) "Cannot set use_gpu_id. Aborting..."
-              stop 1
-            endif
- 
-#include "./handle_creation_template.F90"
-          
-            OBJECT%gpu_setup%gpuAlreadySet = .true.
-
-
-            
-            if (OBJECT%gpu_setup%useCCL) then
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
-#include "./ccl_communicators_template.F90"
-#endif
-            endif
-
-#ifdef ADDITIONAL_OBJECT_CODE
-            call OBJECT%timer%stop("check_gpu_"//gpu_string)
-#endif
-          endif ! numberOfDevices .ne. 0
-          !gpuIsInitialized = .true.
-        endif !OBJECT%gpu_setup%gpuAlreadySet
-        OBJECT%gpu_setup%gpuIsAssigned = .true.
-      endif ! useGPUid
-
+      endif
+#endif /* WITH_MPI */
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = gpublas_get_version(OBJECT%gpu_setup%cublasHandleArray(0), cublas_version)

@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [24:0:5])
+AC_SUBST([ELPA_SO_VERSION], [24:1:5])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -42,16 +42,16 @@ AX_BUILD_DATE_EPOCH(ELPA_BUILDTIME)
 # API Version
 AC_DEFINE([EARLIEST_API_VERSION], [20170403], [Earliest supported ELPA API version])
 print_earliest_api_version=20170403
-AC_DEFINE_SUBST(CURRENT_API_VERSION, 20250131, "Current ELPA API version")
-print_current_api_version=20250131
+AC_DEFINE_SUBST(CURRENT_API_VERSION, 20260202, "Current ELPA API version")
+print_current_api_version=20260202
 # Autotune Version
 AC_DEFINE([EARLIEST_AUTOTUNE_VERSION], [20171201], [Earliest ELPA API version, which supports autotuning])
 print_earliest_autotune_version=20171201
-AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [20250131], [Current ELPA autotune version])
-print_current_autotune_version=20250131
-AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 20250131, "Current ELPA autotune version")
+AC_DEFINE([CURRENT_AUTOTUNE_VERSION], [2020131], [Current ELPA autotune version])
+print_current_autotune_version=20260202
+AC_DEFINE_SUBST(CURRENT_AUTOTUNE_VERSION, 202600202, "Current ELPA autotune version")
 AC_DEFINE_UNQUOTED([ELPA_BUILDTIME], [$ELPA_BUILDTIME], ["Time of build"])
-AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1747401835],[old_elpa_version=yes],[old_elpa_version=no])
+AX_COMPARE_VERSION([$ELPA_BUILDTIME], [gt], [1782906107],[old_elpa_version=yes],[old_elpa_version=no])
 
 AX_CHECK_GNU_MAKE()
 if test x$_cv_gnu_make_command = x ; then
@@ -2872,9 +2872,6 @@ if test x"${use_intel_gpu}" = x"yes" ; then
   AC_LANG_POP([C++])
 fi
 
-dnl PETERDEBUG111
-dnl CXXFLAGS="$CXXFLAGS -fno-sycl-id-queries-fit-in-int"
-
 #TODO mklGPUBLAS
 
 ##########################################################################################
@@ -4315,13 +4312,13 @@ if test x"${ax_cv_have_avx512f_cpu_ext}" = x"yes" -a  x"${need_avx512}" = x"no";
   echo " "
 fi
 
-#echo " "
-#echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2025.06.002.rc1        *"
-#echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2025.06.002                                                   *"
-#echo "***********************************************************************"
-#echo " "
+echo " "
+echo "***********************************************************************"
+echo "*  This is the first release candidate of ELPA 2026.02.001.rc1        *"
+echo "*  There might be still some changes until the final release of       *"
+echo "*  ELPA 2026.02.001                                                   *"
+echo "***********************************************************************"
+echo " "
 
 if test x"$enable_kcomputer" = x"yes" ; then
   echo " "
