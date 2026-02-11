@@ -231,6 +231,7 @@ int mpicclDataTypeMpicclDoubleFromC(void) {
 
 int mpicclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mpicclDatatype, int mpicclOp, intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
+  void *sendbuff_safe; // to handle the case when sendbuff and recvbuff are the same (MPI_IN_PLACE)
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
@@ -241,7 +242,8 @@ int mpicclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int
 
   //printf("mpicclAllreduceFromC, start\n"); // PETERDEBUG111: cleanup after testing
 
-  mpicclError = MPI_Allreduce(sendbuff, recvbuff, count, MPI_Type_f2c(mpicclDatatype), MPI_Op_f2c(mpicclOp), MPI_Comm_f2c(mpicclComm));
+  sendbuff_safe = (sendbuff == recvbuff) ? MPI_IN_PLACE : (void *)sendbuff;
+  mpicclError = MPI_Allreduce(sendbuff_safe, recvbuff, count, MPI_Type_f2c(mpicclDatatype), MPI_Op_f2c(mpicclOp), MPI_Comm_f2c(mpicclComm));
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
@@ -257,6 +259,9 @@ int mpicclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int
 
 int mpicclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mpicclDatatype, int mpicclOp, int root, intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
+  int rank;
+  MPI_Comm comm;
+  void *sendbuff_safe;
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
@@ -265,7 +270,23 @@ int mpicclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mp
   gpuDeviceSynchronize();
 #endif
 
-  mpicclError = MPI_Reduce(sendbuff, recvbuff, count, MPI_Type_f2c(mpicclDatatype), MPI_Op_f2c(mpicclOp), root, MPI_Comm_f2c(mpicclComm));
+  comm = MPI_Comm_f2c(mpicclComm);
+  sendbuff_safe = (void *)sendbuff;
+  if (sendbuff == recvbuff) {
+    mpicclError = MPI_Comm_rank(comm, &rank);
+    if (mpicclError != MPI_SUCCESS) {
+      char errstr[MPI_MAX_ERROR_STRING];
+      int len = 0;
+      MPI_Error_string(mpicclError, errstr, &len);
+      errormessage("Error in mpicclReduce (MPI_Comm_rank): %s\n", errstr);
+      return 0;
+    }
+    if (rank == root) {
+      sendbuff_safe = MPI_IN_PLACE;
+    }
+  }
+
+  mpicclError = MPI_Reduce(sendbuff_safe, recvbuff, count, MPI_Type_f2c(mpicclDatatype), MPI_Op_f2c(mpicclOp), root, comm);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
