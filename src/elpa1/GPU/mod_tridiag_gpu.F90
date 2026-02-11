@@ -59,8 +59,8 @@ module tridiag_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
   interface
-    subroutine gpu_copy_and_set_zeros_c(dataType, v_row_dev, u_col_dev, aux1_dev, vav_dev, d_vec_dev, &
-                                        a_dev, l_rows, l_cols, matrixRows, istep, &
+    subroutine gpu_copy_and_set_zeros_c(dataType, v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, &
+                                        l_rows, l_cols, matrixRows, istep, &
                                         isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
                                         isSkewsymmetric_int, useCCL_int, wantDebug_int, SM_count, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
