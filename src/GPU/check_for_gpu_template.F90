@@ -302,7 +302,7 @@
       OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
 
       OBJECT%gpu_setup%useCCL=.false.  
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
         call OBJECT%get("use_ccl", useCCLCOMM, error)
         if (error .ne. ELPA_OK) then
