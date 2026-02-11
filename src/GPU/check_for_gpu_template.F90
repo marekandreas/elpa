@@ -301,15 +301,20 @@
       call mpi_comm_size(mpi_comm_all_per_nodeMPI, np_total_per_nodeMPI, mpierr)
       OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
 
+      allow_many_mpi_per_gpu_ccl = .false.
+#if defined(WITH_GPU_AWARE_MPICCL)
+      allow_many_mpi_per_gpu_ccl = .true.
+#endif
+
       OBJECT%gpu_setup%useCCL=.false.  
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
-      if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node .eq. 1) then
-        call OBJECT%get("use_ccl", useCCLCOMM, error)
+      if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node==1 .or. allow_many_mpi_per_gpu_ccl) then
+        call OBJECT%get("use_ccl", useCCLcomm, error)
         if (error .ne. ELPA_OK) then
           write(error_unit,*) "Problem getting 'use_ccl' option. Aborting..."
           stop 1
         endif
-        if (useCCLCOMM .eq. 1) then
+        if (useCCLcomm .eq. 1) then
           OBJECT%gpu_setup%useCCL=.true.
         else
           OBJECT%gpu_setup%useCCL=.false.
