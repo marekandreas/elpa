@@ -188,7 +188,6 @@ subroutine trans_ev_cpu_&
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
-  integer(kind=ik)                              :: i,j ! PETERDEBUG111: only for debugging, cleanup
   ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
   logical :: is_sycl_cpu
   is_sycl_cpu = .false.
@@ -391,11 +390,9 @@ subroutine trans_ev_cpu_&
   endif  ! useGPU
 
   if (.not. useCCL) then
-    hvb = 0   ! Safety only ! PETERDEBUG111: check whether it is really needed
     hvm = 0   ! Must be set to 0 !!!
   endif
 
-  ! PETERDEBUG111: check whether it is really needed
   if (useGPU) then
     num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -403,16 +400,6 @@ subroutine trans_ev_cpu_&
     check_memcpy_gpu("trans_ev: hvm_dev", successGPU)
 #else
     successGPU = gpu_memset(hvm_dev, 0, num)
-#endif
-  endif
-  ! PETERDEBUG111: check whether it is really needed
-  if (useGPU) then
-    num = max_local_rows * nblk * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memset_async(hvb_dev, 0, num, my_stream)
-    check_memcpy_gpu("trans_ev: hvb_dev", successGPU)
-#else
-    successGPU = gpu_memset(hvb_dev, 0, num)
 #endif
   endif
 
