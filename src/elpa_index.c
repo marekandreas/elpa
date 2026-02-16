@@ -628,15 +628,24 @@ FOR_ALL_TYPES(IMPLEMENT_SET_FROM_LOAD_FUNCTION)
 
 #define IMPLEMENT_IS_SET_FUNCTION(TYPE, ...) \
         int elpa_index_##TYPE##_value_is_set(elpa_index_t index, char *name) { \
+                TYPE ret; \
                 if (sizeof(TYPE##_entries) == 0) { \
                         return ELPA_ERROR_ENTRY_NOT_FOUND; \
                 } \
                 int n = find_##TYPE##_entry(name); \
                 if (n >= 0) { \
-                        if (index->TYPE##_options.is_set[n]) { \
-                                return 1; \
+                        int from_env = 0; \
+                        if (!TYPE##_entries[n].base.once && !TYPE##_entries[n].base.readonly) { \
+                                from_env = getenv_##TYPE(index, TYPE##_entries[n].base.env_force, NOTIFY_ENV_FORCE, n, &ret, "Option"); \
+                        } \
+                        if (!from_env) { \
+                                if (index->TYPE##_options.is_set[n]) { \
+                                        return 1; \
+                                } else { \
+                                        return 0; \
+                                } \
                         } else { \
-                                return 0; \
+                                return 1; \
                         } \
                 } else { \
                         return ELPA_ERROR_ENTRY_NOT_FOUND; \
