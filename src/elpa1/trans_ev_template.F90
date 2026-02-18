@@ -551,20 +551,6 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvm <- hvb")
     endif ! useGPU
 
-    ! PETERDEBUG111: this memcopy can be cleaned up?
-    if (useGPU .and. .not. useCCL) then
-      num = max_local_rows*max_stored_rows * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-      call gpu_memcpy_async_and_stream_synchronize &
-              ("trans_ev hvm_dev -> hvm", hvm_dev, 0_c_intptr_t, &
-              hvm(1:max_local_rows,1:max_stored_rows), &
-              1, 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
-#else
-      successGPU = gpu_memcpy(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
-#endif
-    endif ! useGPU
-
     ! PETERDEBUG111: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
     ! Please note: for smaller matix sizes (na/np_rows<=256), a value of 32 for nstor is enough!
     if (nstor+nblk > max_stored_rows .or. istep+nblk > na .or. (na/np_rows <= 256 .and. nstor >= 32)) then
