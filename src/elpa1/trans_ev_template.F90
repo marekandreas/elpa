@@ -464,13 +464,12 @@ subroutine trans_ev_cpu_&
     if (useGPU .and. .not. useCCL) then
       num = nb * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-      call gpu_memcpy_async_and_stream_synchronize &
-              ("trans_ev hvb_dev -> hvb", hvb_dev, 0_c_intptr_t, &
-              hvb(1:nb), 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+      successGPU = gpu_memcpy_async(int(loc(hvb(1)),kind=c_intptr_t), hvb_dev, num, gpuMemcpyDeviceToHost, my_stream)
+      successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
-      successGPU = gpu_memcpy(int(loc(hvb(1)),kind=c_intptr_t), hvb_dev, num, gpuMemcpyDeviceToHost)
-      check_memcpy_gpu("trans_ev", successGPU)
+      successGPU = gpu_memcpy      (int(loc(hvb(1)),kind=c_intptr_t), hvb_dev, num, gpuMemcpyDeviceToHost)
 #endif
+      check_memcpy_gpu("trans_ev", successGPU)
     endif ! useGPU
 
     if (nb > 0) then
@@ -512,14 +511,14 @@ subroutine trans_ev_cpu_&
     if (useGPU .and. .not. useCCL) then
       num_el = nb ! = max_local_rows*nblk, no compression
 #ifdef WITH_GPU_STREAMS
-      ! PETERDEBUG111 cleanup, here and elsewhere
-      call gpu_memcpy_async_and_stream_synchronize("trans_ev hvb -> hvb_dev", &
-                hvb_dev, 0_c_intptr_t, hvb(1:num_el), 1, &
-                num_el*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
+      successGPU = gpu_memcpy_async(hvb_dev, int(loc(hvb(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                    gpuMemcpyHostToDevice, my_stream)
+      successGPU = successGPU .and. gpu_stream_synchronize(my_stream) ! PETERDEBUG111 unneeded, cleanup (leave only in debug mode)
 #else
-      successGPU = gpu_memcpy(hvb_dev, int(loc(hvb(1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
-      check_memcpy_gpu("trans_ev", successGPU)
+      successGPU = gpu_memcpy      (hvb_dev, int(loc(hvb(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                    gpuMemcpyHostToDevice)
 #endif
+      check_memcpy_gpu("trans_ev", successGPU)
     endif ! useGPU
 #endif /* WITH_MPI */
 
@@ -595,7 +594,7 @@ subroutine trans_ev_cpu_&
             num = max_local_rows*max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
             successGPU = gpu_memcpy_async(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost, my_stream)
-            successGPU = gpu_stream_synchronize(my_stream)
+            successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
             successGPU = gpu_memcpy      (int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
 #endif
@@ -636,14 +635,14 @@ subroutine trans_ev_cpu_&
       if (useGPU .and. .not. useCCL) then
         num_el = max_stored_rows*max_stored_rows
 #ifdef WITH_GPU_STREAMS
-        call gpu_memcpy_async_and_stream_synchronize &
-                ("trans_ev: tmat_dev -> tmat", tmat_dev, 0_c_intptr_t, &
-                tmat(1:max_stored_rows,1:max_stored_rows), &
-                1, 1, num_el*size_of_datatype, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+        successGPU = gpu_memcpy_async(int(loc(tmat(1,1)),kind=c_intptr_t), tmat_dev, num_el*size_of_datatype, &
+                                      gpuMemcpyDeviceToHost, my_stream)                
+        successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
-        successGPU = gpu_memcpy(int(loc(tmat(1,1)),kind=c_intptr_t), tmat_dev, num_el*size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("trans_ev", successGPU)
+        successGPU = gpu_memcpy      (int(loc(tmat(1,1)),kind=c_intptr_t), tmat_dev, num_el*size_of_datatype, &
+                                      gpuMemcpyDeviceToHost)
 #endif
+        check_memcpy_gpu("trans_ev", successGPU)
       endif ! useGPU
 
 
@@ -655,7 +654,7 @@ subroutine trans_ev_cpu_&
           if (wantDebug) call obj%timer%start("gpu_memcpy")
 #ifdef WITH_GPU_STREAMS
           successGPU = gpu_memcpy_async(h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
-          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+          if (wantDebug) successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
           successGPU = gpu_memcpy      (h_dev, tmat_dev, nc*size_of_datatype, gpuMemcpyDeviceToDevice)
 #endif
@@ -708,13 +707,14 @@ subroutine trans_ev_cpu_&
       if (useGPU .and. .not. useCCL) then
         num_el = nc
 #ifdef WITH_GPU_STREAMS
-        call gpu_memcpy_async_and_stream_synchronize("trans_ev: h -> h_dev", h_dev, 0_c_intptr_t, &
-                                                      h(1:num_el), 1, num_el*size_of_datatype, &
-                                                      gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+        successGPU = gpu_memcpy_async(h_dev, int(loc(h(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                      gpuMemcpyHostToDevice, my_stream)
+        if (wantDebug) successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(h_dev, int(loc(h(1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev", successGPU)
+        successGPU = gpu_memcpy      (h_dev, int(loc(h(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                      gpuMemcpyHostToDevice)
 #endif /* WITH_GPU_STREAMS */
+        check_memcpy_gpu("trans_ev", successGPU)
       endif ! useGPU
 
 
@@ -830,17 +830,14 @@ subroutine trans_ev_cpu_&
         ! PETERDEBUG111. consider the comment above
 
         ! copy tmp_dev -> tmp if needed
+        num = max_local_cols*max_stored_rows * size_of_datatype ! PETERDEBUG111: why differs from allreduce?
 #ifdef WITH_GPU_STREAMS
-        num = max_local_cols * max_stored_rows * size_of_datatype
-        call gpu_memcpy_async_and_stream_synchronize &
-            ("trans_ev tmp_dev -> tmp", tmp_dev, 0_c_intptr_t, &
-                                                 tmp(1:max_local_cols*max_stored_rows), &
-                                                 1, num, gpuMemcpyDeviceToHost, my_stream, .false., .true., .false.)
+        successGPU = gpu_memcpy_async(int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
-        successGPU = gpu_memcpy(int(loc(tmp(1)),kind=c_intptr_t), tmp_dev,  &
-                      max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("trans_ev", successGPU)
+        successGPU = gpu_memcpy      (int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num, gpuMemcpyDeviceToHost)
 #endif
+        check_memcpy_gpu("trans_ev", successGPU)
       endif ! (useGPU .and. .not. useCCL)
 
 
@@ -876,17 +873,14 @@ subroutine trans_ev_cpu_&
 
       ! copy back to tmp -> tmp_dev if needed
       if (useGPU .and. .not. useCCL) then
+        num = max_local_cols * max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-          num = max_local_cols * max_stored_rows * size_of_datatype
-          call gpu_memcpy_async_and_stream_synchronize &
-            ("trans_ev tmp -> tmp_dev", tmp_dev, 0_c_intptr_t, &
-                                                 tmp(1:max_local_cols*max_stored_rows), &
-                                                 1, num, gpuMemcpyHostToDevice, my_stream, .false., .false., .false.)
+        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+        if (wantDebug) successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t),  &
-                      max_local_cols * max_stored_rows * size_of_datatype, gpuMemcpyHostToDevice)
-        check_memcpy_gpu("trans_ev", successGPU)
+        successGPU = gpu_memcpy      (tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif /* WITH_GPU_STREAMS */
+        check_memcpy_gpu("trans_ev", successGPU)
       endif ! useGPU
 
 #endif /* WITH_MPI */
