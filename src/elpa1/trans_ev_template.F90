@@ -849,9 +849,11 @@ subroutine trans_ev_cpu_&
           print *,"Error in ccl_allreduce"
           stop 1
         endif
-          
-        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG111: only in debug mode
-        check_stream_synchronize_gpu("trans_ev", successGPU)
+
+        if (wantDebug) then
+          successGPU = gpu_stream_synchronize(my_stream)
+          check_stream_synchronize_gpu("trans_ev", successGPU)
+        endif
         NVTX_RANGE_POP("ccl_allreduce")
         call obj%timer%stop("ccl_allreduce")
       else ! useCCL
