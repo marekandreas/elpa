@@ -648,7 +648,6 @@ subroutine trans_ev_cpu_&
 
       if (useCCL) then
         ! no compression
-        !nc = max_stored_rows*max_stored_rows
         nc = max_stored_rows*nstor
         if (nc>0) then
           if (wantDebug) call obj%timer%start("gpu_memcpy")
@@ -666,7 +665,7 @@ subroutine trans_ev_cpu_&
         nc = 0
         do n = 1, nstor
           h(nc+1:nc+n) = tmat(n,1:n) ! lower triangular part, takes into account diagonal
-          nc = nc+n ! PETERDEBUG111: on GPU: nc += max_stored_rows 
+          nc = nc+n ! on GPU: nc += max_stored_rows per iteration
         enddo
       endif ! useCCL
 
@@ -760,14 +759,14 @@ subroutine trans_ev_cpu_&
                                         int(debug,kind=c_int), my_stream)
       else ! useGPU
         do n = 1, nstor
-          ic = ice-nstor+n ! PETERDEBUG111: here and below: same as ic = ics + n - 1?
+          ic = ice-nstor+n
           if (tau(ic) == ZERO) then
             tmat(n,n) = ONE
           else
 #ifdef REALCASE
             tmat(n,n) = tmat(n,n)/2 ! a special trick for real case
 #elif COMPLEXCASE
-            tmat(n,n) = ONE / tau(ice-nstor+n) ! general for both real and complex
+            tmat(n,n) = ONE/tau(ic) ! general for both real and complex
 #endif
           endif ! (tau(ic) == ZERO)
         enddo
@@ -824,18 +823,17 @@ subroutine trans_ev_cpu_&
       endif  ! (l_rows>0)
 
 #ifdef WITH_MPI
-      if (useGPU .and. .not. useCCL) then
-        ! In the legacy GPU version, this allreduce was ommited. But probably it has to be done for GPU + MPI
-        ! todo: does it need to be copied whole? Wouldn't be a part sufficient?
-        ! PETERDEBUG111. consider the comment above
+      num_el = nstor*l_cols
 
+      if (useGPU .and. .not. useCCL) then
         ! copy tmp_dev -> tmp if needed
-        num = max_local_cols*max_stored_rows * size_of_datatype ! PETERDEBUG111: why differs from allreduce?
 #ifdef WITH_GPU_STREAMS
-        successGPU = gpu_memcpy_async(int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = gpu_memcpy_async(int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num_el*size_of_datatype, &
+                                      gpuMemcpyDeviceToHost, my_stream)
         successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
-        successGPU = gpu_memcpy      (int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num, gpuMemcpyDeviceToHost)
+        successGPU = gpu_memcpy      (int(loc(tmp(1)),kind=c_intptr_t), tmp_dev, num_el*size_of_datatype, &
+                                      gpuMemcpyDeviceToHost)
 #endif
         check_memcpy_gpu("trans_ev", successGPU)
       endif ! (useGPU .and. .not. useCCL)
@@ -844,28 +842,28 @@ subroutine trans_ev_cpu_&
       if (useCCL) then
         call obj%timer%start("ccl_allreduce")
         NVTX_RANGE_PUSH("ccl_allreduce")
-        successGPU = ccl_Allreduce(tmp_dev, tmp_dev, int(k_datatype*nstor*l_cols,kind=c_size_t), &
+        successGPU = ccl_Allreduce(tmp_dev, tmp_dev, int(k_datatype*num_el,kind=c_size_t), &
                                      cclDataType, cclSum, ccl_comm_rows, my_stream)
 
         if (.not. successGPU) then
           print *,"Error in ccl_allreduce"
-          stop
+          stop 1
         endif
           
-        successGPU = gpu_stream_synchronize(my_stream)
+        successGPU = gpu_stream_synchronize(my_stream) ! PETERDEBUG111: only in debug mode
         check_stream_synchronize_gpu("trans_ev", successGPU)
         NVTX_RANGE_POP("ccl_allreduce")
         call obj%timer%stop("ccl_allreduce")
       else ! useCCL
         if (useNonBlockingCollectivesRows) then
           call obj%timer%start("mpi_nbc_communication")
-          call mpi_iallreduce(MPI_IN_PLACE, tmp, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+          call mpi_iallreduce(MPI_IN_PLACE, tmp, int(num_el,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                              int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
           call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("mpi_nbc_communication")
         else ! useNonBlockingCollectivesRows
           call obj%timer%start("mpi_communication")
-          call mpi_allreduce(MPI_IN_PLACE, tmp, int(nstor*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
+          call mpi_allreduce(MPI_IN_PLACE, tmp, int(num_el,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, MPI_SUM, &
                              int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("mpi_communication")
         endif ! useNonBlockingCollectivesRows
@@ -873,12 +871,13 @@ subroutine trans_ev_cpu_&
 
       ! copy back to tmp -> tmp_dev if needed
       if (useGPU .and. .not. useCCL) then
-        num = max_local_cols * max_stored_rows * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+        successGPU = gpu_memcpy_async(tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                      gpuMemcpyHostToDevice, my_stream)
         if (wantDebug) successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else /* WITH_GPU_STREAMS */
-        successGPU = gpu_memcpy      (tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+        successGPU = gpu_memcpy      (tmp_dev, int(loc(tmp(1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                      gpuMemcpyHostToDevice)
 #endif /* WITH_GPU_STREAMS */
         check_memcpy_gpu("trans_ev", successGPU)
       endif ! useGPU
