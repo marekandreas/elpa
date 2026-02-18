@@ -513,7 +513,7 @@ subroutine trans_ev_cpu_&
 #ifdef WITH_GPU_STREAMS
       successGPU = gpu_memcpy_async(hvb_dev, int(loc(hvb(1)),kind=c_intptr_t), num_el*size_of_datatype, &
                                     gpuMemcpyHostToDevice, my_stream)
-      successGPU = successGPU .and. gpu_stream_synchronize(my_stream) ! PETERDEBUG111 unneeded, cleanup (leave only in debug mode)
+      if (wantDebug) successGPU = successGPU .and. gpu_stream_synchronize(my_stream)
 #else
       successGPU = gpu_memcpy      (hvb_dev, int(loc(hvb(1)),kind=c_intptr_t), num_el*size_of_datatype, &
                                     gpuMemcpyHostToDevice)
