@@ -439,16 +439,10 @@ subroutine trans_ev_cpu_&
         call obj%timer%stop("gpu_copy_hvb_a_kernel")
       endif
 
-      !dry run to find nb, number of used elements in hvb_dev
-      ! do ic = ics, ice
-      !   l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1)
-      !   nb = nb+l_rows
-      ! enddo
       nb = max_local_rows*nblk ! no compression
     else ! useGPU
       NVTX_RANGE_PUSH("loop: copy hvb <- a_mat")
       nb = 0
-      ! PETERDEBUG111: typically, ice-ics = nblk-1, hence nblk steps
       do ic = ics, ice
         l_colh = local_index(ic  , my_pcol, np_cols, nblk, -1) ! Column of Householder Vector
         l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
@@ -465,7 +459,6 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvb <- a_mat")
     endif
 
-    ! PETERDEBUG111: do we need at all this compression-decompression?
 
 #ifdef WITH_MPI
     if (useGPU .and. .not. useCCL) then
@@ -519,6 +512,7 @@ subroutine trans_ev_cpu_&
     if (useGPU .and. .not. useCCL) then
       num_el = nb ! = max_local_rows*nblk, no compression
 #ifdef WITH_GPU_STREAMS
+      ! PETERDEBUG111 cleanup, here and elsewhere
       call gpu_memcpy_async_and_stream_synchronize("trans_ev hvb -> hvb_dev", &
                 hvb_dev, 0_c_intptr_t, hvb(1:num_el), 1, &
                 num_el*size_of_datatype, gpuMemcpyHostToDevice, my_stream, .false., .true., .false.)
@@ -546,10 +540,8 @@ subroutine trans_ev_cpu_&
       do ic = ics, ice
         l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
         
-        ! if tau==0, reflector is identity => make this column inactive
-        if (tau(ic) == ZERO) then
-          hvm(1:l_rows, nstor+1) = 0 ! PETERDEBUG111: cleanup, it's already zero?
-        else
+        ! if tau==0, reflector is identity and the column inactive (hvm(1:l_rows,nstor+1) = 0)
+        if (tau(ic) /= ZERO) then
           hvm(1:l_rows, nstor+1) = hvb(nb+1:nb+l_rows)
         endif
         
@@ -572,7 +564,7 @@ subroutine trans_ev_cpu_&
       check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
 #endif
     endif ! useGPU
-   
+
     ! PETERDEBUG111: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
     ! Please note: for smaller matix sizes (na/np_rows<=256), a value of 32 for nstor is enough!
     if (nstor+nblk > max_stored_rows .or. istep+nblk > na .or. (na/np_rows <= 256 .and. nstor >= 32)) then
@@ -615,7 +607,12 @@ subroutine trans_ev_cpu_&
         else ! useGPU
           if(is_sycl_cpu) then
             num = max_local_rows*max_stored_rows * size_of_datatype
-            successGPU = gpu_memcpy(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost, my_stream)
+            successGPU = gpu_stream_synchronize(my_stream)
+#else
+            successGPU = gpu_memcpy      (int(loc(hvm(1,1)),kind=c_intptr_t), hvm_dev, num, gpuMemcpyDeviceToHost)
+#endif
             check_memcpy_gpu("trans_ev hvm_dev -> hvm", successGPU)
             
             tmat = 0
@@ -638,7 +635,13 @@ subroutine trans_ev_cpu_&
 
           if(is_sycl_cpu) then
             num_el = max_stored_rows*max_stored_rows
-            successGPU = gpu_memcpy(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num_el*size_of_datatype, gpuMemcpyHostToDevice)
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memcpy_async(tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                          gpuMemcpyHostToDevice, my_stream)
+#else
+            successGPU = gpu_memcpy      (tmat_dev, int(loc(tmat(1,1)),kind=c_intptr_t), num_el*size_of_datatype, &
+                                          gpuMemcpyHostToDevice)
+#endif
             check_memcpy_gpu("trans_ev", successGPU)
           endif
         endif ! useGPU

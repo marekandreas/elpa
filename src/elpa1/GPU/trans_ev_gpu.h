@@ -130,12 +130,10 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, const T *t
   // NVTX_RANGE_PUSH("loop: copy hvm <- hvb")
   // do ic = ics, ice
   //   l_rows = local_index(ic-1, my_prow, np_rows, nblk, -1) ! # rows of Householder Vector
-  //    ! if tau==0, reflector is identity => make this column inactive
-  //    if (tau(ic) == ZERO) then
-  //      hvm(1:l_rows, nstor+1) = 0 ! PETERDEBUG111: cleanup, it's already zero?
-  //    else
-  //      hvm(1:l_rows, nstor+1) = hvb(nb+1:nb+l_rows)
-  //    endif
+  //     ! if tau==0, reflector is identity and the column inactive (hvm(1:l_rows,nstor+1) = 0)
+  //     if (tau(ic) /= ZERO) then
+  //       hvm(1:l_rows, nstor+1) = hvb(nb+1:nb+l_rows)
+  //     endif
   //   nstor = nstor+1
   //   nb = nb+l_rows
   // enddo
@@ -150,9 +148,6 @@ __global__ void gpu_copy_hvm_hvb_kernel(T *hvm_dev, const T *hvb_dev, const T *t
     int shift_hvm = ld_hvm*(ic-ics+nstor);
 
     if (elpaDeviceEqualBool(tau_dev[ic-1], Zero)) {
-      for (int i=i0; i < ld_hvm; i+=blockDim.x) {
-        hvm_dev[i + shift_hvm] = Zero; // ! PETERDEBUG111: cleanup, it's already zero?
-      }
       continue;
     }
 
