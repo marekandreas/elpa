@@ -420,6 +420,22 @@ subroutine trans_ev_cpu_&
     endif
   endif
 #endif
+
+  if (useGPU) then
+    call obj%timer%start("gpu_memset")
+    num_el = max_stored_rows*max_stored_rows
+#ifdef WITH_GPU_STREAMS
+    successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
+    if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else
+    successGPU = gpu_memset(tmat_dev, 0, num_el*size_of_datatype)
+#endif
+    check_memcpy_gpu("trans_ev: tmat_dev", successGPU)
+    call obj%timer%stop("gpu_memset")
+  else
+    tmat = 0
+  endif
+
   do istep = 1, na, blockStep
     ics = MAX(istep,3)
     ice = MIN(istep+nblk-1,na)
@@ -556,22 +572,6 @@ subroutine trans_ev_cpu_&
 
       ! Calculate scalar products of stored vectors.
       ! This can be done in different ways, we use dsyrk or zherk
-      if (useGPU) then
-        call obj%timer%start("gpu_memset")
-        ! PETERDEBUG111: is this really needed for GPU?
-        num_el = max_stored_rows*max_stored_rows
-#ifdef WITH_GPU_STREAMS
-        successGPU = gpu_memset_async(tmat_dev, 0, num_el*size_of_datatype, my_stream)
-        if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else
-        successGPU = gpu_memset(tmat_dev, 0, num_el*size_of_datatype)
-#endif
-        check_memcpy_gpu("trans_ev: tmat_dev", successGPU)
-        call obj%timer%stop("gpu_memset")
-      else
-        tmat = 0 ! PETERDEBUG111: not needed or overkill? needed once? same for GPU
-      endif
-
       if (l_rows>0) then
         if (useGPU .and. .not. is_sycl_cpu) then
           call obj%timer%start("gpublas_syrk")
