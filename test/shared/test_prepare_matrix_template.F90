@@ -79,11 +79,11 @@
 
       implicit none
 #include "./test_precision_kinds.F90"
-      TEST_INT_TYPE, intent(in)                     :: myid, na, sc_desc(:)
-      MATH_DATATYPE(kind=rck), intent(inout)        :: z(:,:), a(:,:), as(:,:)
-      integer(kind=c_int), intent(in), optional     :: is_hermitian ! default: 1
-      integer(kind=c_int), intent(in), optional     :: is_skewsymmetric ! default: 0
-      logical                                       :: hermitian, skewsymmetric
+      TEST_INT_TYPE, intent(in)                 :: myid, na, sc_desc(:)
+      MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:), a(:,:), as(:,:)
+      integer(kind=c_int), intent(in), optional :: is_hermitian ! default: 1
+      integer(kind=c_int), intent(in), optional :: is_skewsymmetric ! default: 0
+      logical                                   :: hermitian, skewsymmetric
 
 #if COMPLEXCASE == 1
       real(kind=rk), allocatable                :: xr(:,:)
@@ -236,7 +236,7 @@
     !c>                                             int is_hermitian, int is_skewsymmetric);
 #endif
 #endif /* COMPLEXCASE */
-  
+
 subroutine prepare_matrix_random_&
 &MATH_DATATYPE&
 &_wrapper_&
@@ -252,8 +252,8 @@ subroutine prepare_matrix_random_&
       implicit none
 #include "./test_precision_kinds.F90"
 
-      TEST_INT_TYPE, value   :: myid, na, na_rows, na_cols
-      TEST_INT_TYPE, value          :: is_hermitian, is_skewsymmetric
+      TEST_INT_TYPE, value    :: myid, na, na_rows, na_cols
+      integer, value          :: is_hermitian, is_skewsymmetric
 
       TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
