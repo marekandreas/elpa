@@ -664,7 +664,8 @@ program test
   nontridi_damping    = (1.0e-16_c_double, 0.0_c_double)
 #endif
 
-  call prepare_matrix_noisytridi(na, myid, sc_desc, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol, nontridi_damping=nontridi_damping)
+  call prepare_matrix_noisytridi(na, myid, sc_desc, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol, &
+                                 nontridi_damping=nontridi_damping)
   do_test_numeric_residual = .true.
 #endif /* (TEST_MATRIX_NOISYTRIDI) */
 #if defined(TEST_MATRIX_NOISYTRIDI) && !defined(TEST_EIGENVECTORS)
