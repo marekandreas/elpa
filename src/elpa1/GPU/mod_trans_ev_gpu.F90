@@ -130,25 +130,6 @@ module trans_ev_gpu
   end interface
 
   interface
-    subroutine gpu_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                                 SM_count, debug, my_stream) &
-#if   defined(WITH_NVIDIA_GPU_VERSION)
-                                bind(C, name="cuda_update_tmat_FromC")
-#elif defined(WITH_AMD_GPU_VERSION)
-                                bind(C, name="hip_update_tmat_FromC")
-#elif defined(WITH_SYCL_GPU_VERSION)
-                                bind(C, name="sycl_update_tmat_FromC")
-#endif
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
-      integer(kind=c_int), value      :: max_stored_rows, nc, n, SM_count, debug
-      integer(kind=c_intptr_t), value :: my_stream
-    end subroutine
-  end interface
-
-  interface
     subroutine gpu_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
                                             SM_count, debug, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
@@ -163,25 +144,6 @@ module trans_ev_gpu
       character(1, c_char), value     :: dataType
       integer(kind=c_intptr_t), value :: tmat_dev, tau_dev
       integer(kind=c_int), value      :: max_stored_rows, nstor, tau_offset, SM_count, debug
-      integer(kind=c_intptr_t), value :: my_stream
-    end subroutine
-  end interface
-
-  interface
-    subroutine gpu_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                          SM_count, debug, my_stream) &
-#if   defined(WITH_NVIDIA_GPU_VERSION)
-                                bind(C, name="cuda_trmv_FromC")
-#elif defined(WITH_AMD_GPU_VERSION)
-                                bind(C, name="hip_trmv_FromC")
-#elif defined(WITH_SYCL_GPU_VERSION)
-                                bind(C, name="sycl_trmv_FromC")
-#endif
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
-      integer(kind=c_int), value      :: max_stored_rows, n, SM_count, debug
       integer(kind=c_intptr_t), value :: my_stream
     end subroutine
   end interface
@@ -243,21 +205,6 @@ module trans_ev_gpu
 #endif
     end subroutine
 
-    subroutine gpu_update_tmat(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                                SM_count, debug, my_stream)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, tau_curr_dev
-      integer(kind=c_int), value      :: max_stored_rows, nc, n, SM_count, debug
-      integer(kind=c_intptr_t), value :: my_stream
-
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_update_tmat_c(dataType, tmat_dev, h_dev, tau_curr_dev, max_stored_rows, nc, n, &
-                             SM_count, debug, my_stream)
-#endif
-    end subroutine
-
     subroutine gpu_set_tmat_diag_from_tau(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
                                            SM_count, debug, my_stream)
       use, intrinsic :: iso_c_binding
@@ -269,20 +216,6 @@ module trans_ev_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       call gpu_set_tmat_diag_from_tau_c(dataType, tmat_dev, tau_dev, max_stored_rows, nstor, tau_offset, &
                                         SM_count, debug, my_stream)
-#endif
-    end subroutine
-
-    subroutine gpu_trmv(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                         SM_count, debug, my_stream)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      character(1, c_char), value     :: dataType
-      integer(kind=c_intptr_t), value :: tmat_dev, h_dev, result_buffer_dev, tau_curr_dev
-      integer(kind=c_int), value      :: max_stored_rows, n, SM_count, debug
-      integer(kind=c_intptr_t), value :: my_stream
-#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
-      call gpu_trmv_c(dataType, tmat_dev, h_dev, result_buffer_dev, tau_curr_dev, max_stored_rows, n, &
-                      SM_count, debug, my_stream)
 #endif
     end subroutine
 
