@@ -336,7 +336,7 @@ subroutine trans_ev_cpu_&
     !&", "hvm1", istat, errorMessage)
 
     if (.not. useCCL) then
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_local_rows*max_stored_rows) * size_of_datatype
         successGPU = gpu_malloc_host(hvm1_host,num)
         check_alloc_gpu("trans_ev: hvm1_host", successGPU)
@@ -345,7 +345,7 @@ subroutine trans_ev_cpu_&
         allocate(hvm1(max_local_rows*max_stored_rows))
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         num = (max_stored_rows*max_stored_rows) * size_of_datatype
         successGPU = gpu_malloc_host(tmat_host,num)
         check_alloc_gpu("trans_ev: tmat_host", successGPU)
@@ -957,7 +957,7 @@ subroutine trans_ev_cpu_&
     !endif
 
     if (.not. useCCL) then
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
         successGPU = gpu_free_host(hvm1_host)
         check_host_dealloc_gpu("trans_ev: hvm1_host", successGPU)
         nullify(hvm1)

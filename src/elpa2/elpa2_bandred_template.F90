@@ -350,7 +350,7 @@ max_threads, isSkewsymmetric)
     check_alloc_gpu("bandred: a_dev", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_register(int(loc(vav),kind=c_intptr_t), &
                   nbw * nbw * size_of_datatype,&
@@ -436,7 +436,7 @@ max_threads, isSkewsymmetric)
   if (useGPU) then
  
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_register(int(loc(a_mat),kind=c_intptr_t), &
                   matrixRows*matrixCols*size_of_datatype, gpuHostRegisterDefault)
@@ -511,7 +511,7 @@ max_threads, isSkewsymmetric)
     check_allocate("bandred: vr", istat, errorMessage)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_malloc_host(vmr_host,vmr_size*size_of_datatype)
       check_host_alloc_gpu("bandred: vmr_host", successGPU)
@@ -527,7 +527,7 @@ max_threads, isSkewsymmetric)
 
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_malloc_host(umc_host,umc_size*size_of_datatype)
       check_host_alloc_gpu("bandred: umc_host", successGPU)
@@ -570,7 +570,7 @@ max_threads, isSkewsymmetric)
       check_allocate("bandred: vr", istat, errorMessage)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_malloc_host(vmr_host, max_l_rows*2*n_cols*size_of_datatype)
         
@@ -589,7 +589,7 @@ max_threads, isSkewsymmetric)
 
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         successGPU = gpu_malloc_host(umc_host,max_l_cols*2*n_cols*size_of_datatype)
         check_host_alloc_gpu("bandred: umc_host", successGPU)
@@ -658,7 +658,7 @@ max_threads, isSkewsymmetric)
 
       if (do_memcpy) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -870,7 +870,7 @@ max_threads, isSkewsymmetric)
         ! store column tiles back to GPU
         if (do_memcpy) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -988,7 +988,7 @@ max_threads, isSkewsymmetric)
       !vmrGPU(1:max_l_rows * n_cols) = vmrCPU(1:max_l_rows,1:n_cols)
       if (do_memcpy) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
@@ -1280,7 +1280,7 @@ max_threads, isSkewsymmetric)
 
         if (useGPU) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -1333,7 +1333,7 @@ max_threads, isSkewsymmetric)
 #endif
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+          if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -2058,7 +2058,7 @@ max_threads, isSkewsymmetric)
     if (useGPU) then
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         if (associated(umcGPU_2d)) then
           nullify(umcGPU_2d)
@@ -2073,7 +2073,7 @@ max_threads, isSkewsymmetric)
         deallocate(vmrGPU_2d)
       endif
 
-      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+      if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
         if (associated(umcGPU)) then
           nullify(umcGPU)
@@ -2169,7 +2169,7 @@ max_threads, isSkewsymmetric)
     check_dealloc_gpu("bandred: tmat_dev ", successGPU)
 
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       successGPU = gpu_host_unregister(int(loc(vav),kind=c_intptr_t))
       check_host_unregister_gpu("bandred: vav", successGPU)
@@ -2179,7 +2179,7 @@ max_threads, isSkewsymmetric)
 
 #ifndef WITH_OPENMP_TRADITIONAL
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
-    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU) then
+    if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
       if (associated(umcGPU)) then
         nullify(umcGPU)
