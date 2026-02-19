@@ -268,7 +268,7 @@ subroutine tridiag_cpu_&
   logical                                       :: useGPU
   integer(kind=c_int)                           :: pointerMode
 
-  integer(kind=ik)                              :: string_length, sm_count
+  integer(kind=ik)                              :: string_length, SM_count
 
   useGPU = .false.
 #ifdef TRIDIAG_GPU_BUILD
@@ -1518,7 +1518,7 @@ subroutine tridiag_cpu_&
     if (useGPU .and. useCCL) then
       call obj%timer%start("gpu_dot_product_kernel")
       NVTX_RANGE_PUSH("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
-      call gpu_dot_product(PRECISION_CHAR, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, sm_count, my_stream)
+      call gpu_dot_product(PRECISION_CHAR, l_cols, v_col_dev, 1, u_col_dev, 1, vav_dev, wantDebug, SM_count, my_stream)
       NVTX_RANGE_POP("kernel: gpu_dot_product_double vav_dev=v_col_dev*u_col_dev")
       call obj%timer%stop("gpu_dot_product_kernel")
     endif ! useGPU .and. useCCL
@@ -1746,7 +1746,7 @@ subroutine tridiag_cpu_&
         NVTX_RANGE_PUSH("gpu_update_matrix_element_add_kernel")
         call gpu_update_matrix_element_add (PRECISION_CHAR, vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                             l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric, wantDebug, my_stream)
+                                            isSkewsymmetric, wantDebug, SM_count, my_stream)
         NVTX_RANGE_POP("gpu_update_matrix_element_add_kernel")
         if (wantDebug) call obj%timer%stop("gpu_update_matrix_element_add_kernel")
 

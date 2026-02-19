@@ -174,7 +174,7 @@ module tridiag_gpu
   interface
     subroutine gpu_update_matrix_element_add_c (dataType, vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev, &
                                                 l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                                isSkewsymmetric_int, wantDebug_int, my_stream) &
+                                                isSkewsymmetric_int, wantDebug_int, SM_count, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                               bind(C, name="cuda_update_matrix_element_add_FromC")
 #elif defined(WITH_AMD_GPU_VERSION)
@@ -188,7 +188,7 @@ module tridiag_gpu
       integer(kind=c_intptr_t), value  :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       integer(kind=c_int), value       :: l_rows, l_cols, matrixRows, max_local_rows, max_local_cols
       integer(kind=c_int), value       :: istep, n_stored_vecs
-      integer(kind=c_int), value       :: isSkewsymmetric_int, wantDebug_int
+      integer(kind=c_int), value       :: isSkewsymmetric_int, wantDebug_int, SM_count
       integer(kind=c_intptr_t), value  :: my_stream
     end subroutine
   end interface
@@ -380,7 +380,7 @@ module tridiag_gpu
 
     subroutine gpu_update_matrix_element_add (dataType, vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                               l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                              isSkewsymmetric, wantDebug, my_stream)
+                                              isSkewsymmetric, wantDebug, SM_count, my_stream)
       use, intrinsic :: iso_c_binding
       implicit none
       character(1, c_char), value     :: dataType
@@ -389,7 +389,7 @@ module tridiag_gpu
       integer(kind=c_intptr_t), value :: vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev
       logical, intent(in)             :: isSkewsymmetric, wantDebug
       integer(kind=c_intptr_t), value :: my_stream
-      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int
+      integer(kind=c_int)             :: isSkewsymmetric_int, wantDebug_int, SM_count
 
       isSkewsymmetric_int = 0
       wantDebug_int = 0
@@ -399,7 +399,7 @@ module tridiag_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
       call gpu_update_matrix_element_add_c (dataType, vu_stored_rows_dev, uv_stored_cols_dev, a_dev, d_vec_dev,  &
                                             l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, &
-                                            isSkewsymmetric_int, wantDebug_int, my_stream)
+                                            isSkewsymmetric_int, wantDebug_int, SM_count, my_stream)
 #endif
     end subroutine
 
