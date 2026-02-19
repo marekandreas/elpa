@@ -294,9 +294,13 @@ subroutine trans_ev_cpu_&
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
 
-  call obj%get("max_stored_rows",max_stored_rows_fac, error)  ! PETERDEBUG111: default 256. 
-                                                              ! check whether for GPU it should be increased
-                                                              ! size for GEMM should be at least 5000 (A100)
+  call obj%get("max_stored_rows", max_stored_rows_fac, error)
+  ! Use an alternative default for GPU run, if not enforced by user
+  if (useGPU .and. obj%is_set("max_stored_rows")==0) then
+    max_stored_rows_fac = 1024
+  endif
+  max_stored_rows = max((max_stored_rows_fac/nblk)*nblk, nblk)
+  if (wantDebug .and. obj%mpi_setup%myRank_comm_parent==0) print *, "ELPA trans_ev: max_stored_rows=", max_stored_rows
 
   totalblocks = (na-1)/nblk + 1
   max_blocks_row = (totalblocks-1)/np_rows + 1
@@ -304,10 +308,6 @@ subroutine trans_ev_cpu_&
 
   max_local_rows = max_blocks_row*nblk
   max_local_cols = max_blocks_col*nblk
-
-  max_stored_rows = (max_stored_rows_fac/nblk+1)*nblk
-
-  if (wantDebug .and. obj%mpi_setup%myRank_comm_parent==0) print *, "ELPA trans_ev: max_stored_rows=", max_stored_rows
 
   if (.not. useGPU) then
     allocate(tmat(max_stored_rows,max_stored_rows), stat=istat, errmsg=errorMessage)
@@ -566,7 +566,6 @@ subroutine trans_ev_cpu_&
       NVTX_RANGE_POP("loop: copy hvm <- hvb")
     endif ! useGPU
 
-    ! PETERDEBUG111: for GPU, and big max_stored_rows, isn't it more efficient to do one MPI_send instead of many?
     ! Please note: for smaller matix sizes (na/np_rows<=256), a value of 32 for nstor is enough!
     if (nstor+nblk > max_stored_rows .or. istep+nblk > na .or. (na/np_rows <= 256 .and. nstor >= 32)) then
 
