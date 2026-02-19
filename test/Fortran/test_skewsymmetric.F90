@@ -161,7 +161,7 @@ program test
   logical                                :: skip_check_correctness
 
   call read_input_parameters_traditional(na, nev, nblk, write_to_file, skip_check_correctness)
-  print *, " skip_check_correctness=", skip_check_correctness ! PETERDEBUG111: cleanup after testing
+
   call setup_mpi(myid, nprocs)
 #ifdef HAVE_REDIRECT
 #ifdef WITH_MPI
@@ -334,7 +334,6 @@ program test
     status = check_correctness_evp_numeric_residuals_complex_double(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
                                                 nblk, myid, np_rows,np_cols, my_prow, my_pcol)
 #endif
-    status = 0 ! PETERDEBUG111: cleanup after testing
     call check_status(status, myid)
   endif ! (.not. skip_check_correctness)
 

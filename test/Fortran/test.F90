@@ -1165,15 +1165,6 @@ program test
 
 ! _________________________________________________________________________________________________________________________________
 
-! !PETERDEBUG111-printmat cleanup
-! block
-! integer :: i
-! print *, "a (initial):"
-! do i = 1, size(a,1)
-!   print '(*(g0,1x))', a(i,:)
-! end do
-! end block
-
 ! The actual solve step
 
 #if defined(TEST_EIGENVECTORS)
