@@ -657,11 +657,6 @@ extern "C" void CONCATENATE(ELPA_GPU, _store_u_v_in_uv_vu_FromC) (char dataType,
 template <typename T, typename T_real>
 __global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                                       int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, int isSkewsymmetric){
-  
-  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
-  __shared__ T cache[threadsPerBlock];
-  int tid = threadIdx.x + blockIdx.x*blockDim.x;
-
 /*
       if (n_stored_vecs > 0) then
         ! update a_mat (only one elememt!)
@@ -680,13 +675,10 @@ __global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
 #endif
 */
 
-  // if (threadIdx.x==0)
-  //   { 
-  //   if (isSkewsymmetric) 
-  //     d_vec_dev[istep-1-1] = 0.0;
-  //   else 
-  //     d_vec_dev[istep-1-1] = elpaDeviceRealPart(a_dev[(l_rows-1) + matrixRows*(l_cols-1)]); // set initial value // TODO_23_11: move this to the previous kernel for thread safety
-  //   }
+  const int threadsPerBlock = MAX_THREADS_PER_BLOCK;
+  __shared__ T cache[threadsPerBlock];
+  int tid = threadIdx.x + blockIdx.x*blockDim.x;
+
   if (n_stored_vecs > 0)
     {
 
@@ -723,9 +715,9 @@ __global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
 template <typename T, typename T_real>
 void gpu_update_matrix_element_add (T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *a_dev, T_real *d_vec_dev, 
                                     int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, 
-                                    int isSkewsymmetric, int wantDebug, gpuStream_t my_stream){
+                                    int isSkewsymmetric, int wantDebug, int SM_count, gpuStream_t my_stream){
 
-  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, 32); // PETERDEBUG111: 32 --> SM_count
+  int blocks = std::min((2*n_stored_vecs+MAX_THREADS_PER_BLOCK-1)/MAX_THREADS_PER_BLOCK, SM_count);
   if (n_stored_vecs==0) blocks=1;
   dim3 blocksPerGrid = dim3(blocks,1,1);
   dim3 threadsPerBlock = dim3(MAX_THREADS_PER_BLOCK,1,1);
@@ -754,15 +746,15 @@ void gpu_update_matrix_element_add (T *vu_stored_rows_dev, T *uv_stored_cols_dev
 
 extern "C" void CONCATENATE(ELPA_GPU, _update_matrix_element_add_FromC) (char dataType, intptr_t vu_stored_rows_dev, intptr_t uv_stored_cols_dev, intptr_t a_dev, intptr_t d_vec_dev, 
                                                             int l_rows, int l_cols, int matrixRows, int max_local_rows, int max_local_cols, int istep, int n_stored_vecs, 
-                                                            int isSkewsymmetric, int wantDebug, gpuStream_t my_stream){
+                                                            int isSkewsymmetric, int wantDebug, int SM_count, gpuStream_t my_stream){
   if      (dataType=='D') gpu_update_matrix_element_add<double, double>((double *)vu_stored_rows_dev, (double *)uv_stored_cols_dev, (double *)a_dev, (double *)d_vec_dev, 
-                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, SM_count, my_stream);
   else if (dataType=='S') gpu_update_matrix_element_add<float,  float> ((float  *)vu_stored_rows_dev, (float  *)uv_stored_cols_dev, (float  *)a_dev, (float  *)d_vec_dev,
-                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, SM_count, my_stream);
   else if (dataType=='Z') gpu_update_matrix_element_add<gpuDoubleComplex, double>((gpuDoubleComplex *)vu_stored_rows_dev, (gpuDoubleComplex *)uv_stored_cols_dev, (gpuDoubleComplex *)a_dev, (double *)d_vec_dev, 
-                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, SM_count, my_stream);
   else if (dataType=='C') gpu_update_matrix_element_add<gpuFloatComplex , float> ((gpuFloatComplex  *)vu_stored_rows_dev, (gpuFloatComplex  *)uv_stored_cols_dev, (gpuFloatComplex  *)a_dev, (float  *)d_vec_dev, 
-                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, my_stream);
+                                                        l_rows, l_cols, matrixRows, max_local_rows, max_local_cols, istep, n_stored_vecs, isSkewsymmetric, wantDebug, SM_count, my_stream);
   else {
     printf("Error in gpu_update_matrix_element_add_FromC: Unsupported data type\n");
   }
