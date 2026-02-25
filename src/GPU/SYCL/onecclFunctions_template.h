@@ -1,4 +1,4 @@
-#include <cstring>
+ginclude <cstring>
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #ifdef DEBUG_SYCL
@@ -19,12 +19,16 @@ using namespace sycl_be;
 extern "C" {
 
   int onecclGroupStartFromC() {
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
     ccl::group_start();
+#endif
     return 1;
   }
 
   int onecclGroupEndFromC() {
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
     ccl::group_end();
+#endif
     return 1;
   }
 
@@ -101,6 +105,12 @@ extern "C" {
   }
 
   int onecclRedOpAvgFromC(void) {
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20250000
+  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::custom
+#else
+  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::avg
+#endif
+
     return static_cast<int>(ccl::reduction::avg);
   }
 
@@ -172,7 +182,7 @@ extern "C" {
   int onecclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, int root, ccl::communicator *onecclComm, QueueData *qd) {
     QueueData *qData = getQueueDataOrDefault(qd);
     if (onecclOp == ccl::reduction::custom) {
-      errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
+      errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA.");
       return 0;
     }
 
