@@ -97,10 +97,8 @@ int getDebugEnvVar() {
 
 int getBackendEnvVar() {
   using namespace std::string_literals;
-  auto backendForceEnvVar = getEnvInt("ELPA_FORCE_gpu_sycl_backend"s);
-  auto backendDefaultEnvVar = getEnvInt("ELPA_DEFAULT_gpu_sycl_backend"s);
-  return (backendForceEnvVar.has_value())   ? backendForceEnvVar.value() :
-         (backendDefaultEnvVar.has_value()) ? backendDefaultEnvVar.value() : 0;
+  auto backendEnvVar = getEnvInt("ELPA_EXTRA_gpu_sycl_backend"s);
+  return (backendEnvVar.has_value()) ? backendEnvVar.value() : 0;
 } 
 
 //--------------------------------------------------------------------------------------------
