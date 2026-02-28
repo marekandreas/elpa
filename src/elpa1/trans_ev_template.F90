@@ -188,12 +188,7 @@ subroutine trans_ev_cpu_&
   integer(kind=c_intptr_t)                      :: ccl_comm_rows, ccl_comm_cols
   integer(kind=c_int)                           :: cclDataType
   integer(kind=ik)                              :: k_datatype
-  ! workaround for SYCL CPU devices: SYRK/HERK produces wrong results
-  logical :: is_sycl_cpu
-  is_sycl_cpu = .false.
-#if defined(WITH_SYCL_GPU_VERSION)
-  success = sycl_getiscpudevice(is_sycl_cpu)
-#endif
+  logical                                       :: is_sycl_cpu ! for workaround for SYCL CPU devices: SYRK/HERK produces wrong results
 
   success = .true.
 
@@ -205,6 +200,11 @@ subroutine trans_ev_cpu_&
   useGPU = .true.
   gpublasHandle = obj%gpu_setup%gpublasHandleArray(0)
   SM_count = obj%gpu_setup%gpuSMcount
+#endif
+
+  is_sycl_cpu = .false.
+#if defined(WITH_SYCL_GPU_VERSION)
+  if (useGPU) success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
 
 #ifdef WITH_GPU_STREAMS
