@@ -505,9 +505,6 @@ int main(int argc, char** argv) {
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
   assert_elpa_ok(error_elpa);
-
-  elpa_set(handle, "gpu_sycl_backend", 0, &error_elpa);
-  assert_elpa_ok(error_elpa);
 #endif
 
 #if defined(TEST_SOLVE_2STAGE) && defined(TEST_KERNEL)

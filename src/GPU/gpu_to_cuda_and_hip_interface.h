@@ -125,7 +125,7 @@
 #define gpuFloatComplex std::complex<float>
 #define make_gpuDoubleComplex std::complex<double>
 #define make_gpuFloatComplex std::complex<float>
-#define MAX_THREADS_PER_BLOCK 1024
+#define MAX_THREADS_PER_BLOCK 512
 #define MIN_THREADS_PER_BLOCK 32
 #define ELPA_GPU sycl
 #endif

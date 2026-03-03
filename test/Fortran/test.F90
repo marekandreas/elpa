@@ -220,6 +220,10 @@ program test
   EV_TYPE                             :: diagonalElement, subdiagonalElement
 #endif
 
+#if defined(TEST_MATRIX_NOISYTRIDI)
+  MATRIX_TYPE                         :: nontridi_damping
+#endif
+
   TEST_INT_TYPE                       :: status
   integer(kind=c_int)                 :: error_elpa
 
@@ -573,7 +577,7 @@ program test
   do_test_toeplitz_eigenvalues = .false.
 #endif /* TEST_MATRIX_ANALYTIC */
 #if defined(TEST_MATRIX_ANALYTIC) && (defined(TEST_SOLVE_TRIDIAGONAL) || defined(TEST_CHOLESKY))
-#error "Analytic matrix is not allowd in this configuration"
+#error "Analytic matrix is not allowed in this configuration"
 #endif
 
 #if defined(TEST_MATRIX_TOEPLITZ)
@@ -648,6 +652,25 @@ program test
   do_test_frank_eigenvalues = .false.
   do_test_toeplitz_eigenvalues = .false.
 #endif /* TEST_MATRIX_BLOCKTRIDI */
+
+#if defined(TEST_MATRIX_NOISYTRIDI) && defined(TEST_EIGENVECTORS)
+#if defined(TEST_REAL) && defined(TEST_SINGLE)
+  nontridi_damping    = 1.0e-7_c_float
+#elif defined(TEST_REAL) && defined(TEST_DOUBLE)
+  nontridi_damping    = 1.0e-16_c_double
+#elif defined(TEST_COMPLEX) && defined(TEST_SINGLE)
+  nontridi_damping    = (1.0e-7_c_float, 0.0_c_float)
+#elif defined(TEST_COMPLEX) && defined(TEST_DOUBLE)
+  nontridi_damping    = (1.0e-16_c_double, 0.0_c_double)
+#endif
+
+  call prepare_matrix_noisytridi(na, myid, sc_desc, a, q, as, nblk, np_rows, np_cols, my_prow, my_pcol, &
+                                 nontridi_damping=nontridi_damping)
+  do_test_numeric_residual = .true.
+#endif /* (TEST_MATRIX_NOISYTRIDI) */
+#if defined(TEST_MATRIX_NOISYTRIDI) && !defined(TEST_EIGENVECTORS)
+#error "Noisy tridi matrix is not allowed in this configuration"
+#endif
 
 #if defined(TEST_MATRIX_FRANK) && !defined(TEST_SOLVE_TRIDIAGONAL) && !defined(TEST_CHOLESKY)
   ! the random matrix can be used in allmost all tests; but for some no
@@ -854,8 +877,6 @@ program test
 
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
   call e%set("intel-gpu", TEST_GPU, error_elpa)
-  assert_elpa_ok(error_elpa)
-  call e%set("gpu_sycl_backend", 0, error_elpa) ! By default, use Level Zero backend for Intel GPUs.
   assert_elpa_ok(error_elpa)
 #endif
 
@@ -1142,15 +1163,6 @@ program test
 #endif
 
 ! _________________________________________________________________________________________________________________________________
-
-! !PETERDEBUG111-printmat cleanup
-! block
-! integer :: i
-! print *, "a (initial):"
-! do i = 1, size(a,1)
-!   print '(*(g0,1x))', a(i,:)
-! end do
-! end block
 
 ! The actual solve step
 

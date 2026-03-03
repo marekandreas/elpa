@@ -46,6 +46,7 @@ matrix_flag = {
     "toeplitz":    "-DTEST_MATRIX_TOEPLITZ",
     "frank":       "-DTEST_MATRIX_FRANK",
     "blocktridi":  "-DTEST_MATRIX_BLOCKTRIDI",
+    "noisytridi":  "-DTEST_MATRIX_NOISYTRIDI",
 }
 
 qr_flag = {
@@ -173,7 +174,11 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
         continue
     
     # blocktridi matrix used only for solve_tridiagonal
-    if (t != "solve_tridiagonal" and m == "blocktridi"):
+    if (m == "blocktridi" and t != "solve_tridiagonal"):
+        continue
+    
+    # noisytridi matrix used only for eigenvectors in Fortran
+    if (m == "noisytridi" and (t != "eigenvectors" or lang != "Fortran")):
         continue
     
     # solve generalized only for random matrix in 1stage
