@@ -1,4 +1,4 @@
-ginclude <cstring>
+#include <cstring>
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 #ifdef DEBUG_SYCL
@@ -111,7 +111,7 @@ extern "C" {
   #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::avg
 #endif
 
-    return static_cast<int>(ccl::reduction::avg);
+    return static_cast<int>(ELPA_ONECCL_REDUCTION_AVG);
   }
 
   int onecclDataTypeOnecclIntFromC(void) {
