@@ -105,10 +105,10 @@ extern "C" {
   }
 
   int onecclRedOpAvgFromC(void) {
-#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER < 20250000
-  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::custom
-#else
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250100
   #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::avg
+#else
+  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::custom
 #endif
 
     return static_cast<int>(ELPA_ONECCL_REDUCTION_AVG);
