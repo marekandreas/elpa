@@ -270,7 +270,7 @@ void gpu_copy_q_slice_to_qtmp2 (T *q_dev, T *qtmp2_dev, int *idxq1_dev, int *l_c
                                 const int debug, gpuStream_t my_stream){
   
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(1,32,32);
+  sycl::range<3> threadsPerBlock(1,16,16);
   sycl::range<3> blocks( 1,
                         (ncnt   + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1), 
                         (l_rows + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));
@@ -331,7 +331,7 @@ void gpu_copy_qtmp2_slice_to_q (T *q_dev, T *qtmp2_dev, int *idxq1_dev, int *l_c
                                 const int debug, gpuStream_t my_stream){
   
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(1,32,32);
+  sycl::range<3> threadsPerBlock(1,16,16);
   sycl::range<3> blocks( 1,
                         (l_rows + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1),
                         (ncnt   + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));
@@ -389,7 +389,7 @@ void gpu_fill_ev (T *ev_dev, T *d1u_dev, T *dbase_dev, T *ddiff_dev, T *zu_dev, 
                   int na, int gemm_dim_l, int gemm_dim_m, int nnzu, int ns, int ncnt, int debug, gpuStream_t my_stream){
   
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(1,32,32);
+  sycl::range<3> threadsPerBlock(1,16,16);
   sycl::range<3> blocks( 1,
                         (ncnt + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1), 
                         (nnzu + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));
@@ -543,7 +543,7 @@ void gpu_zero_q(T *q_dev, int *p_col_out_dev, int *l_col_out_dev,
                 const int debug, gpuStream_t my_stream) {
 
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(1,32,32);
+  sycl::range<3> threadsPerBlock(1,16,16);
   sycl::range<3> blocks( 1,
                         ((l_rqe-l_rqs+1) + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1), 
                         (na              + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));
@@ -640,7 +640,7 @@ void gpu_copy_qtmp1_to_qtmp1_tmp (T *qtmp1_dev, T* qtmp1_tmp_dev, const int gemm
                                   const int debug, gpuStream_t my_stream) {
   
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(1,32,32);
+  sycl::range<3> threadsPerBlock(1,16,16);
   sycl::range<3> blocks( 1,
                         (gemm_dim_l + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1), 
                         (gemm_dim_k + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));

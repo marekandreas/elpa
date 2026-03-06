@@ -179,7 +179,7 @@ void gpu_distribute_global_column(T *g_col_dev, T *l_col_dev, int g_col_dim1, in
   int nbe = (noff+nlen-1)/(nblk*np_rows);
 
   sycl::queue q = getQueueOrDefault(my_stream);
-  sycl::range<3> threadsPerBlock(2,16,32);
+  sycl::range<3> threadsPerBlock(2,16,16);
   sycl::range<3> blocks( (matrixCols + threadsPerBlock.get(0) - 1) / threadsPerBlock.get(0),
                         (nbe-nbs+1 + threadsPerBlock.get(1) - 1) / threadsPerBlock.get(1), 
                         (nlen + threadsPerBlock.get(2) - 1) / threadsPerBlock.get(2));

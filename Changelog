@@ -3,7 +3,7 @@ Changelog for next release
 
 - not yet decided
 
-Changelog for ELPA 2026.02.001.rc1
+Changelog for ELPA 2026.02.001
 - speed up of ELPA1-GPU tridiagonalization by at least 10%
 - speed up of ELPA1-GPU backtransformation by at least 10%
 

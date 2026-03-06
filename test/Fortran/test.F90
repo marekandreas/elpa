@@ -878,8 +878,6 @@ program test
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
   call e%set("intel-gpu", TEST_GPU, error_elpa)
   assert_elpa_ok(error_elpa)
-  call e%set("gpu_sycl_backend", 0, error_elpa) ! By default, use Level Zero backend for Intel GPUs.
-  assert_elpa_ok(error_elpa)
 #endif
 
 

@@ -63,7 +63,7 @@
 
 #include "../../../GPU/common_device_functions.h"
 
-#define MAX_THREADS_PER_BLOCK 1024
+#define MAX_THREADS_PER_BLOCK 512
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
