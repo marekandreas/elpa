@@ -416,7 +416,9 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
     if (attributes.type == gpuMemoryTypeHost)
 #endif
       {
-      T xf_host_value = *xf_host_or_dev;
+      //T xf_host_value = *xf_host_or_dev; // this causes problems with alignment between Fortran and C++ for complex numbers
+      T xf_host_value;
+      std::memcpy(&xf_host_value, xf_host_or_dev, sizeof(T));
 #ifdef WITH_GPU_STREAMS
       gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
                                                                                              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
@@ -581,8 +583,11 @@ void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_r
     if (attributes.type == gpuMemoryTypeHost)
 #endif
       {
-      T vav_host_value = *vav_host_or_dev;
-      T tau_host_value = *tau_host_or_dev;
+      //T vav_host_value = *vav_host_or_dev;
+      //T tau_host_value = *tau_host_or_dev;
+      T vav_host_value, tau_host_value;
+      std::memcpy(&vav_host_value, vav_host_or_dev, sizeof(T));
+      std::memcpy(&tau_host_value, tau_host_or_dev, sizeof(T));
 #ifdef WITH_GPU_STREAMS
       gpu_store_u_v_in_uv_vu_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(vu_stored_rows_dev, uv_stored_cols_dev, v_row_dev, u_row_dev, 
                                        v_col_dev, u_col_dev, tau_dev, aux_complex_dev, vav_host_value, tau_host_value, 
