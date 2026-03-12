@@ -459,10 +459,13 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle_skewsymmetric));
 
-   elpa_get(handle_skewsymmetric, "solver", &value, &error_elpa);
-   if (myid == 0) {
-     printf("Solver is set to %d \n", value);
-   }
+#ifdef TEST_SOLVER_1STAGE
+  elpa_set(handle_skewsymmetric, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
+#else
+  elpa_set(handle_skewsymmetric, "solver", ELPA_SOLVER_2STAGE, &error_elpa);
+#endif
+  assert_elpa_ok(error_elpa);
+
    /* Solve EV problem */
    elpa_skew_eigenvectors(handle_skewsymmetric, a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, &error_elpa);
    assert_elpa_ok(error_elpa);

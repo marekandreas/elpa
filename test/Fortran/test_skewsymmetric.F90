@@ -299,7 +299,7 @@ program test
   assert_elpa_ok(e_complex%setup())
 
   ! Set runtime options (e.g. solver, GPU usage, ELPA2 kernel)
-  call e_complex%set("solver", elpa_solver_2stage, error_elpa)
+  call e_complex%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
   assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
@@ -379,7 +379,11 @@ program test
 #endif
   assert_elpa_ok(e_skewsymmetric%setup())
 
-  call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)
+#ifdef TEST_SOLVER_1STAGE
+  call e_skewsymmetric%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
+#else
+  call e_skewsymmetric%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+#endif
   assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)

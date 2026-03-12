@@ -859,11 +859,10 @@ program test
 
 #ifdef TEST_SOLVER_1STAGE
   call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
-  assert_elpa_ok(error_elpa)
 #else
   call e%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
-  assert_elpa_ok(error_elpa)
 #endif
+  assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1
   call e%set("nvidia-gpu", TEST_GPU, error_elpa)
