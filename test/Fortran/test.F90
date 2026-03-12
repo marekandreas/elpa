@@ -855,7 +855,7 @@ program test
   ! Setup
   assert_elpa_ok(e%setup())
 
-  ! Set solver and ELPA2 kernel
+  ! Set runtime options (e.g. solver, GPU usage, ELPA2 kernel)
 
 #ifdef TEST_SOLVER_1STAGE
   call e%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
@@ -1162,9 +1162,9 @@ program test
   call e%timer_start(elpa_int_value_to_string(KERNEL_KEY, kernel))
 #endif
 
-! _________________________________________________________________________________________________________________________________
+  ! _________________________________________________________________________________________________________________________________
 
-! The actual solve step
+  ! The actual solve step
 
 #if defined(TEST_EIGENVECTORS)
 #if TEST_QR_DECOMPOSITION == 1
@@ -1599,9 +1599,9 @@ program test
 
 #endif /* TEST_GPU_DEVICE_POINTER_API */
 
-! _________________________________________________________________________________________________________________________________
+  ! _________________________________________________________________________________________________________________________________
      
-! Check the results
+  ! Check the results
 
   if (do_test_analytic_eigenvalues) then
     status = check_correctness_analytic(na, nev, ev, q, nblk, myid, np_rows, np_cols, &

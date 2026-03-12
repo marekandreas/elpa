@@ -378,6 +378,7 @@ int main(int argc, char** argv) {
    /* Setup */
    assert_elpa_ok(elpa_setup(handle_complex));
 
+   /* Set runtime options (e.g. solver) */
    elpa_get(handle_complex, "solver", &value, &error_elpa);
    if (myid == 0) {
      printf("Solver is set to %d \n", value);
