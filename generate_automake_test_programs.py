@@ -221,7 +221,7 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
     if (q == 1 and (s != "2stage" or d != "real" or t != "eigenvectors" or g == "NVIDIA_GPU_ON" or "INTEL_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON" or g == "AMD_GPU_ON" or m != "random")):
         continue
 
-    if(spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
+    if (spl == "myself" and (d != "real" or p != "double" or q != 0 or m != "random" or (t != "eigenvectors" and t != "cholesky")  or lang != "Fortran" or lay != "square")):
         continue
 
     for kernel in ["all_kernels", "default_kernel"] if s == "2stage" else ["nokernel"]:
@@ -372,12 +372,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
               print(name + "_SOURCES = test/Fortran/test.F90")
               print(name + "_LDADD = $(test_program_ldadd)")
               print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-
           elif lang == "C":
               print(name + "_SOURCES = test/C/test.c")
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
               print(name + "_CFLAGS = $(test_program_cflags) \\")
-          
           elif lang == "C++":
               print(name + "_SOURCES = test/C++/test.cpp")
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
@@ -422,12 +420,10 @@ for lang, m, g, gid, deviceptr, q, t, p, d, s, lay, spl, api_name in product(sor
               print(name + "_SOURCES = test/Fortran/test.F90")
               print(name + "_LDADD = $(test_program_ldadd)")
               print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-
           elif lang == "C":
               print(name + "_SOURCES = test/C/test.c")
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
               print(name + "_CFLAGS = $(test_program_cflags) \\")
-
           elif lang == "C++":
               print(name + "_SOURCES = test/C++/test.cpp")
               print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
@@ -477,16 +473,15 @@ for lang, p, d in product(sorted(language_flag.keys()), sorted(prec_flag.keys())
          
     print("check_SCRIPTS += " + name + "_autotune.sh")
     print("noinst_PROGRAMS += " + name)
+
     if lang == "Fortran":
         print(name + "_SOURCES = test/Fortran/test_autotune.F90")
         print(name + "_LDADD = $(test_program_ldadd)")
         print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-
     elif lang == "C":
         print(name + "_SOURCES = test/C/test_autotune.c")
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
         print(name + "_CFLAGS = $(test_program_cflags) \\")
-
     elif lang == "C++":
         print(name + "_SOURCES = test/C++/test_autotune.cpp")
         print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
@@ -530,182 +525,108 @@ for lang, g, gid, deviceptr, p, d, api_name in product(sorted(language_flag.keys
     if deviceptr == 1 and (api_name != "explicit"):
         continue
 
+    # GPU tests only for Fortran
+    if lang != "Fortran" and g != "GPU_OFF":
+        continue
+
     # conditional cases
-    
+
+    if (lang == "Fortran"):
+        print("if ENABLE_FORTRAN_TESTS")
+        endifs += 1
+
+    if (lang == "C"):
+        print("if ENABLE_C_TESTS")
+        endifs += 1
+
+    if (lang == "C++"):
+        print("if ENABLE_CPP_TESTS")
+        endifs += 1
+
+
     if (g == "NVIDIA_GPU_ON"):
         print("if WITH_NVIDIA_GPU_VERSION")
         endifs += 1
 
-    #if (g == "INTEL_GPU_ON"):
-    #    print("if WITH_INTEL_GPU_VERSION")
-    #    endifs += 1
+    if (g == "AMD_GPU_ON"):
+        print("if WITH_AMD_GPU_VERSION")
+        endifs += 1
+
+    if (g == "SYCL_GPU_ON"):
+        print("if WITH_SYCL_GPU_VERSION")
+        endifs += 1
+
+    if (g == "OPENMP_OFFLOAD_GPU_ON"):
+        print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
+        endifs += 1
+
+    if (p == "single"):
+        if (d == "real"):
+            print("if WANT_SINGLE_PRECISION_REAL")
+        elif (d == "complex"):
+            print("if WANT_SINGLE_PRECISION_COMPLEX")
+        else:
+            raise Exception("Oh no!")
+        endifs += 1
 
     if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
-      print("if BUILD_GPU_TESTS")
-      print("if ENABLE_FORTRAN_TESTS")
-      endifs += 1
-      if (g == "OPENMP_OFFLOAD_GPU_ON"):
-          print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
-          endifs += 1
-
-      if (g == "SYCL_GPU_ON"):
-          print("if WITH_SYCL_GPU_VERSION")
-          endifs += 1
-
-      if (g == "AMD_GPU_ON"):
-          print("if WITH_AMD_GPU_VERSION")
-          endifs += 1
-          
-      if (p == "single"):
-          if (d == "real"):
-              print("if WANT_SINGLE_PRECISION_REAL")
-          elif (d == "complex"):
-              print("if WANT_SINGLE_PRECISION_COMPLEX")
-          else:
-              raise Exception("Oh no!")
-          endifs += 1
-      
-      if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
-        gpu_suffix="gpu_"
-        if (gid):
-          gpu_suffix="gpu_id_"
+      gpu_suffix="gpu_"
+      if (gid):
+        gpu_suffix="gpu_id_"
         if (deviceptr):
           gpu_suffix="gpu_api_"
-      else:
-        gpu_suffix=""
-
-      name = "validate{langsuffix}_{d}_{p}_{gpu_suffix}{api_name}invert_triangular".format(
-          langsuffix=language_flag[lang], 
-          d=d, p=p, gpu_suffix=gpu_suffix,
-          api_name="explicit_" if api_name == "explicit" else "")
-
-      if (lang == "C"):
-          print("if ENABLE_C_TESTS")
-          endifs += 1
-      if (lang == "C++"):
-          print("if ENABLE_CPP_TESTS")
-          endifs += 1
-           
-      print("check_SCRIPTS += " + name + "_default.sh")
-      print("noinst_PROGRAMS += " + name)
-      if lang == "Fortran":
-          print(name + "_SOURCES = test/Fortran/test_invert_triangular.F90")
-          print(name + "_LDADD = $(test_program_ldadd)")
-          print(name + "_FCFLAGS = $(test_program_fcflags) \\")
-
-      elif lang == "C":
-          print(name + "_SOURCES = test/C/test_invert_triangular.c")
-          print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-          print(name + "_CFLAGS = $(test_program_cflags) \\")
-      
-      elif lang == "C++":
-          print(name + "_SOURCES = test/C++/test_invert_triangular.cpp")
-          print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-          print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
-           
-      else:
-          raise Exception("Unknown language")
-
-      if (explicit_name_flag[api_name] == "-DTEST_EXPLICIT_NAME"):
-        print("  " + " \\\n  ".join([
-          domain_flag[d],
-          prec_flag[p],
-          gpu_flag[g], 
-          gpu_id_flag[gid],
-          device_pointer_flag[deviceptr],
-          explicit_name_flag[api_name]]))
-      else:
-        print("  " + " \\\n  ".join([
-          domain_flag[d],
-          prec_flag[p],
-          gpu_flag[g], 
-          gpu_id_flag[gid],
-          device_pointer_flag[deviceptr]]))
-      print("endif\n" * endifs)
-      print("endif")
     else:
+      gpu_suffix=""
+
+    if (g == "GPU_OFF"):
       print("if BUILD_CPU_TESTS")
-      print("if ENABLE_FORTRAN_TESTS")
-      endifs += 1
-      if (g == "OPENMP_OFFLOAD_GPU_ON"):
-          print("if WITH_OPENMP_OFFLOAD_GPU_VERSION")
-          endifs += 1
+    else:
+      print("if BUILD_GPU_TESTS")
+    endifs += 1
 
-      if (g == "SYCL_GPU_ON"):
-          print("if WITH_SYCL_GPU_VERSION")
-          endifs += 1
+    name = "validate{langsuffix}_{d}_{p}_{gpu_suffix}{api_name}invert_triangular".format(
+        langsuffix=language_flag[lang],
+        d=d, p=p, gpu_suffix=gpu_suffix,
+        api_name="explicit_" if api_name == "explicit" else "")
+ 
+    print("check_SCRIPTS += " + name + "_default.sh")
+    print("noinst_PROGRAMS += " + name)
 
-      if (g == "AMD_GPU_ON"):
-          print("if WITH_AMD_GPU_VERSION")
-          endifs += 1
+    if lang == "Fortran":
+        print(name + "_SOURCES = test/Fortran/test_invert_triangular.F90")
+        print(name + "_LDADD = $(test_program_ldadd)")
+        print(name + "_FCFLAGS = $(test_program_fcflags) \\")
+    elif lang == "C":
+        print(name + "_SOURCES = test/C/test_invert_triangular.c")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CFLAGS = $(test_program_cflags) \\")
+    elif lang == "C++":
+        print(name + "_SOURCES = test/C++/test_invert_triangular.cpp")
+        print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
+        print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
           
-      if (p == "single"):
-          if (d == "real"):
-              print("if WANT_SINGLE_PRECISION_REAL")
-          elif (d == "complex"):
-              print("if WANT_SINGLE_PRECISION_COMPLEX")
-          else:
-              raise Exception("Oh no!")
-          endifs += 1
-      
-      if (g == "NVIDIA_GPU_ON" or g == "INTEL_GPU_ON" or g == "AMD_GPU_ON" or g == "OPENMP_OFFLOAD_GPU_ON" or g == "SYCL_GPU_ON"):
-        gpu_suffix="gpu_"
-        if (gid):
-          gpu_suffix="gpu_id_"
-        if (deviceptr):
-          gpu_suffix="gpu_api_"
-      else:
-        gpu_suffix=""
+    else:
+        raise Exception("Unknown language")
 
-      name = "validate{langsuffix}_{d}_{p}_{gpu_suffix}{api_name}invert_triangular".format(
-          langsuffix=language_flag[lang], 
-          d=d, p=p, gpu_suffix=gpu_suffix,
-          api_name="explicit_" if api_name == "explicit" else "")
+    if (explicit_name_flag[api_name] == "-DTEST_EXPLICIT_NAME"):
+      print("  " + " \\\n  ".join([
+        domain_flag[d],
+        prec_flag[p],
+        gpu_flag[g],
+        gpu_id_flag[gid],
+        device_pointer_flag[deviceptr],
+        explicit_name_flag[api_name]]))
+    else:
+      print("  " + " \\\n  ".join([
+        domain_flag[d],
+        prec_flag[p],
+        gpu_flag[g],
+        gpu_id_flag[gid],
+        device_pointer_flag[deviceptr]]))
 
-      if (lang == "C"):
-          print("if ENABLE_C_TESTS")
-          endifs += 1
-      if (lang == "C++"):
-          print("if ENABLE_CPP_TESTS")
-          endifs += 1
-           
-      print("check_SCRIPTS += " + name + "_default.sh")
-      print("noinst_PROGRAMS += " + name)
-      if lang == "Fortran":
-          print(name + "_SOURCES = test/Fortran/test_invert_triangular.F90")
-          print(name + "_LDADD = $(test_program_ldadd)")
-          print(name + "_FCFLAGS = $(test_program_fcflags) \\")
 
-      elif lang == "C":
-          print(name + "_SOURCES = test/C/test_invert_triangular.c")
-          print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-          print(name + "_CFLAGS = $(test_program_cflags) \\")
-      
-      elif lang == "C++":
-          print(name + "_SOURCES = test/C++/test_invert_triangular.cpp")
-          print(name + "_LDADD = $(test_program_ldadd) $(FCLIBS)")
-          print(name + "_CXXFLAGS = $(test_program_cxxflags) \\")
-           
-      else:
-          raise Exception("Unknown language")
+    print("endif\n" * endifs)
 
-      if (explicit_name_flag[api_name] == "-DTEST_EXPLICIT_NAME"):
-        print("  " + " \\\n  ".join([
-          domain_flag[d],
-          prec_flag[p],
-          gpu_flag[g], 
-          gpu_id_flag[gid],
-          device_pointer_flag[deviceptr],
-          explicit_name_flag[api_name]]))
-      else:
-        print("  " + " \\\n  ".join([
-          domain_flag[d],
-          prec_flag[p],
-          gpu_flag[g], 
-          gpu_id_flag[gid],
-          device_pointer_flag[deviceptr]]))
-      print("endif\n" * endifs)
-      print("endif")
 
 name = "validate_multiple_objs_real_double"
 print("if ENABLE_AUTOTUNING")
