@@ -235,9 +235,6 @@ int mpicclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   //printf("mpicclAllreduceFromC, start\n"); // PETERDEBUG111: cleanup after testing
@@ -251,7 +248,7 @@ int mpicclAllReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int
     errormessage("Error in mpicclAllReduce: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
   //printf("mpicclAllreduceFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
@@ -265,9 +262,6 @@ int mpicclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mp
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   comm = MPI_Comm_f2c(mpicclComm);
@@ -294,7 +288,7 @@ int mpicclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mp
     errormessage("Error in mpicclReduce: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
   return 1;
 }
@@ -302,18 +296,14 @@ int mpicclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, int mp
 int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int mpicclDatatype, int root, intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
 
-  //printf("mpicclBroadcastFromC, start\n"); // PETERDEBUG111: cleanup after testing
-  //printf("sizeof(intptr_t)=%zu, sizeof(MPI_Comm)=%zu\n", sizeof(intptr_t), sizeof(MPI_Comm)); // PETERDEBUG111: cleanup after testing
+  //printf("sizeof(intptr_t)=%zu, sizeof(MPI_Comm)=%zu\n", sizeof(intptr_t), sizeof(MPI_Comm));
   gpuError_t gpuerr = gpuSuccess;
   
   int rank;
   //MPI_Comm_rank(MPI_COMM_WORLD, &rank); // PETERDEBUG111: cleanup after testing
-  //printf("mpicclBroadcastFromC, after MPI_Comm_rank(MPI_COMM_WORLD, &rank), rank=%d\n", rank); // PETERDEBUG111: cleanup after testing
   //MPI_Comm      MPI_COMM = (MPI_Comm)mpicclComm_;
 
   MPI_Comm_rank(MPI_Comm_f2c(mpicclComm), &rank);
-
-  //printf("mpicclBroadcastFromC, after MPI_Comm_rank, rank=%d\n", rank); // PETERDEBUG111: cleanup after testing
 
   if (rank==root && recvbuff != sendbuff){
     int typesize;
@@ -327,8 +317,7 @@ int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int
       return 0;
     }
 
-    //printf("mpicclBroadcastFromC, after MPI_Type_size, rank=%d\n", rank); // PETERDEBUG111: cleanup after testing
-    gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+    //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
     size_t nbytes = (size_t)typesize * count;
 
@@ -337,22 +326,17 @@ int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int
 #else
     gpuerr = gpuMemcpy     (recvbuff, sendbuff, nbytes, gpuMemcpyDeviceToDevice);
 #endif
-    //printf("mpicclBroadcastFromC, after gpuMemcpyAsync, rank=%d\n", rank); // PETERDEBUG111: cleanup after testing
   }
 
+// The sync is needed since MPI_Bcast doesn't carry a stream
 #ifdef WITH_GPU_STREAMS
   gpuerr = gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuerr = gpuDeviceSynchronize();
-#endif
-
-  //printf("mpicclBroadcastFromC, after gpuStreamSynchronize, rank=%d\n", rank); // PETERDEBUG111: cleanup after testing
 
   if (gpuerr != gpuSuccess) {
     errormessage("Error in executing mpicclBroadcastFromC (gpuMemcpy): %s\n",gpuGetErrorString(gpuerr));
     return 0;
   }
+#endif
 
   mpicclError = MPI_Bcast(recvbuff, (int)count, MPI_Type_f2c(mpicclDatatype), root, MPI_Comm_f2c(mpicclComm));
   if (mpicclError != MPI_SUCCESS) {
@@ -362,19 +346,19 @@ int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int
     errormessage("Error in mpicclBroadcast: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+
+#ifdef WITH_GPU_STREAMS
+  gpuerr = gpuStreamSynchronize(gpuStream);
+#endif
   return 1;
 }
 
 int mpicclSendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
-  printf("mpicclSendFromC, start\n"); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclSendFromC, start\n"); // PETERDEBUG111: cleanup after testing
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   int tag_dummy = 0;
@@ -387,21 +371,18 @@ int mpicclSendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int 
     errormessage("Error in mpicclSend: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
-  printf("mpicclSendFromC, done\n"); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclSendFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
 }
 
 int mpicclRecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
-  printf("mpicclRecvFromC, start\n"); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclRecvFromC, start\n"); // PETERDEBUG111: cleanup after testing
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   int tag_dummy = 0;
@@ -415,8 +396,8 @@ int mpicclRecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer, 
     errormessage("Error in mpicclRecv: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-  printf("mpicclRecvFromC, done\n"); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclRecvFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
 }
 
@@ -424,12 +405,10 @@ int mpicclSendrecvFromC(const void* sendbuff, size_t sendcount, int sendMpicclDa
                         void*       recvbuff, size_t recvcount, int recvMpicclDatatype, int source,
                         intptr_t mpicclComm, gpuStream_t gpuStream) {
   int mpicclError;
-  printf("mpicclSendrecvFromC, start\n"); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclSendrecvFromC, start\n"); // PETERDEBUG111: cleanup after testing
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-#else
-  gpuDeviceSynchronize();
 #endif
 
   int tag_dummy = 0;
@@ -447,7 +426,7 @@ int mpicclSendrecvFromC(const void* sendbuff, size_t sendcount, int sendMpicclDa
     return 0;
   }
 
-  printf("mpicclSendrecvFromC, done\n"); // PETERDEBUG111: cleanup after testing
+  //printf("mpicclSendrecvFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
 }
 
@@ -457,9 +436,6 @@ int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   int tag_dummy = 0;
@@ -472,7 +448,7 @@ int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int
     errormessage("Error in mpicclIsend: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
   //printf("mpicclIsendFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
@@ -484,9 +460,6 @@ int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer,
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
-#else
-  gpuDeviceSynchronize();
 #endif
 
   int tag_dummy = 0;
@@ -500,7 +473,7 @@ int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer,
     errormessage("Error in mpicclIrecv: %s\n", errstr);
     return 0;
   }
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
 
   //printf("mpicclIrecvFromC, done\n"); // PETERDEBUG111: cleanup after testing
   return 1;
@@ -511,7 +484,7 @@ int mpicclWaitallFromC(int count, intptr_t request_handles, gpuStream_t gpuStrea
   //printf("mpicclWaitallFromC, start\n"); // PETERDEBUG111: cleanup after testing
 
   //printf("sizeof(int)=%zu, sizeof(MPI_Request)=%zu\n", sizeof(int), sizeof(MPI_Request)); // PETERDEBUG111: cleanup after testing
-  gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
+  //gpuDeviceSynchronize(); // PETERDEBUG111: cleanup after testing
   
   mpicclError = MPI_Waitall(count, (MPI_Request*)request_handles, MPI_STATUSES_IGNORE);
   if (mpicclError != MPI_SUCCESS) {
