@@ -286,6 +286,22 @@ program test
   call e_complex%set("debug",1,error_elpa)
   assert_elpa_ok(error_elpa)
 
+#ifdef WITH_OPENMP_TRADITIONAL
+  max_threads=omp_get_max_threads()
+  call e_complex%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e_complex%set("omp_threads", 1, error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+
+  ! Setup
+  assert_elpa_ok(e_complex%setup())
+
+  ! Set runtime options (e.g. solver, GPU usage, ELPA2 kernel)
+  call e_complex%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+  assert_elpa_ok(error_elpa)
+
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
   call e_complex%set("nvidia-gpu", TEST_GPU,error_elpa)
   assert_elpa_ok(error_elpa)
@@ -299,18 +315,13 @@ program test
   assert_elpa_ok(error_elpa)
 #endif
 
-#ifdef WITH_OPENMP_TRADITIONAL
-  max_threads=omp_get_max_threads()
-  call e_complex%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
-  assert_elpa_ok(error_elpa)
-#else
-  call e_complex%set("omp_threads", 1, error_elpa)
-  assert_elpa_ok(error_elpa)
+#if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
+  assert_elpa_ok(e_complex%setup_gpu())
 #endif
 
-  assert_elpa_ok(e_complex%setup())
-  call e_complex%set("solver", elpa_solver_2stage, error_elpa)
-  assert_elpa_ok(error_elpa)
+  ! _________________________________________________________________________________________________________________________________
+
+  ! The actual solve step for e_complex
 
   if (.not. skip_check_correctness) then
     call e_complex%timer_start("eigenvectors: brute force as complex matrix")
@@ -327,6 +338,10 @@ program test
 #endif     
 !      as_complex(:,:) = z_complex(:,:)
 
+  ! _________________________________________________________________________________________________________________________________
+
+  ! Check the results for e_complex
+
 #ifdef TEST_SINGLE
     status = check_correctness_evp_numeric_residuals_complex_single(na, nev, as_complex, z_complex, ev_complex, sc_desc, &
                                                 nblk, myid, np_rows,np_cols, my_prow, my_pcol)
@@ -341,6 +356,8 @@ program test
   call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
 
+  ! _________________________________________________________________________________________________________________________________
+
   ! now run the skewsymmetric case
   e_skewsymmetric => elpa_allocate(error_elpa)
   assert_elpa_ok(error_elpa)
@@ -350,6 +367,23 @@ program test
   assert_elpa_ok(error_elpa)
 
   call e_skewsymmetric%set("debug",1,error_elpa)
+  assert_elpa_ok(error_elpa)
+
+#ifdef WITH_OPENMP_TRADITIONAL
+  max_threads=omp_get_max_threads()
+  call e_skewsymmetric%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
+  assert_elpa_ok(error_elpa)
+#else
+  call e_skewsymmetric%set("omp_threads",1, error_elpa)
+  assert_elpa_ok(error_elpa)
+#endif
+  assert_elpa_ok(e_skewsymmetric%setup())
+
+#ifdef TEST_SOLVER_1STAGE
+  call e_skewsymmetric%set("solver", ELPA_SOLVER_1STAGE, error_elpa)
+#else
+  call e_skewsymmetric%set("solver", ELPA_SOLVER_2STAGE, error_elpa)
+#endif
   assert_elpa_ok(error_elpa)
 
 #if TEST_NVIDIA_GPU == 1 || (TEST_NVIDIA_GPU == 0) && (TEST_AMD_GPU == 0) && (TEST_INTEL_GPU == 0) && (TEST_INTEL_GPU_OPENMP == 0) && (TEST_INTEL_GPU_SYCL == 0)
@@ -364,18 +398,10 @@ program test
   call e_skewsymmetric%set("intel-gpu", TEST_GPU,error_elpa)
   assert_elpa_ok(error_elpa)
 #endif
-#ifdef WITH_OPENMP_TRADITIONAL
-  max_threads=omp_get_max_threads()
-  call e_skewsymmetric%set("omp_threads", int(max_threads,kind=c_int), error_elpa)
-  assert_elpa_ok(error_elpa)
-#else
-  call e_skewsymmetric%set("omp_threads",1, error_elpa)
-  assert_elpa_ok(error_elpa)
+
+#if defined(TEST_NVIDIA_GPU) || defined(TEST_AMD_GPU) || defined(TEST_INTEL_GPU) || defined(TEST_INTEL_GPU_OPENMP) || defined(TEST_INTEL_GPU_SYCL)
+  assert_elpa_ok(e_skewsymmetric%setup_gpu())
 #endif
-  assert_elpa_ok(e_skewsymmetric%setup())
-   
-  call e_skewsymmetric%set("solver", elpa_solver_2stage, error_elpa)
-  assert_elpa_ok(error_elpa)
 
   call e_skewsymmetric%timer_start("eigenvectors: skewsymmetric ")
   call e_skewsymmetric%skew_eigenvectors(a_skewsymmetric, ev_skewsymmetric, z_skewsymmetric, error_elpa)
@@ -438,7 +464,6 @@ program test
 #endif
   call elpa_deallocate(e_complex,error_elpa)
   call elpa_deallocate(e_skewsymmetric,error_elpa)
-
 
   !to do 
   ! - check whether brute-force check_correctness_evp_numeric_residuals worsk (complex ev)

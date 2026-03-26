@@ -1,7 +1,7 @@
 #!/bin/bash -l
 # Standard output and error:
-#SBATCH -o ./ELPA_CI_2gpu.out.%j
-#SBATCH -e ./ELPA_CI_2gpu.err.%j
+#SBATCH -o ./ELPA_CI_cpu.out.%j
+#SBATCH -e ./ELPA_CI_cpu.err.%j
 # Initial working directory:
 #SBATCH -D ./
 # Job name
