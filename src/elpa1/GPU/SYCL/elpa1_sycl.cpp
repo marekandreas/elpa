@@ -113,8 +113,8 @@ void sycl_zero_skewsymmetric_q(T *q_dev, int *matrixRows_in, int *matrixCols_in,
     int row = it.get_group(1) * it.get_local_range(1) + it.get_local_id(1);
     int col = it.get_group(0) * it.get_local_range(0) + it.get_local_id(0);
 
-    if (row < matrixRows && col >= matrixCols && col < 2 * matrixCols) {
-        int index = row + (matrixRows) * col;
+    if (row < matrixRows && col < matrixCols) {
+        int index = row + matrixRows * (col + matrixCols);
         q_dev[index] = 0.0;
     }
   });

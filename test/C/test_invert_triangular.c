@@ -450,8 +450,8 @@ int main(int argc, char** argv) {
    //-----------------------------------------------------------------------------------------------------------------------------
    // Check the results
    
-   status = CHECK_CORRECTNESS_MULTIPLY('N', 'N', 'F', 'F', uplo_c,
-                                        na, a, b, c, na_rows, na_cols, sc_desc,
+   status = CHECK_CORRECTNESS_MULTIPLY('N', 'N', 'F', 'F',
+                                        na, a, as, c, na_rows, na_cols, sc_desc,
                                         nblk, myid, np_rows, np_cols, my_prow, my_pcol);
    
    if (myid==0) {

@@ -137,8 +137,8 @@ __global__ void hip_zero_skewsymmetric_q_double_kernel(double *q, const int matr
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (row < matrixRows && col >= matrixCols && col < 2 * matrixCols) {
-        int index = row + (matrixRows) * col;
+    if (row < matrixRows && col < matrixCols) {
+        int index = row + matrixRows * (col + matrixCols);
         q[index] = 0.0;
     }
 }
@@ -166,12 +166,8 @@ __global__ void hip_zero_skewsymmetric_q_float_kernel(float *q, const int matrix
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
-    //if (row < matrixRows && col >= matrixCols && col < 2 * matrixCols) {
-    //    int index = row * (2 * matrixCols) + col;
-    //    q[index] = 0.0f;
-    //}
-    if (row < matrixRows && col >= matrixCols && col < 2 * matrixCols) {
-        int index = row + (matrixRows) * col;
+    if (row < matrixRows && col < matrixCols) {
+        int index = row + matrixRows * (col + matrixCols);
         q[index] = 0.0f;
     }
 }
@@ -181,7 +177,6 @@ extern "C" void hip_zero_skewsymmetric_q_float_FromC(float *q_dev, int *matrixRo
   int matrixRows = *matrixRows_in;
 
   dim3 threadsPerBlock(32, 32);
-  //dim3 blocks((matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (2 * matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
   dim3 blocks((matrixRows + threadsPerBlock.x - 1) / threadsPerBlock.x, (matrixCols + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
 #ifdef WITH_GPU_STREAMS
@@ -541,4 +536,3 @@ extern "C" void hip_put_skewsymmetric_second_half_q_float_FromC(float *q_dev, fl
     printf("Error in executing hip_put_skewsymmetric_second_half_q_float_kernel: %s\n",hipGetErrorString(cuerr));
   }
 }
-
