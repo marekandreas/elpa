@@ -511,12 +511,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* COMPLEXCASE */
     endif ! useGPU
 
-    if (useGPU) then
-      !new
-      last_stripe_width = l_nev - (stripe_count-1)*stripe_width
-      ! not needed in OpenMP case
-      ! last_stripe_width = l_nev - (stripe_count-1)*stripe_width
-    endif ! useGPU
+    last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
