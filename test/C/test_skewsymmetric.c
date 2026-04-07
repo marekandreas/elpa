@@ -376,7 +376,8 @@ int main(int argc, char** argv) {
 #endif
 
    /* Setup */
-   assert_elpa_ok(elpa_setup(handle_complex));
+   error_elpa = elpa_setup(handle_complex);
+   assert_elpa_ok(error_elpa);
 
    elpa_get(handle_complex, "solver", &value, &error_elpa);
    if (myid == 0) {
@@ -456,7 +457,8 @@ int main(int argc, char** argv) {
 
 
    /* Setup */
-   assert_elpa_ok(elpa_setup(handle_skewsymmetric));
+   error_elpa = elpa_setup(handle_skewsymmetric);
+   assert_elpa_ok(error_elpa);
 
    elpa_get(handle_skewsymmetric, "solver", &value, &error_elpa);
    if (myid == 0) {

@@ -274,7 +274,8 @@ int main(int argc, char** argv) {
 
   set_basic_parameters(&elpa_handle_1, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
   /* Setup */
-  assert_elpa_ok(elpa_setup(elpa_handle_1));
+  error_elpa = elpa_setup(elpa_handle_1);
+  assert_elpa_ok(error_elpa);
 
   elpa_set(elpa_handle_1, "nvidia-gpu", 0, &error_elpa);
   assert_elpa_ok(error_elpa);
@@ -306,7 +307,8 @@ int main(int argc, char** argv) {
 
   set_basic_parameters(&elpa_handle_2, na, nev, na_rows, na_cols, nblk, my_prow, my_pcol);
   /* Setup */
-  assert_elpa_ok(elpa_setup(elpa_handle_2));
+  error_elpa = elpa_setup(elpa_handle_2);
+  assert_elpa_ok(error_elpa);
 
 #ifdef WITH_MPI
   // barrier after store settings, file created from one MPI rank only, but loaded everywhere

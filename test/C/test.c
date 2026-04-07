@@ -481,7 +481,8 @@ int main(int argc, char** argv) {
   assert_elpa_ok(error_elpa);
 
   /* Setup */
-  assert_elpa_ok(elpa_setup(handle));
+  error_elpa = elpa_setup(handle);
+  assert_elpa_ok(error_elpa);
 
   /* Set solver and ELPA2 kernel */
 
@@ -579,7 +580,8 @@ int main(int argc, char** argv) {
 #endif
 
 #if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-  assert_elpa_ok(elpa_setup_gpu(handle));
+  error_elpa = elpa_setup_gpu(handle);
+  assert_elpa_ok(error_elpa);
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
