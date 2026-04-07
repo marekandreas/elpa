@@ -100,6 +100,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _WIN32
+#define ELPA_CONJ(x) __builtin_conj(x)
+#else
+#define ELPA_CONJ(x) conj(x)
+#endif
+
 #ifdef BLOCK2
 #define PREFIX double
 #define BLOCK 2
@@ -1402,11 +1408,11 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_complex_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (D
 #ifdef BLOCK2
      int ldh = *pldh;
 
-     DATA_TYPE s = conj(hh[(ldh)+1])*ONE;
+     DATA_TYPE s = ELPA_CONJ(hh[(ldh)+1])*ONE;
 
      for (i = 2; i < nb; i++)
      {
-             s += hh[i-1] * conj(hh[(i+ldh)]);
+             s += hh[i-1] * ELPA_CONJ(hh[(i+ldh)]);
      }
 #endif
 
