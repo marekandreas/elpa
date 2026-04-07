@@ -733,6 +733,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(aIntern_dev , 0, num, my_stream)
@@ -797,6 +798,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(row_group_dev , 0, num, my_stream)
@@ -873,6 +875,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -972,6 +975,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
             if (allComputeOnGPU) then
               ! memcopy row_dev -> row_group_dev
+              my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)
@@ -1069,6 +1073,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
             if (allComputeOnGPU) then
               ! memcpy row_dev -> row_group_dev
+              my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)

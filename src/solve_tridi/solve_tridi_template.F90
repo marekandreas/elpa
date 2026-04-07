@@ -164,6 +164,7 @@ subroutine solve_tridi_cpu_&
 
 
       if (useGPU) then
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_memset_async(q_dev, 0, l_rows*l_cols*size_of_datatype_real, my_stream)
@@ -222,6 +223,7 @@ subroutine solve_tridi_cpu_&
         check_alloc_gpu("solve_tridi limits_dev: ", successGPU)
 
         num = (np_cols) * size_of_int  
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_memcpy_async(limits_dev, int(loc(limits(1)),kind=c_intptr_t), &
@@ -336,6 +338,7 @@ subroutine solve_tridi_cpu_&
       ! gpu function or memcpy
       if (useGPU) then
         num = na * size_of_datatype_real
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -349,6 +352,7 @@ subroutine solve_tridi_cpu_&
 #endif
 
         num = na * size_of_datatype_real
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -394,6 +398,7 @@ subroutine solve_tridi_cpu_&
       if (useGPU) then
         ! dirty hack
         num = na * size_of_datatype_real
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -407,6 +412,7 @@ subroutine solve_tridi_cpu_&
 #endif
 
         num = na * size_of_datatype_real
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &

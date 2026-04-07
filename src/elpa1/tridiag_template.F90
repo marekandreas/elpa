@@ -281,6 +281,7 @@ subroutine tridiag_cpu_&
     SM_count = obj%gpu_setup%gpuSMcount
     gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif
@@ -652,6 +653,7 @@ subroutine tridiag_cpu_&
   tau(:) = 0
 
   if (useGPU) then
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(d_vec_dev, 0, na * size_of_datatype_real, my_stream)

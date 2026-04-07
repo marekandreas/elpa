@@ -450,6 +450,7 @@ max_threads, isSkewsymmetric)
     cur_l_cols = 0
 #endif
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
@@ -661,6 +662,7 @@ max_threads, isSkewsymmetric)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -873,6 +875,7 @@ max_threads, isSkewsymmetric)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
@@ -990,6 +993,7 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -1109,6 +1113,7 @@ max_threads, isSkewsymmetric)
       endif ! useGPU
 
       if (useGPU) then
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1236,6 +1241,7 @@ max_threads, isSkewsymmetric)
       endif ! l_cols>0 .and. l_rows>0
 
       if (useGPU) then
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1283,6 +1289,7 @@ max_threads, isSkewsymmetric)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
@@ -1312,6 +1319,7 @@ max_threads, isSkewsymmetric)
           endif
 #endif
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)

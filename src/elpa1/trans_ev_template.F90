@@ -207,6 +207,7 @@ subroutine trans_ev_cpu_&
   if (useGPU) success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
 
+  my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
   my_stream = obj%gpu_setup%my_stream
 #endif

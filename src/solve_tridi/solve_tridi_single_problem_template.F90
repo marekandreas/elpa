@@ -120,6 +120,7 @@
     useGPUsolver =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
     useGPU =.true.
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif

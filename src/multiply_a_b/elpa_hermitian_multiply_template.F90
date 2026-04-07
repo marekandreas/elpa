@@ -308,6 +308,7 @@
     
     SM_count = obj%gpu_setup%gpuSMcount
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS    
     my_stream = obj%gpu_setup%my_stream
 #endif

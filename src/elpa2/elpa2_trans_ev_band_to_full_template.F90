@@ -305,6 +305,7 @@ subroutine trans_ev_band_to_full_&
     endif
 #endif
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
@@ -423,6 +424,7 @@ subroutine trans_ev_band_to_full_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -455,6 +457,7 @@ subroutine trans_ev_band_to_full_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -502,6 +505,7 @@ subroutine trans_ev_band_to_full_&
        if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+         my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
@@ -518,6 +522,7 @@ subroutine trans_ev_band_to_full_&
 #endif
 
 #ifdef CUDA_AWARE_MPI_BAND_TO_FULL
+         my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
          my_stream = obj%gpu_setup%my_stream
          successGPU = gpu_stream_synchronize(my_stream)
@@ -644,6 +649,7 @@ subroutine trans_ev_band_to_full_&
         if (useGPU) then
 #ifdef MORE_GPUBLAS
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -711,6 +717,7 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -738,6 +745,7 @@ subroutine trans_ev_band_to_full_&
           call obj%timer%stop("mpi_nbc_communication")
 
 #ifdef MORE_GPUBLAS
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -765,6 +773,7 @@ subroutine trans_ev_band_to_full_&
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request1, mpierr)
           call mpi_wait(allreduce_request1, MPI_STATUS_IGNORE, mpierr)
           call obj%timer%stop("cuda_mpi_nbc_communication")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -789,6 +798,7 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -815,6 +825,7 @@ subroutine trans_ev_band_to_full_&
           call obj%timer%stop("mpi_communication")
 
 #ifdef MORE_GPUBLAS
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -841,6 +852,7 @@ subroutine trans_ev_band_to_full_&
           call mpi_allreduce(t_tmp_gpu_deviceptr, t_tmp2_gpu_deviceptr, int(cwy_blocking*nbw,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                            MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
           call obj%timer%stop("cuda_mpi_communication")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -865,6 +877,7 @@ subroutine trans_ev_band_to_full_&
 
         if (useGPU) then
 #ifdef MORE_GPUBLAS
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -901,6 +914,7 @@ subroutine trans_ev_band_to_full_&
                                    t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -950,6 +964,7 @@ subroutine trans_ev_band_to_full_&
           ! remove cuda_aware section here, does not make sense without MPI add MORE_GPUBLAS instead
 #ifdef MORE_GPUBLAS
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -985,6 +1000,7 @@ subroutine trans_ev_band_to_full_&
                                    t_rows, t_cols, -ONE, c_loc(tmat_gpu_deviceptr(t_rows+1,t_rows+1)), cwy_blocking, &
                                    t_tmp_gpu_dev, cwy_blocking, gpuHandle)
           call obj%timer%stop("gpublas")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           succcessGPU = gpu_stream_synchronize(my_stream)
@@ -1037,6 +1053,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows > 0) then
       if (useGPU) then
 #ifndef MORE_GPUBAS
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1067,6 +1084,7 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_MPI
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
         ! copy data from device to host for a later MPI_ALLREDUCE
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS  
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1108,6 +1126,7 @@ subroutine trans_ev_band_to_full_&
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -1144,6 +1163,7 @@ subroutine trans_ev_band_to_full_&
 #ifdef WITH_MPI
     if (useGPU) then
 #ifndef MORE_GPUBLAS
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1181,6 +1201,7 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS  
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1208,6 +1229,7 @@ subroutine trans_ev_band_to_full_&
       call obj%timer%stop("mpi_nbc_communication")
 
 #ifdef MORE_GPUBLAS
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1236,6 +1258,7 @@ subroutine trans_ev_band_to_full_&
                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), allreduce_request2, mpierr)
       call mpi_wait(allreduce_request2, MPI_STATUS_IGNORE, mpierr)
       call obj%timer%stop("cuda_mpi_nbc_communication")
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1261,6 +1284,7 @@ subroutine trans_ev_band_to_full_&
 #ifndef CUDA_AWARE_MPI_BAND_TO_FULL
 
 #ifdef MORE_GPUBLAS
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1288,6 +1312,7 @@ subroutine trans_ev_band_to_full_&
       call obj%timer%stop("mpi_communication")
 
 #ifdef MORE_GPUBLAS
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1314,6 +1339,7 @@ subroutine trans_ev_band_to_full_&
       call mpi_allreduce(tmp1_mpi_deviceptr, tmp2_mpi_deviceptr, int(n_cols*l_cols,kind=MPI_KIND), MPI_MATH_DATATYPE_PRECISION, &
                           MPI_SUM, int(mpi_comm_rows,kind=MPI_KIND), mpierr)
       call obj%timer%stop("cuda_mpi_communication")
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -1339,6 +1365,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows>0) then
       if (useGPU) then
 #ifndef MORE_GPUBLAS
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1361,6 +1388,7 @@ subroutine trans_ev_band_to_full_&
 #endif /* MORE_GPUBLAS */
 
         ! needed: as long as not device to device copy
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1405,6 +1433,7 @@ subroutine trans_ev_band_to_full_&
     if (l_rows > 0) then
       if (useGPU) then
         ! needed as long as not device to device copy
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1467,6 +1496,7 @@ subroutine trans_ev_band_to_full_&
     check_dealloc_gpu("trans_ev_band_to_full: tmat_complete_dev", successGPU)
 
     ! final transfer of q_dev
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)

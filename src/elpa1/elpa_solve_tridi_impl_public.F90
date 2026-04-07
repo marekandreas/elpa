@@ -189,6 +189,7 @@
         
 
         num = na * size_of_datatype_real
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_memcpy_async(d_dev, int(loc(d(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
