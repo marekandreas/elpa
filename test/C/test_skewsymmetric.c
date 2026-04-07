@@ -69,6 +69,9 @@
 #ifdef __cplusplus
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
+#elif defined(_WIN32)
+#define double_complex double _Complex
+#define float_complex float _Complex
 #define Complex_I std::complex<EV_TYPE> (0.0,1.0); 
 #else
 #define double_complex double complex

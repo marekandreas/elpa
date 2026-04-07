@@ -52,7 +52,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include <complex.h>
 
 #include "./test_gpu_vendor_agnostic_layerFunctions.h"
