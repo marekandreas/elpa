@@ -198,23 +198,15 @@
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
-        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-        gpuMemcpyHostToDevice    = cudaMemcpyHostToDevice
-        cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-        gpuMemcpyDeviceToHost    = cudaMemcpyDeviceToHost
-        cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-        gpuMemcpyDeviceToDevice  = cudaMemcpyDeviceToDevice
-        cudaHostRegisterPortable = cuda_hostRegisterPortable()
-        gpuHostRegisterPortable  = cudaHostRegisterPortable
-        cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-        gpuHostRegisterMapped    = cudaHostRegisterMapped
-        cudaHostRegisterDefault  = cuda_hostRegisterDefault()
-        gpuHostRegisterDefault   = cudaHostRegisterDefault
+        gpuMemcpyHostToDevice    = cuda_memcpyHostToDevice()
+        gpuMemcpyDeviceToHost    = cuda_memcpyDeviceToHost()
+        gpuMemcpyDeviceToDevice  = cuda_memcpyDeviceToDevice()
+        gpuHostRegisterPortable  = cuda_hostRegisterPortable()
+        gpuHostRegisterMapped    = cuda_hostRegisterMapped()
+        gpuHostRegisterDefault   = cuda_hostRegisterDefault()
 
-        cublasPointerModeDevice  = cublas_PointerModeDevice()
-        gpublasPointerModeDevice = cublasPointerModeDevice
-        cublasPointerModeHost    = cublas_PointerModeHost()
-        gpublasPointerModeHost   = cublasPointerModeHost
+        gpublasPointerModeDevice = cublas_PointerModeDevice()
+        gpublasPointerModeHost   = cublas_PointerModeHost()
       endif
 #endif
 
@@ -235,6 +227,7 @@
       endif
 #endif
 
+#ifndef _WIN32
       cclSum  = ccl_redOp_cclSum()
       cclMax  = ccl_redOp_cclMax()
       cclMin  = ccl_redOp_cclMin()
@@ -248,6 +241,7 @@
       cclFloat32 = ccl_dataType_cclFloat32()
       cclFloat64 = ccl_dataType_cclFloat64()
       cclDouble  = ccl_dataType_cclDouble()
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
