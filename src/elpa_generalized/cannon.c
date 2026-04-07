@@ -104,6 +104,14 @@ int gpuMemcpyHostToDevice;
 int gpuMemcpyDeviceToHost;
 #include "./gpu_vendor_agnostic_layer.h"
 
+#ifdef _WIN32
+#define ELPA_C_DOUBLE_COMPLEX double _Complex
+#define ELPA_C_FLOAT_COMPLEX float _Complex
+#else
+#define ELPA_C_DOUBLE_COMPLEX double complex
+#define ELPA_C_FLOAT_COMPLEX float complex
+#endif
+
 #define gpuErrCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 static inline void gpuAssert(int status, const char *file, int line)
 {
@@ -302,8 +310,8 @@ void cannons_triang_rectangular_c_f(float* U, float* B, int local_rowsCast, int 
 !f>   end subroutine
 !f> end interface
 */
-void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rowsCast, int local_colsCasr, C_INT_TYPE_PTR a_desc,
-                            double complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+void cannons_reduction_c_dc(ELPA_C_DOUBLE_COMPLEX* A, ELPA_C_DOUBLE_COMPLEX* U, int local_rowsCast, int local_colsCasr, C_INT_TYPE_PTR a_desc,
+                            ELPA_C_DOUBLE_COMPLEX *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
                             int wantDebug, int useGPU, intptr_t *gpublasHandle);
 
 /*
@@ -324,8 +332,8 @@ void cannons_reduction_c_dc(double complex* A, double complex* U, int local_rows
 !f>   end subroutine
 !f> end interface
 */
-void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int local_rowsCast, int local_colsCast,
-                                     C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, double complex *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+void cannons_triang_rectangular_c_dc(ELPA_C_DOUBLE_COMPLEX* U, ELPA_C_DOUBLE_COMPLEX* B, int local_rowsCast, int local_colsCast,
+                                     C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, ELPA_C_DOUBLE_COMPLEX *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
                                      int wantDebug, int useGPU, intptr_t *gpublasHandle);
 //***********************************************************************************************************
 
@@ -361,8 +369,8 @@ void cannons_triang_rectangular_c_dc(double complex* U, double complex* B, int l
 !f> end interface
 */
 
-void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
-                            float complex *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+void cannons_reduction_c_fc(ELPA_C_FLOAT_COMPLEX* A, ELPA_C_FLOAT_COMPLEX* U, int local_rowsCast, int local_colsCast, C_INT_TYPE_PTR a_desc,
+                            ELPA_C_FLOAT_COMPLEX *Res, C_INT_MPI_TYPE ToStore, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
                             int wantDebug, int useGPU, intptr_t *gpublasHandle);
 
 /*
@@ -383,7 +391,7 @@ void cannons_reduction_c_fc(float complex* A, float complex* U, int local_rowsCa
 !f>   end subroutine
 !f> end interface
 */
-void cannons_triang_rectangular_c_fc(float complex* U, float complex* B, int local_rowsCast, int local_colsCast,
-                                     C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, float complex *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
+void cannons_triang_rectangular_c_fc(ELPA_C_FLOAT_COMPLEX* U, ELPA_C_FLOAT_COMPLEX* B, int local_rowsCast, int local_colsCast,
+                                     C_INT_TYPE_PTR u_desc, C_INT_TYPE_PTR b_desc, ELPA_C_FLOAT_COMPLEX *Res, C_INT_MPI_TYPE row_comm, C_INT_MPI_TYPE col_comm,
                                      int wantDebug, int useGPU, intptr_t *gpublasHandle);
 #endif

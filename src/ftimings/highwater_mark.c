@@ -18,11 +18,18 @@
 #include <sys/types.h>
 #define _GNU_SOURCE
 #include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
 long ftimings_highwater_mark() {
+#ifdef _WIN32
+	return 0L;
+#else
 	long hwm = 0L;
 	char line[1024];
 	FILE* fp = NULL;
@@ -40,4 +47,5 @@ long ftimings_highwater_mark() {
 	fclose(fp);
 
 	return hwm * 1024L;
+#endif
 }

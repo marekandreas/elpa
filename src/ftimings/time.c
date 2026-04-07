@@ -16,12 +16,17 @@
  * along with ftimings.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sys/time.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#include <unistd.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config-f90.h"
@@ -31,21 +36,38 @@
  * (with 2^64 us ~ 6 * 10^5 years, this should be sufficiently overflow safe)
  */
 int64_t ftimings_microseconds_since_epoch(void) {
+#ifdef _WIN32
+	FILETIME ft;
+	ULARGE_INTEGER uli;
+	const uint64_t epoch_diff_100ns = 116444736000000000ULL;
+
+	GetSystemTimeAsFileTime(&ft);
+	uli.LowPart = ft.dwLowDateTime;
+	uli.HighPart = ft.dwHighDateTime;
+
+	return (int64_t)((uli.QuadPart - epoch_diff_100ns) / 10ULL);
+#else
 	struct timeval tv;
 	if (gettimeofday(&tv, NULL) != 0) {
 		perror("gettimeofday");
 		exit(1);
 	}
 	return (int64_t) (tv.tv_sec) * ((int64_t) 1000000) + (int64_t)(tv.tv_usec);
+#endif
 }
 
 #ifndef WITH_MPI
 int64_t t0 = 0;
+#ifndef _WIN32
 void __attribute__((constructor)) init_time(void) {
 	t0 = ftimings_microseconds_since_epoch();
 }
+#endif
 
 double seconds(void) {
+	if (t0 == 0) {
+		t0 = ftimings_microseconds_since_epoch();
+	}
     return (ftimings_microseconds_since_epoch() - t0) / 1e6;
 }
 #endif
