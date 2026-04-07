@@ -1077,7 +1077,7 @@ int main(int argc, char** argv) {
 
 #else /* TEST_EXPLICIT_NAME */
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-  elpa_timer_start(handle, "is_already_decomposed=.false.");
+  elpa_timer_start(handle, (char*) "is_already_decomposed=.false.");
 #endif
   elpa_generalized_eigenvectors(handle, a, b, ev, q, 0, &error_elpa);
   assert_elpa_ok(error_elpa);
