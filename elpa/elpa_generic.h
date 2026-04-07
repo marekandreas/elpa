@@ -94,10 +94,10 @@ inline void elpa_eigenvectors(const elpa_t handle, std::complex<float>  *a, floa
                 float*: \
                   elpa_eigenvectors_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_eigenvectors_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_eigenvectors_a_h_a_fc \
         )(handle, a, ev, q, error)
 #endif
@@ -175,10 +175,10 @@ inline void elpa_generalized_eigenvectors(elpa_t handle, std::complex<float>  *a
                 float*: \
                   elpa_generalized_eigenvectors_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_generalized_eigenvectors_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_generalized_eigenvectors_a_h_a_fc \
         )(handle, a, b, ev, q, is_already_decomposed, error)
 #endif
@@ -217,10 +217,10 @@ inline void elpa_eigenvalues(elpa_t handle, std::complex<float>  *a, float  *ev,
                 float*: \
                   elpa_eigenvalues_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_eigenvalues_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_eigenvalues_a_h_a_fc \
         )(handle, a, ev, error)
 #endif
@@ -290,10 +290,10 @@ inline void elpa_cholesky(elpa_t handle, std::complex<float>  *a, int *error)
                 float*: \
                   elpa_cholesky_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_cholesky_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_cholesky_a_h_a_fc \
         )(handle, a, error)
 #endif
@@ -340,10 +340,10 @@ inline void elpa_hermitian_multiply(elpa_t handle, char uplo_a, char uplo_c, int
                 float*: \
                   elpa_hermitian_multiply_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_hermitian_multiply_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_hermitian_multiply_a_h_a_fc \
         )(handle, uplo_a, uplo_c, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
 #endif
@@ -390,10 +390,10 @@ inline void elpa_pxgemm_multiply(elpa_t handle, char trans_a, char trans_b, int 
                 float*: \
                   elpa_pxgemm_multiply_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_pxgemm_multiply_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_pxgemm_multiply_a_h_a_fc \
         )(handle, trans_a, trans_b, ncb, a, b, nrows_b, ncols_b, c, nrows_c, ncols_c, error)
 #endif
@@ -432,10 +432,10 @@ inline void elpa_invert_triangular(elpa_t handle, std::complex<float>  *a, int *
                 float*: \
                   elpa_invert_trm_a_h_a_f, \
                 \
-                double complex*: \
+                double_complex*: \
                   elpa_invert_trm_a_h_a_dc, \
                 \
-                float complex*: \
+                float_complex*: \
                   elpa_invert_trm_a_h_a_fc \
         )(handle, a, error)
 #endif
