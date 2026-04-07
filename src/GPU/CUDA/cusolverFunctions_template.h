@@ -320,7 +320,7 @@ void cusolverStrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
 }
 
 
-void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char diag, int64_t n, double _Complex *A, int64_t lda, int *info) {
+void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char diag, int64_t n, cuDoubleComplex *A, int64_t lda, int *info) {
   cusolverStatus_t status;
 
   int info_gpu = 0;
@@ -335,7 +335,7 @@ void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   //cuDoubleComplex A_casted = *((cuDoubleComplex*)(A));
-  double _Complex *d_work = NULL, *h_work=NULL;
+  cuDoubleComplex *d_work = NULL, *h_work=NULL;
   size_t d_lwork = 0;
   size_t h_lwork = 0;
 
@@ -353,7 +353,7 @@ void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   d_lwork *= 16;
 #endif
 
-  //cuerr = cudaMalloc((void**) &d_work, sizeof(double _Complex) * d_lwork);
+  //cuerr = cudaMalloc((void**) &d_work, sizeof(cuDoubleComplex) * d_lwork);
   cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork in bytes
 #ifdef DEBUG_CUDA
   printf("CUDA Malloc, cusolverZtrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
@@ -391,7 +391,7 @@ void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
 }
 
 
-void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char diag, int64_t n, float _Complex *A, int64_t lda, int *info) {
+void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char diag, int64_t n, cuFloatComplex *A, int64_t lda, int *info) {
   cusolverStatus_t status;
 
   int info_gpu = 0;
@@ -406,7 +406,7 @@ void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   //cuFloatComplex A_casted = *((cuFloatComplex*)(A));
-  float _Complex *d_work = NULL, *h_work=NULL;
+  cuFloatComplex *d_work = NULL, *h_work=NULL;
   size_t d_lwork = 0;
   size_t h_lwork = 0;
 
@@ -424,7 +424,7 @@ void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   d_lwork *= 8;
 #endif
 
-  //cuerr = cudaMalloc((void**) &d_work, sizeof(float _Complex) * d_lwork);
+  //cuerr = cudaMalloc((void**) &d_work, sizeof(cuFloatComplex) * d_lwork);
   cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
 #ifdef DEBUG_CUDA
   printf("CUDA Malloc, cusolverCtrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
@@ -528,7 +528,7 @@ void cusolverSpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
   }
 }
 
-void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, double _Complex *A, int lda, int *info_dev) {
+void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, cuDoubleComplex *A, int lda, int *info_dev) {
   cusolverStatus_t status;
   cudaError_t cuerr;
 
@@ -560,7 +560,7 @@ void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
   }
 }
 
-void cusolverCpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, float _Complex *A, int lda, int *info_dev) {
+void cusolverCpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int n, cuFloatComplex *A, int lda, int *info_dev) {
   cusolverStatus_t status;
   cudaError_t cuerr;
 
