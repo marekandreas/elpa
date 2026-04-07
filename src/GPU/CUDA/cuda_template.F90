@@ -45,15 +45,15 @@
 ! This file is the generated version. Do NOT edit
 
 
-  integer(kind=ik) :: cudaMemcpyHostToDevice
-  integer(kind=ik) :: cudaMemcpyDeviceToHost
-  integer(kind=ik) :: cudaMemcpyDeviceToDevice
-  integer(kind=ik) :: cudaHostRegisterDefault
-  integer(kind=ik) :: cudaHostRegisterPortable
-  integer(kind=ik) :: cudaHostRegisterMapped
+  integer(kind=ik) :: cudaMemcpyHostToDevice    = 0_ik
+  integer(kind=ik) :: cudaMemcpyDeviceToHost    = 0_ik
+  integer(kind=ik) :: cudaMemcpyDeviceToDevice  = 0_ik
+  integer(kind=ik) :: cudaHostRegisterDefault   = 0_ik
+  integer(kind=ik) :: cudaHostRegisterPortable  = 0_ik
+  integer(kind=ik) :: cudaHostRegisterMapped    = 0_ik
 
-  integer(kind=ik) :: cublasPointerModeDevice
-  integer(kind=ik) :: cublasPointerModeHost
+  integer(kind=ik) :: cublasPointerModeDevice   = 0_ik
+  integer(kind=ik) :: cublasPointerModeHost     = 0_ik
 
 
   interface

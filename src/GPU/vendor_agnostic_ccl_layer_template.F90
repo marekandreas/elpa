@@ -47,19 +47,19 @@
 #endif
 
 
-  integer(kind=c_int) :: cclSum
-  integer(kind=c_int) :: cclMax
-  integer(kind=c_int) :: cclMin
-  integer(kind=c_int) :: cclAvg
-  integer(kind=c_int) :: cclProd
+  integer(kind=c_int) :: cclSum   = 0_c_int
+  integer(kind=c_int) :: cclMax   = 0_c_int
+  integer(kind=c_int) :: cclMin   = 0_c_int
+  integer(kind=c_int) :: cclAvg   = 0_c_int
+  integer(kind=c_int) :: cclProd  = 0_c_int
 
-  integer(kind=c_int) :: cclInt
-  integer(kind=c_int) :: cclInt32
-  integer(kind=c_int) :: cclInt64
-  integer(kind=c_int) :: cclFloat
-  integer(kind=c_int) :: cclFloat32
-  integer(kind=c_int) :: cclFloat64
-  integer(kind=c_int) :: cclDouble
+  integer(kind=c_int) :: cclInt    = 0_c_int
+  integer(kind=c_int) :: cclInt32  = 0_c_int
+  integer(kind=c_int) :: cclInt64  = 0_c_int
+  integer(kind=c_int) :: cclFloat  = 0_c_int
+  integer(kind=c_int) :: cclFloat32 = 0_c_int
+  integer(kind=c_int) :: cclFloat64 = 0_c_int
+  integer(kind=c_int) :: cclDouble  = 0_c_int
 
 !  !type, BIND(C,name="ncclUniqueId") :: uniqueId_c
 !  type, BIND(C) ::ncclUniqueId

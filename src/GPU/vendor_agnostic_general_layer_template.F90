@@ -62,16 +62,16 @@
   ! the following variables, as long as they are not stored in the ELPA object
   ! prohibit to run ELPA at the same time on different GPUs of different vendors!
   integer(kind=c_int)            :: use_gpu_vendor
-  integer(kind=c_int)            :: gpuHostRegisterDefault    
-  integer(kind=c_int)            :: gpuMemcpyHostToDevice    
-  integer(kind=c_int)            :: gpuMemcpyDeviceToHost   
-  integer(kind=c_int)            :: gpuMemcpyDeviceToDevice
-  integer(kind=c_int)            :: gpuHostRegisterMapped
-  integer(kind=c_int)            :: gpuHostRegisterPortable
+  integer(kind=c_int)            :: gpuHostRegisterDefault    = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyHostToDevice     = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyDeviceToHost     = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyDeviceToDevice   = 0_c_int
+  integer(kind=c_int)            :: gpuHostRegisterMapped     = 0_c_int
+  integer(kind=c_int)            :: gpuHostRegisterPortable   = 0_c_int
 
-  integer(kind=c_int)            :: gpublasPointerModeHost
-  integer(kind=c_int)            :: gpublasPointerModeDevice
-  integer(kind=c_int)            :: gpublasDefaultPointerMode
+  integer(kind=c_int)            :: gpublasPointerModeHost    = 0_c_int
+  integer(kind=c_int)            :: gpublasPointerModeDevice  = 0_c_int
+  integer(kind=c_int)            :: gpublasDefaultPointerMode = 0_c_int
 
   !! per task information should be stored elsewhere
   !integer(kind=C_intptr_T), allocatable :: gpublasHandleArray(:)
