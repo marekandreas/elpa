@@ -776,6 +776,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
 	DATA_TYPE_PTR scalarprods);
 #endif
+/* ROW_LENGTH was used above only for the kernel function name; undefine it
+   here so the production-section VEC_SET blocks below can redefine it cleanly
+   without triggering -Wmacro-redefined. */
+#undef ROW_LENGTH
 
 void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
@@ -2149,6 +2153,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
@@ -2256,6 +2261,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
@@ -2272,6 +2278,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       }
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
