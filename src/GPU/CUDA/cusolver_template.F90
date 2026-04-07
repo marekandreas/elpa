@@ -256,6 +256,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int)                       :: version
+      version = 0
 #ifdef WITH_NVIDIA_CUSOLVER
       version = cusolver_get_version_c()
 #endif

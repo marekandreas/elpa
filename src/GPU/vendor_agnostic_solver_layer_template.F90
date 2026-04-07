@@ -65,6 +65,7 @@
     implicit none
 
     integer(kind=c_int)                  :: version
+    version = 0
 
 #ifdef WITH_NVIDIA_GPU_VERSION
     version = cusolver_get_version()

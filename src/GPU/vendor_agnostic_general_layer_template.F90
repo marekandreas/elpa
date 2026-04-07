@@ -427,6 +427,7 @@
 
       integer(kind=c_int)           :: n
       logical                       :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_getdevicecount(n)
@@ -478,6 +479,7 @@
 
       integer(kind=c_int), intent(in) :: n
       logical                         :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
