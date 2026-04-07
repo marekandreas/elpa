@@ -201,7 +201,7 @@ void cusolverDtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   if (h_lwork != 0) {
-    errormessage("Error in cusolver_Dtrtri host work array needed of size=: %d\n",h_lwork);
+    errormessage("Error in cusolver_Dtrtri host work array needed of size=: %zu\n",h_lwork);
   }
 
 #if CUSOLVER_VERSION < 11601
@@ -218,7 +218,7 @@ void cusolverDtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
     errormessage("Error in cusolver_Dtrtri d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverDtrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
+  printf("CUDA Malloc, cusolverDtrtri_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, d_lwork);
 #endif
 
   //status = cusolverDnXtrtri(*((cusolverDnHandle_t*)handle), fill_mode_new_api(uplo), diag_type_new_api(diag), n, CUDA_R_64F, A, lda, d_work, d_lwork, h_work, h_lwork, devInfo);
@@ -275,7 +275,7 @@ void cusolverStrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   if (h_lwork != 0) {
-    errormessage("Error in cusolver_Strtri host work array needed of size=: %d\n",h_lwork);
+    errormessage("Error in cusolver_Strtri host work array needed of size=: %zu\n",h_lwork);
   }
 
 #if CUSOLVER_VERSION < 11601
@@ -285,7 +285,7 @@ void cusolverStrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   //cuerr = cudaMalloc((void**) &d_work, sizeof(float) * d_lwork);
   cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverStrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
+  printf("CUDA Malloc, cusolverStrtri_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, d_lwork);
 #endif
   if (cuerr != cudaSuccess) {
     errormessage("Error in cusolver_Strtri d_work: %s\n",cudaGetErrorString(cuerr));
@@ -346,7 +346,7 @@ void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   if (h_lwork != 0) {
-    errormessage("Error in cusolver_Ztrtri host work array needed of size=: %d\n",h_lwork);
+    errormessage("Error in cusolver_Ztrtri host work array needed of size=: %zu\n",h_lwork);
   }
 
 #if CUSOLVER_VERSION < 11601
@@ -356,7 +356,7 @@ void cusolverZtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   //cuerr = cudaMalloc((void**) &d_work, sizeof(cuDoubleComplex) * d_lwork);
   cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork in bytes
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverZtrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
+  printf("CUDA Malloc, cusolverZtrtri_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, d_lwork);
 #endif
   if (cuerr != cudaSuccess) {
     errormessage("Error in cusolver_Ztrtri d_work: %s\n",cudaGetErrorString(cuerr));
@@ -417,7 +417,7 @@ void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   }
 
   if (h_lwork != 0) {
-    errormessage("Error in cusolver_Ctrtri host work array needed of size=: %d\n",h_lwork);
+    errormessage("Error in cusolver_Ctrtri host work array needed of size=: %zu\n",h_lwork);
   }
 
 #if CUSOLVER_VERSION < 11601
@@ -427,7 +427,7 @@ void cusolverCtrtri_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, char
   //cuerr = cudaMalloc((void**) &d_work, sizeof(cuFloatComplex) * d_lwork);
   cuerr = cudaMalloc((void**) &d_work, d_lwork); // d_lwork already in bytes
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverCtrtri_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, d_lwork);
+  printf("CUDA Malloc, cusolverCtrtri_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, d_lwork);
 #endif
   if (cuerr != cudaSuccess) {
     errormessage("Error in cusolver_Ctrtri d_work: %s\n",cudaGetErrorString(cuerr));
@@ -482,7 +482,7 @@ void cusolverDpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
     errormessage("Error in cusolver_Dpotrf d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverDpotrf_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work,  sizeof(double)*d_lwork);
+  printf("CUDA Malloc, cusolverDpotrf_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work,  sizeof(double)*d_lwork);
 #endif
 
   status = cusolverDnDpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, info_dev);
@@ -514,7 +514,7 @@ void cusolverSpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
     errormessage("Error in cusolver_Spotrf d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverSpotrf_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, sizeof(float)*d_lwork);
+  printf("CUDA Malloc, cusolverSpotrf_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, sizeof(float)*d_lwork);
 #endif
 
   status = cusolverDnSpotrf(cudaHandle, fill_mode_new_api(uplo), n, A, lda, d_work, d_lwork, info_dev);
@@ -546,7 +546,7 @@ void cusolverZpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
     errormessage("Error in cusolver_Zpotrf d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverZpotrf_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, sizeof(cuDoubleComplex)*d_lwork);
+  printf("CUDA Malloc, cusolverZpotrf_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, sizeof(cuDoubleComplex)*d_lwork);
 #endif
 
   status = cusolverDnZpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, info_dev);
@@ -578,7 +578,7 @@ void cusolverCpotrf_elpa_wrapper (cusolverDnHandle_t cudaHandle, char uplo, int 
     errormessage("Error in cusolver_Cpotrf d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverCpotrf_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, sizeof(cuFloatComplex)*d_lwork);
+  printf("CUDA Malloc, cusolverCpotrf_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, sizeof(cuFloatComplex)*d_lwork);
 #endif
 
   status = cusolverDnCpotrf(cudaHandle, fill_mode_new_api(uplo), n, A_casted, lda, d_work, d_lwork, info_dev);
@@ -655,7 +655,7 @@ void cusolverDsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, double *
     errormessage("Error in cudaMalloc d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverDsyevd_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, sizeof(double)*d_lwork);
+  printf("CUDA Malloc, cusolverDsyevd_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, sizeof(double)*d_lwork);
 #endif
 
   NVTX_RANGE_PUSH("cusolverDnDsyevd");
@@ -690,7 +690,7 @@ void cusolverSsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, float *A
     errormessage("Error in cudaMalloc d_work: %s\n",cudaGetErrorString(cuerr));
   }
 #ifdef DEBUG_CUDA
-  printf("CUDA Malloc, cusolverSsyevd_elpa_wrapper, pointer address: %p, size: %d \n", (void*)d_work, sizeof(float)*d_lwork);
+  printf("CUDA Malloc, cusolverSsyevd_elpa_wrapper, pointer address: %p, size: %zu \n", (void*)d_work, sizeof(float)*d_lwork);
 #endif
 
   status = cusolverDnSsyevd(cudaHandle, jobz, uplo, n, A, lda, eigenvalues, d_work, d_lwork, info_dev);
