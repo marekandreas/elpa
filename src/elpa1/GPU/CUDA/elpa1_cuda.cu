@@ -369,7 +369,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_double_minus_kernel(double 
 extern "C" void cuda_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
-  int negative_or_positive = *negative_or_positive_in;
+  (void)negative_or_positive_in; /* always negates — parameter kept for API symmetry with _second_half */
   int i = *i_in;
 
   dim3 threadsPerBlock(1024);
@@ -399,7 +399,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_float_minus_kernel(float *q
 extern "C" void cuda_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
-  int negative_or_positive = *negative_or_positive_in;
+  (void)negative_or_positive_in; /* always negates — parameter kept for API symmetry with _second_half */
   int i = *i_in;
 
   dim3 threadsPerBlock(1024);
