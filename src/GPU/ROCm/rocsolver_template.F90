@@ -276,6 +276,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int)                       :: version
+      version = 0  ! default stub; actual result requires WITH_AMD_ROCSOLVER
 #ifdef WITH_AMD_ROCSOLVER
       version = rocsolver_get_version_c()
 #endif
