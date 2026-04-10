@@ -67,6 +67,7 @@
 #endif
 
 #ifdef __cplusplus
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0)
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
 #elif defined(_WIN32)
@@ -238,6 +239,7 @@ int main(int argc, char** argv) {
      nblk = atoi(argv[3]);
    } else {
 #ifdef __cplusplus
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0)
      na = 100;
      nev = 50;
      nblk = 4;
