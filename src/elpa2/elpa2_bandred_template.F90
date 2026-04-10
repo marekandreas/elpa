@@ -1188,7 +1188,7 @@ max_threads, isSkewsymmetric)
               if (isSkewsymmetric) then
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
                                     -ONE, a_dev + (lrs-1 + (lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
-                                    umc_dev + (lcs-1 + (n_cols+1+1)*max_l_cols)*size_of_datatype, max_l_cols, &
+                                    umc_dev + (lcs-1 + (n_cols+1-1)*max_l_cols)*size_of_datatype, max_l_cols, &
                                     ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows, gpuHandle)
               else
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
