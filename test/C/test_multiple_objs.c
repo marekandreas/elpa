@@ -45,7 +45,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <windows.h>
+#define sleep(s) Sleep((s)*1000)
+#else
 #include <unistd.h>
+#endif
 #ifdef WITH_MPI
 #include <mpi.h>
 #endif
