@@ -73,7 +73,10 @@
 #elif defined(_WIN32)
 #define double_complex double _Complex
 #define float_complex float _Complex
-#define Complex_I std::complex<EV_TYPE> (0.0,1.0); 
+/* MSVC UCRT _Complex_I is an opaque struct (_Fcomplex) that doesn't support
+   arithmetic operators.  Use clang's __builtin_complex to construct a
+   double _Complex imaginary unit compatible with multiplication. */
+#define Complex_I __builtin_complex(0.0, 1.0)
 #else
 #define double_complex double complex
 #define float_complex float complex
