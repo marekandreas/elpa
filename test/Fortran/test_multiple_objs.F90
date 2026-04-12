@@ -150,7 +150,8 @@ program test
    class(elpa_t), pointer            :: e1, e2, e_ptr
    class(elpa_autotune_t), pointer   :: tune_state
 
-   TEST_INT_TYPE                     :: iter
+   TEST_INT_TYPE                     :: iter, max_scf
+   logical                           :: autotune_unfinished
    character(len=5)                  :: iter_string
    integer(kind=c_int)               :: timings, debug, gpu
 
@@ -328,9 +329,17 @@ program test
    assert_elpa_ok(error_elpa)
 
 
+   ! mimic 20 scf steps (consistent with C/C++ test variants)
+   max_scf = 20
    iter=0
-   do while (e_ptr%autotune_step(tune_state, error_elpa))
+   autotune_unfinished = .true.
+   do while (autotune_unfinished .and. iter < max_scf)
+     autotune_unfinished = e_ptr%autotune_step(tune_state, error_elpa)
      assert_elpa_ok(error_elpa)
+     if (.not. autotune_unfinished) then
+       if (myid == 0) print *, "ELPA autotuning finished in the ", iter, "th scf step"
+       exit
+     end if
  
      iter=iter+1
      write(iter_string,'(I5.5)') iter
@@ -340,7 +349,6 @@ program test
      call e_ptr%store_settings("saved_parameters_"//trim(iter_string)//".txt", error_elpa)
      assert_elpa_ok(error_elpa)
 
-     call sleep(2)
 #ifdef WITH_MPI
      ! barrier after store settings, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
@@ -368,11 +376,13 @@ program test
      ! barrier after save state, file created from one MPI rank only, but loaded everywhere
      call MPI_BARRIER(MPI_COMM_WORLD, mpierr)
 #endif
-     call sleep(2)
      call e_ptr%autotune_load_state(tune_state, "saved_state_"//trim(iter_string)//".txt", error_elpa)
      assert_elpa_ok(error_elpa)
 
    end do
+   if (autotune_unfinished .and. myid == 0) then
+     print *, "ELPA autotuning did not finished during ", max_scf, " scf cycles"
+   end if
 
    ! set and print the autotuned-settings
    call e_ptr%autotune_set_best(tune_state, error_elpa)
