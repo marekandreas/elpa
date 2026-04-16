@@ -475,8 +475,6 @@ subroutine qr_pdlarfl_1dcomm_&
     integer(kind=ik) :: local_size,local_offset
     integer(kind=ik) :: v_local_offset
 
-    ! external functions
-    real(kind=C_DATATYPE_KIND), external :: ddot
     call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI, mpierr)
     call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
 
@@ -572,8 +570,6 @@ subroutine qr_pdlarfl2_tmatrix_1dcomm_&
     real(kind=C_DATATYPE_KIND)    :: hvdot
     integer(kind=ik) :: irow,icol,v1col,v2col
 
-    ! external functions
-    real(kind=C_DATATYPE_KIND), external :: ddot
     call MPI_Comm_rank(int(mpicomm,kind=MPI_KIND), mpirankMPI, mpierr)
     call MPI_Comm_size(int(mpicomm,kind=MPI_KIND), mpiprocsMPI, mpierr)
 
