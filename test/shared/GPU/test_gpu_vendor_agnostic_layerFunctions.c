@@ -134,6 +134,7 @@ int gpuSetDevice_tests(int n){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+   return -1;
 }
 
 int gpuMalloc_tests(intptr_t *a, size_t width_height) {
@@ -149,6 +150,7 @@ int gpuMalloc_tests(intptr_t *a, size_t width_height) {
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif   
+   return -1;
 }
 
 int gpuFree_tests(intptr_t *a) {
@@ -165,6 +167,7 @@ int gpuFree_tests(intptr_t *a) {
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif   
+   return -1;
 }
 
 int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir){
@@ -180,4 +183,5 @@ int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif  
+   return -1;
 }
