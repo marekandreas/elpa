@@ -847,7 +847,7 @@ static int matrix_layout_enumerate(elpa_index_t index, int i) {
 #define EVAL(...) __VA_ARGS__
 
 #define ENUMERATE_CASE(name, value, ...) \
-        { const int array_of_size_value[value]; \
+        { int array_of_size_value[value]; \
         case 0 DEFER1(INNER_ITERATOR)()(OPTION_RANK): \
                 return value; }
 
@@ -889,7 +889,7 @@ static int solver_enumerate(elpa_index_t index, int i) {
 #define EVAL(...) __VA_ARGS__
 
 #define ENUMERATE_CASE(name, value, ...) \
-        { const int array_of_size_value[value]; \
+        { int array_of_size_value[value]; \
         case 0 DEFER1(INNER_ITERATOR)()(OPTION_RANK): \
                 return value; }
 
