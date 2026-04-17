@@ -349,7 +349,8 @@ static oneapi::mkl::side sideFromChar(char c) {
       *a=0;
       return 0;
     } else {
-      *a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
+      //*a = reinterpret_cast<intptr_t>(sycl::malloc_host(elems, devSel.context));
+      *a = reinterpret_cast<intptr_t>(malloc(elems));
       if (*a) {
         return 1;
       } else {
@@ -372,10 +373,14 @@ static oneapi::mkl::side sideFromChar(char c) {
       }
     };
     syclDeviceSynchronizeFromC();
-    // auto allocT = sycl::get_pointer_type(a, devSel.context);
+    auto allocT = sycl::get_pointer_type(a, devSel.context);
     // queue.wait();
     // std::cerr << "FREE |" << "syclFree" << "| ~> void **: " << ((size_t) a) << " -> " << allocStr(allocT) << "\n";
-    sycl::free(a, devSel.context);
+    if (allocT == alloc::device || allocT == alloc::host) {
+      sycl::free(a, devSel.context);
+    } else {
+      free(a);
+    }
     return 1;
   }
 

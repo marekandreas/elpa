@@ -991,6 +991,19 @@ subroutine tridiag_cpu_&
       if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
       call obj%timer%stop("ccl_bcast")
       NVTX_RANGE_POP("ccl_bcast")
+
+      ! After broadcast, replicate tau(istep) from v_row_dev[l_rows] to tau_dev(istep) on all ranks
+      num = 1 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+      successGPU = gpu_memcpy_async(tau_dev + (istep-1)*size_of_datatype, &
+                                    v_row_dev + l_rows*size_of_datatype, &
+                                    num, gpuMemcpyDeviceToDevice, my_stream)
+#else
+      successGPU = gpu_memcpy      (tau_dev + (istep-1)*size_of_datatype, &
+                                    v_row_dev + l_rows*size_of_datatype, &
+                                    num, gpuMemcpyDeviceToDevice)
+#endif
+      check_memcpy_gpu("tridiag: v_row_dev(tau) -> tau_dev(istep)", successGPU)
 #endif /* USE_CCL_TRIDIAG */
     else ! useCCL
       if (useGPU) then

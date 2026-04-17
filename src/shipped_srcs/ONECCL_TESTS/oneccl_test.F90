@@ -12,13 +12,12 @@ contains
     implicit none
 
     double precision t_begin, t_end
-    double precision init_time, transfer_time, compute_time
+    double precision transfer_time, compute_time
     integer(kind=c_intptr_t) :: num_elements, num_bytes
     integer(kind=c_intptr_t) :: gpu_buffer, host_ptr
     integer(kind=c_int) :: ok, n_gpu
     real(kind=c_double), dimension(:), allocatable :: host_buffer
 
-    init_time = t_end - t_begin
     ok = sycl_getdevicecount(n_gpu)
 
     if(ok == 0) then
@@ -105,7 +104,7 @@ contains
     integer(kind=c_intptr_t), intent(out) :: ccl_comm
     integer(kind=c_intptr_t), intent(out) :: my_stream
     
-    type(onecclUniqueId), intent(inout) :: ccl_unique_id_val
+    type(ncclUniqueId), intent(inout) :: ccl_unique_id_val
     integer(kind=c_int) :: my_rank, my_gpu
     integer(kind=c_int) :: n_local_ranks, n_ranks, n_local_gpus, ierr, ok
     integer :: mpi_local_comm
@@ -117,7 +116,6 @@ contains
 
     call get_mpi_local_ranks(ierr, n_local_ranks)
 
-    ok = sycl_state_initialize(0)
     if (n_local_ranks < 0) then
       write(*,"(2X,A)") "Error getting local ranks"
       stop
@@ -423,6 +421,7 @@ contains
 
     destination_rank = 0
 
+    print *, " bla ---- ", c_double
     ok = gpu_malloc(original_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_malloc(result_data_gpu, num_elements * c_double); NOT_OK_OUCH
     ok = gpu_memcpy(original_data_gpu, int(loc(original_data),c_intptr_t), num_elements * c_double, gpuMemcpyHostToDevice)

@@ -45,6 +45,12 @@
 #endif
 
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+  #define CCL_UNIQUE_ID_SIZE 128
+#elif defined(WITH_ONEAPI_ONECCL)
+  #define CCL_UNIQUE_ID_SIZE 256
+#endif
+
             ! mpi_comm_all
             if (myid .eq. 0) then
               success = ccl_get_unique_id(ncclId)
@@ -56,7 +62,7 @@
           
             !broadcast id currently not possible
             call mpi_comm_size(mpi_comm_all, nprocs, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_all, mpierr)
+            call MPI_Bcast(ncclId, CCL_UNIQUE_ID_SIZE, MPI_BYTE, 0, mpi_comm_all, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               write(error_unit,*) "Error when sending unique id"
               stop 1
@@ -104,7 +110,7 @@
               endif
             endif
             call mpi_comm_size(mpi_comm_rows, nprows, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_rows, mpierr)
+            call MPI_Bcast(ncclId, CCL_UNIQUE_ID_SIZE, MPI_BYTE, 0, mpi_comm_rows, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               write(error_unit,*) "Error when sending unique id for rows"
               stop 1
@@ -153,7 +159,7 @@
 #endif
             endif
             call mpi_comm_size(mpi_comm_cols, npcols, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_cols, mpierr)
+            call MPI_Bcast(ncclId, CCL_UNIQUE_ID_SIZE, MPI_BYTE, 0, mpi_comm_cols, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               write(error_unit,*) "Error when sending unique id for cols"
               stop 1
@@ -196,7 +202,7 @@
 #endif
             endif
             call mpi_comm_size(mpi_comm_self, npself, mpierr)
-            call MPI_Bcast(ncclId, 128, MPI_BYTE, 0, mpi_comm_self, mpierr)
+            call MPI_Bcast(ncclId, CCL_UNIQUE_ID_SIZE, MPI_BYTE, 0, mpi_comm_self, mpierr)
             if (mpierr .ne. MPI_SUCCESS) then
               write(error_unit,*) "Error when sending unique id for self"
               stop 1

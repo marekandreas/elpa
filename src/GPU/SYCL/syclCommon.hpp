@@ -55,6 +55,8 @@
 
 #ifdef WITH_ONEAPI_ONECCL
 #include <oneapi/ccl.hpp>
+#include <list>
+#include <string>
 #endif
 
 namespace sycl_be {
@@ -93,7 +95,7 @@ struct DeviceSelection {
 #ifdef WITH_ONEAPI_ONECCL
   ccl::device cclDevice;
   ccl::context cclContext;
-  std::vector<ccl::communicator> cclComms;
+  std::list<ccl::communicator> cclComms;
 #endif  
   QueueData defaultQueueHandle;
   std::vector<QueueData> queueHandles;
@@ -106,6 +108,7 @@ struct DeviceSelection {
   bool isCpuDevice();
 #ifdef WITH_ONEAPI_ONECCL
   ccl::communicator* initCclCommunicator(int nRanks, int myRank, cclKvsHandle kvs);
+  bool destroyCclCommunicator(ccl::communicator *comm);
 #endif
 };
 
@@ -114,7 +117,7 @@ class SyclState {
   static std::optional<SyclState> _staticState;
 
 #ifdef WITH_ONEAPI_ONECCL
-  std::unordered_map<void *, cclKvsHandle> kvsMap;
+  std::unordered_map<std::string, cclKvsHandle> kvsMap;
 #endif
 //  bool isManagingOnlyL0Gpus;
   public:
@@ -138,9 +141,10 @@ class SyclState {
   static SyclState& defaultState();
 
 #ifdef WITH_ONEAPI_ONECCL
-  void registerKvs(void *kvsAddr, cclKvsHandle kvs);
-  std::optional<cclKvsHandle> retrieveKvs(void *kvsAddress);
+  void registerKvs(const std::string &kvsKey, cclKvsHandle kvs);
+  std::optional<cclKvsHandle> retrieveKvs(const std::string &kvsKey);
   void teardownCclStack();
+  bool destroyCclCommunicator(ccl::communicator *comm);
 #endif
 };
   
