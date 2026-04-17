@@ -2067,7 +2067,13 @@
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_cptr_c(a, width_height) /= 0
+      ! Route through intptr variant to work around flang-new type(c_ptr)
+      ! by-reference bind(C) codegen bug (incorrect dereference of output arg)
+      ! https://github.com/llvm/llvm-project/issues/192655
+      integer(kind=c_intptr_t) :: a_raw
+      a_raw = 0
+      success = hip_malloc_intptr_c(a_raw, width_height) /= 0
+      a = transfer(a_raw, a)
 #else
       success = .true.
 #endif
@@ -2117,7 +2123,13 @@
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_host_cptr_c(a, width_height) /= 0
+      ! Route through intptr variant to work around flang-new type(c_ptr)
+      ! by-reference bind(C) codegen bug (incorrect dereference of output arg)
+      ! https://github.com/llvm/llvm-project/issues/192655
+      integer(kind=c_intptr_t) :: a_raw
+      a_raw = 0
+      success = hip_malloc_host_intptr_c(a_raw, width_height) /= 0
+      a = transfer(a_raw, a)
 #else
       success = .true.
 #endif
