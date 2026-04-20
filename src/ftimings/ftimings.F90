@@ -462,7 +462,11 @@ module ftimings
     !$   endif
     !$ end do
 
+#ifdef HAVE_OMP_MASKED
+    !$omp masked
+#else
     !$omp master
+#endif
 
     if (.not. associated(self%current_node)) then
       ! First call to timer_start()
@@ -510,7 +514,11 @@ module ftimings
 
     self%current_node => node
 
+#ifdef HAVE_OMP_MASKED
+    !$omp end masked
+#else
     !$omp end master
+#endif
 
   end subroutine
 
@@ -539,7 +547,11 @@ module ftimings
     !$   endif
     !$ end do
 
+#ifdef HAVE_OMP_MASKED
+    !$omp masked
+#else
     !$omp master
+#endif
     error = .false.
 
     if (.not. associated(self%current_node)) then
@@ -569,7 +581,11 @@ module ftimings
       self%current_node => self%current_node%parent
 
     endif
+#ifdef HAVE_OMP_MASKED
+    !$omp end masked
+#else
     !$omp end master
+#endif
 
   end subroutine
 
