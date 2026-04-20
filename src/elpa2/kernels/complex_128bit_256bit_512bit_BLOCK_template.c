@@ -83,7 +83,7 @@
 #endif
 #endif
 
-#define __forceinline __attribute__((always_inline))
+#define __forceinline __attribute__((always_inline)) inline
 
 #endif /* VEC_SET == SSE_128 || VEC_SET == AVX_256 || VEC_SET == AVX2_256 || VEC_SET == AVX_512 */
 
@@ -534,7 +534,7 @@
 #endif/*  VEC_SET == SVE_512 || VEC_SET == SVE_256 || VEC_SET == SVE_128 */
 
 
-#define __forceinline __attribute__((always_inline))
+#define __forceinline __attribute__((always_inline)) inline
 
 #ifdef HAVE_SSE_INTRINSICS
 #undef __AVX__
