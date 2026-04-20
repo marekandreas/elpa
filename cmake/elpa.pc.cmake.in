@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/elpa@ELPA_SUFFIX@-@PROJECT_VERSION@
+
+Name: elpa@ELPA_SUFFIX@
+Description: Eigenvalue SoLvers for Petaflop-Applications
+Version: @PROJECT_VERSION@
+URL: https://elpa.mpcdf.mpg.de
+Libs: -L${libdir} -lelpa@ELPA_SUFFIX@
+Libs.private: @SCALAPACK_LDFLAGS@
+Cflags: -I${includedir} -I${includedir}/elpa -I${includedir}/modules
