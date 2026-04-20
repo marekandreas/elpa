@@ -266,7 +266,7 @@
 #define _SIMD_SUB vsubq_f32
 #define _SIMD_NEG vnegq_f32
 #define _SIMD_FMA(a, b, c) vfmaq_f32(c ,b, a)
-#define _SIMD_NFMA(a, b, c) vfmsq_f32(a, b, c)
+#define _SIMD_NFMA(a, b, c) vfmsq_f32(c, b, a)
 #define _SIMD_FMSUB(a, b, c) vnegq_f32(vfmsq_f32(c, b, a))
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 vdupq_n_f32
