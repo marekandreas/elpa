@@ -76,15 +76,12 @@
 #error "openmp_offload missing"
 #endif
 
-#ifdef _WIN32
-/* On Windows, Fortran module variables use module-prefixed COFF symbol names
- * and are not accessible from C as plain externals. Define C-side globals here
- * so set_gpu_parameters_tests() and callers have a consistent gpuMemcpy*
- * definition. Both C globals and Fortran module variables receive the same enum
- * values via their respective initialization functions. */
+/* Authoritative definitions for the gpuMemcpy direction constants used by
+ * the test layer. Using bare definitions in a header (common symbols) is
+ * non-portable: it relies on ELF tentative-definition merging and breaks
+ * under -fno-common (GCC default since GCC 10) and on COFF (Windows). */
 int gpuMemcpyHostToDevice;
 int gpuMemcpyDeviceToHost;
-#endif
 
 
 void set_gpu_parameters_tests(){
