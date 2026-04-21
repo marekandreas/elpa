@@ -536,7 +536,9 @@
 
       zmax = maxval(abs(z))
       dmax = maxval(abs(d))
-      EPS = PRECISION_LAMCH( 'E' ) ! return epsilon
+      EPS = epsilon(1.0_rk) ! Fortran intrinsic: portable, correct for all precisions.
+      ! NOTE: PRECISION_LAMCH (i.e. SLAMCH) returns 0.0 for all parameters
+      ! in Apple Accelerate vecLib for single precision — do not call it.
       TOL = 8.0_rk*EPS*MAX(dmax,zmax)
 
       ! If the rank-1 modifier is small enough, no more needs to be done
@@ -611,7 +613,9 @@
 
           ! Find TAU = sqrt(a**2+b**2) without overflow or
           ! destructive underflow.
-          TAU = PRECISION_LAPY2( C, S )
+          ! NOTE: PRECISION_LAPY2 (i.e. SLAPY2) is completely broken in Apple
+          ! Accelerate vecLib for single precision — use Fortran intrinsic hypot.
+          TAU = hypot( C, S )
           T = D1(na1) - D(idx(i))
           C = C / TAU
           S = -S / TAU

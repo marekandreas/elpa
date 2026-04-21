@@ -1569,7 +1569,8 @@
 #ifdef DOUBLE_PRECISION_REAL
         beta = sign(dlapy2(alpha, xnorm), alpha)
 #else
-        beta = sign(slapy2(alpha, xnorm), alpha)
+        ! NOTE: slapy2 is broken in Apple Accelerate vecLib for single precision.
+        beta = sign(hypot(alpha, xnorm), alpha)
 #endif
         tau = (beta+alpha) / beta
 
@@ -2483,7 +2484,8 @@
         call dscal(local_size, 1.0_rk8/(beta+alpha), &
                      x(local_offset), incx)
 #else
-      xnorm = slapy2(sqrt(dot), snrm2(k-sidx,seedC(1,k-sidx+1),1))
+      ! NOTE: slapy2 is broken in Apple Accelerate vecLib for single precision.
+      xnorm = hypot(sqrt(dot), snrm2(k-sidx,seedC(1,k-sidx+1),1))
 
       if (xnorm .eq. 0.0_rk4) then
         tau = 0.0_rk4
@@ -2491,7 +2493,8 @@
 
         ! General case
 
-        beta = sign(slapy2(alpha, xnorm), alpha)
+        ! NOTE: slapy2 is broken in Apple Accelerate vecLib for single precision.
+        beta = sign(hypot(alpha, xnorm), alpha)
         ! store a preliminary version of beta in tau
         tau = beta
 
