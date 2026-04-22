@@ -422,13 +422,39 @@ endif()
 # ---------------------------------------------------------------------------
 # NVTX profiling support
 # ---------------------------------------------------------------------------
+# NVTX v3 is header-only — there is no libnvToolsExt to link.  The Fortran
+# sources call nvtxRangePushA / nvtxRangePop via bind(C) interfaces, so a
+# small C shim (src/general/nvtx_impl.c) is compiled with NVTX_EXPORT_API to
+# emit the symbols.  We only need the include path for <nvtx3/nvToolsExt.h>.
+#
+# The legacy libnvToolsExt (NVTX v1/v2) is also accepted as a fallback.
 option(ELPA_NVTX "Enable NVTX profiler annotations" OFF)
+set(ELPA_NVTX_ROOT
+    ""
+    CACHE PATH
+    "Optional root path hint for NVTX headers (e.g. Conan package folder)"
+)
 if(ELPA_NVTX)
-    find_library(NVTOOLSEXT_LIBRARY NAMES nvToolsExt)
-    if(NVTOOLSEXT_LIBRARY)
+    set(_nvtx_hints "")
+    if(ELPA_NVTX_ROOT)
+        list(APPEND _nvtx_hints "${ELPA_NVTX_ROOT}")
+    endif()
+    # Try NVTX3 header-only first (preferred)
+    find_path(NVTX3_INCLUDE_DIR NAMES nvtx3/nvToolsExt.h HINTS ${_nvtx_hints} PATH_SUFFIXES include)
+    if(NVTX3_INCLUDE_DIR)
         set(WITH_NVTX 1)
+        set(ELPA_NVTX3_HEADER_ONLY TRUE)
+        message(STATUS "ELPA: NVTX3 header-only found at ${NVTX3_INCLUDE_DIR}")
     else()
-        message(WARNING "ELPA: NVTX requested but nvToolsExt not found")
+        # Fallback: legacy libnvToolsExt (NVTX v1/v2)
+        find_library(NVTOOLSEXT_LIBRARY NAMES nvToolsExt HINTS ${_nvtx_hints} PATH_SUFFIXES lib lib64)
+        if(NVTOOLSEXT_LIBRARY)
+            set(WITH_NVTX 1)
+            set(ELPA_NVTX3_HEADER_ONLY FALSE)
+            message(STATUS "ELPA: legacy nvToolsExt library found at ${NVTOOLSEXT_LIBRARY}")
+        else()
+            message(WARNING "ELPA: NVTX requested but neither nvtx3 headers nor nvToolsExt library found")
+        endif()
     endif()
 endif()
 

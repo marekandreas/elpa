@@ -328,8 +328,18 @@ if(WITH_NVIDIA_GPU_VERSION)
         target_link_libraries(${_libname} PRIVATE ${NCCL_LIBRARY})
         target_include_directories(${_libname} PRIVATE ${NCCL_INCLUDE_DIR})
     endif()
-    if(WITH_NVTX AND NVTOOLSEXT_LIBRARY)
-        target_link_libraries(${_libname} PRIVATE ${NVTOOLSEXT_LIBRARY})
+    if(WITH_NVTX)
+        if(ELPA_NVTX3_HEADER_ONLY)
+            # NVTX3 header-only: compile the C shim that emits externally-
+            # visible nvtxRangePushA / nvtxRangePop symbols for Fortran.
+            target_sources(${_libname} PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/general/nvtx_impl.c)
+            target_include_directories(${_libname} PRIVATE
+                ${NVTX3_INCLUDE_DIR} ${NVTX3_INCLUDE_DIR}/nvtx3)
+        elseif(NVTOOLSEXT_LIBRARY)
+            # Legacy NVTX v1/v2 shared library
+            target_link_libraries(${_libname} PRIVATE ${NVTOOLSEXT_LIBRARY})
+        endif()
     endif()
 endif()
 
