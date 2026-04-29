@@ -816,9 +816,6 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
     successGPU = gpu_free(evDev)
     check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: evDev", successGPU)
 
-    successGPU = gpu_free(qDev)
-    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: qDev", successGPU)
-
     return
   endif
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
