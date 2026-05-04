@@ -1119,32 +1119,126 @@ subroutine tridiag_cpu_&
         endif ! .not. useCCL
       endif ! useGPU
 
+      if (useGPU) then
+        if (mat_vec_as_one_block) then
+          ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
+          ! this requires altering of the algorithm when later explicitly updating the matrix
+          ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
+          if (wantDebug) call obj%timer%start("gpublas_gemv")
+          NVTX_RANGE_PUSH("gpublas_gemv: u_col_dev=a_dev^T*v_row_dev")
+              
+          ! u_col_dev = a_dev^T*v_row_dev
+          call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
+                                    ONE, a_dev, matrixRows,                   &
+                                    v_row_dev , 1,                          &
+                                    ZERO, u_col_dev, 1, gpuHandle)
+              
+#ifdef WITH_GPU_STREAMS
+          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else                                    
+          if (wantDebug) successGPU = gpu_DeviceSynchronize()
+#endif
+          NVTX_RANGE_POP("gpublas_gemv: u_col_dev=a_dev^T*v_row_dev")
+          if (wantDebug) call obj%timer%stop("gpublas_gemv")
+       ! todo: try with non transposed!!!
+!                 if(i/=j) then
+!                   call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
+!                                             ONE, a_dev + offset_dev, matrixRows,                        &
+!                                             v_col_dev + (l_col_beg - 1) *                      &
+!                                             size_of_datatype, 1,                          &
+!                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
+!                                             size_of_datatype, 1)
+!                 endif
+        else  ! mat_vec_as_one_block
+          !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
+          !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
+
+          if (useCCL .and. l_cols>l_rows) then 
+#ifdef WITH_GPU_STREAMS
+            successGPU = gpu_memset_async(u_col_dev + l_rows*size_of_datatype, 0, (l_cols-l_rows) * size_of_datatype, my_stream)
+            if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
+#else
+            successGPU = gpu_memset      (u_col_dev + l_rows*size_of_datatype, 0, (l_cols-l_rows) * size_of_datatype)
+#endif
+            check_memcpy_gpu("tridiag: u_col_dev", successGPU)
+          endif
+
+          do i=0,(istep-2)/tile_size
+            l_col_beg = i*l_cols_per_tile+1
+            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+            if (l_col_end<l_col_beg) cycle
+
+            l_row_beg = 1
+            l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
+                  
+            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
+          
+            call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
+                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                          ONE, a_dev + offset_dev, matrixRows,  &
+                          v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
+                          ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1, gpuHandle)
+          enddo !i=0,(istep-2)/tile_size
+
+          do i=0,(istep-2)/tile_size
+            l_col_beg = i*l_cols_per_tile+1
+            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
+            if (l_col_end<l_col_beg) cycle
+
+            l_row_beg = 1
+            l_row_end = min(l_rows,i*l_rows_per_tile)
+              
+            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
+
+            if (isSkewsymmetric) then
+                call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                            -ONE, a_dev + offset_dev, matrixRows, &
+                            v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                            ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
+            else
+                call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
+                            ONE, a_dev + offset_dev, matrixRows, &
+                            v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
+                            ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
+            endif
+          enddo ! i=0,(istep-2)/tile_size
+
+          NVTX_RANGE_PUSH("memcpy D-H u_row_dev->u_row")
+          num = l_rows * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+          successGPU = gpu_memcpy_async(int(loc(u_row(1)),kind=c_intptr_t), u_row_dev, num, gpuMemcpyDeviceToHost, my_stream)
+          successGPU = gpu_stream_synchronize(my_stream)
+#else
+          successGPU = gpu_memcpy      (int(loc(u_row(1)),kind=c_intptr_t), u_row_dev, num, gpuMemcpyDeviceToHost)
+#endif
+          check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
+          NVTX_RANGE_POP("memcpy D-H u_row_dev->u_row")
+        end if ! mat_vec_as_one_block / per stripes
+
+      else ! useGPU
+
 #ifdef WITH_OPENMP_TRADITIONAL
-      call obj%timer%start("OpenMP parallel")
-!todo : check whether GPU implementation with large matrix multiply is beneficial
-!       for a larger number of threads; could be addressed with autotuning if this
-!       is the case
+        call obj%timer%start("OpenMP parallel")
 !$omp parallel &
 !$omp num_threads(max_threads) &
 !$omp default(none) &
-!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, my_stream, num) &
-!$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
+!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end) &
+!$omp shared(obj, gpuHandle, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &
 !$omp&       matrixRows, istep, tile_size, l_rows, l_cols, ur_p, uc_p, a_mat, &
 !$omp&       matrixCols, useCCL)
-      my_thread = omp_get_thread_num()
-          
-      n_threads = omp_get_num_threads()
+        my_thread = omp_get_thread_num()
 
-      n_iter = 0
+        n_threads = omp_get_num_threads()
 
-      ! first calculate A*v part of (A + VU**T + UV**T)*v
-      uc_p(1:l_cols,my_thread) = 0.
-      ur_p(1:l_rows,my_thread) = 0.
+        n_iter = 0
+
+        ! first calculate A*v part of (A + VU**T + UV**T)*v
+        uc_p(1:l_cols,my_thread) = 0.
+        ur_p(1:l_rows,my_thread) = 0.
 #endif /* WITH_OPENMP_TRADITIONAL */
 
-      if (.not. useGPU) then
         do i=0, (istep-2)/tile_size ! iteration over tiles
           l_col_beg = i*l_cols_per_tile+1
           l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
@@ -1213,119 +1307,16 @@ subroutine tridiag_cpu_&
 #endif /* WITH_OPENMP_TRADITIONAL */
           enddo  ! j=0,i
         enddo  ! i=0,(istep-2)/tile_size
-      endif ! .not. useGPU
-
-
-      if (useGPU) then
-        if (mat_vec_as_one_block) then
-          ! Unlike for CPU, we (for each MPI thread) do just one large mat-vec multiplication
-          ! this requires altering of the algorithm when later explicitly updating the matrix
-          ! after max_stored_uv is reached : we need to update all tiles, not only those above diagonal
-          if (wantDebug) call obj%timer%start("gpublas_gemv")
-          NVTX_RANGE_PUSH("gpublas_gemv: u_col_dev=a_dev^T*v_row_dev")
-              
-          ! u_col_dev = a_dev^T*v_row_dev
-          call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, l_rows,l_cols,  &
-                                    ONE, a_dev, matrixRows,                   &
-                                    v_row_dev , 1,                          &
-                                    ZERO, u_col_dev, 1, gpuHandle)
-              
-#ifdef WITH_GPU_STREAMS
-          if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else                                    
-          if (wantDebug) successGPU = gpu_DeviceSynchronize()
-#endif
-          NVTX_RANGE_POP("gpublas_gemv: u_col_dev=a_dev^T*v_row_dev")
-          if (wantDebug) call obj%timer%stop("gpublas_gemv")
-       ! todo: try with non transposed!!!
-!                 if(i/=j) then
-!                   call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1,l_col_end-l_col_beg+1,  &
-!                                             ONE, a_dev + offset_dev, matrixRows,                        &
-!                                             v_col_dev + (l_col_beg - 1) *                      &
-!                                             size_of_datatype, 1,                          &
-!                                             ONE, u_row_dev + (l_row_beg - 1) *                 &
-!                                             size_of_datatype, 1)
-!                 endif
-        else  ! mat_vec_as_one_block
-          !perform multiplication by stripes - it is faster than by blocks, since we call cublas with
-          !larger matrices. In general, however, this algorithm is very simmilar to the one with CPU
-
-          if (useCCL .and. l_cols>l_rows) then 
-#ifdef WITH_GPU_STREAMS
-            successGPU = gpu_memset_async(u_col_dev + l_rows*size_of_datatype, 0, (l_cols-l_rows) * size_of_datatype, my_stream)
-            if (wantDebug) successGPU = gpu_stream_synchronize(my_stream)
-#else
-            successGPU = gpu_memset      (u_col_dev + l_rows*size_of_datatype, 0, (l_cols-l_rows) * size_of_datatype)
-#endif
-            check_memcpy_gpu("tridiag: u_col_dev", successGPU)
-      endif
-
-          do i=0,(istep-2)/tile_size
-            l_col_beg = i*l_cols_per_tile+1
-            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-            if (l_col_end<l_col_beg) cycle
-
-            l_row_beg = 1
-            l_row_end = min(l_rows,(i+1)*l_rows_per_tile)
-                  
-            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
-          
-            call gpublas_PRECISION_GEMV(BLAS_TRANS_OR_CONJ, &
-                          l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                          ONE, a_dev + offset_dev, matrixRows,  &
-                          v_row_dev + (l_row_beg - 1) * size_of_datatype, 1,  &
-                          ONE, u_col_dev + (l_col_beg - 1) * size_of_datatype, 1, gpuHandle)
-          enddo !i=0,(istep-2)/tile_size
-
-          do i=0,(istep-2)/tile_size
-            l_col_beg = i*l_cols_per_tile+1
-            l_col_end = min(l_cols,(i+1)*l_cols_per_tile)
-            if (l_col_end<l_col_beg) cycle
-
-            l_row_beg = 1
-            l_row_end = min(l_rows,i*l_rows_per_tile)
-              
-            offset_dev = ((l_row_beg-1) + (l_col_beg - 1) * matrixRows) * size_of_datatype
-
-            if (isSkewsymmetric) then
-                call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            -ONE, a_dev + offset_dev, matrixRows, &
-                            v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
-                            ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
-            else
-                call gpublas_PRECISION_GEMV('N', l_row_end-l_row_beg+1, l_col_end-l_col_beg+1, &
-                            ONE, a_dev + offset_dev, matrixRows, &
-                            v_col_dev + (l_col_beg - 1) * size_of_datatype,1, &
-                            ONE, u_row_dev + (l_row_beg - 1) * size_of_datatype, 1, gpuHandle)
-            endif
-          enddo ! i=0,(istep-2)/tile_size
-        end if ! mat_vec_as_one_block / per stripes
-
-
-        if (.not. mat_vec_as_one_block) then
-          NVTX_RANGE_PUSH("memcpy D-H u_row_dev->u_row")
-          num = l_rows * size_of_datatype
-#ifdef WITH_GPU_STREAMS
-          successGPU = gpu_memcpy_async(int(loc(u_row(1)),kind=c_intptr_t), u_row_dev, num, gpuMemcpyDeviceToHost, my_stream)
-          successGPU = gpu_stream_synchronize(my_stream)
-#else
-          successGPU = gpu_memcpy      (int(loc(u_row(1)),kind=c_intptr_t), u_row_dev, num, gpuMemcpyDeviceToHost)
-#endif
-          check_memcpy_gpu("tridiag: u_row_dev 1", successGPU)
-          NVTX_RANGE_POP("memcpy D-H u_row_dev->u_row")
-        endif ! .not. mat_vec_as_one_block
-      endif ! useGPU
 
 #ifdef WITH_OPENMP_TRADITIONAL
 !$OMP END PARALLEL
-      call obj%timer%stop("OpenMP parallel")
-      if (.not.(useGPU)) then
+        call obj%timer%stop("OpenMP parallel")
         do i=0,max_threads-1
           u_col(1:l_cols) = u_col(1:l_cols) + uc_p(1:l_cols,i)
           u_row(1:l_rows) = u_row(1:l_rows) + ur_p(1:l_rows,i)
         enddo
-      endif
 #endif /* WITH_OPENMP_TRADITIONAL */
+      endif ! .not. useGPU
 
       ! second calculate (VU**T + UV**T)*v part of (A + VU**T + UV**T)*v
       if (n_stored_vecs > 0) then
