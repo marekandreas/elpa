@@ -709,6 +709,7 @@ __global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
       i /= 2;
       }
 
+    // here we do only update of d_vec_dev by dot product. Initial value is already set in gpu_copy_and_set_zeros
     if (threadIdx.x==0) 
       {
       atomicAdd(&a_dev[(l_rows-1) + matrixRows*(l_cols-1)], cache[0]);
