@@ -46,9 +46,9 @@
 
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
-  #define CCL_UNIQUE_ID_SIZE 128
+#define CCL_UNIQUE_ID_SIZE 128
 #elif defined(WITH_ONEAPI_ONECCL)
-  #define CCL_UNIQUE_ID_SIZE 256
+#define CCL_UNIQUE_ID_SIZE 256
 #endif
 
             ! mpi_comm_all
