@@ -58,6 +58,40 @@ struct is_pointer { static const bool value = false; };
 template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
 
+
+template <typename T>
+__global__ void gpu_set_one_complex_kernel(T *a_dev)
+{
+  using S = typename std::conditional<std::is_same<T, gpuFloatComplex>::value,
+                                      float, double>::type;
+  if (threadIdx.x == 0 && blockIdx.x == 0)
+    *a_dev = elpaDeviceNumberFromRealImag<T>(S(1.0), S(0.0));
+}
+
+
+
+template <typename T>
+void gpu_set_one_complex (T *a_dev, cudaStream_t my_stream){
+#ifdef WITH_GPU_STREAMS
+  gpu_set_one_complex_kernel <<<1, 1, 0, my_stream>>>(a_dev);
+#else
+  gpu_set_one_complex_kernel <<<1, 1>>>              (a_dev);
+#endif
+
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _set_one_complex_FromC)(char dataType, intptr_t *a_dev, gpuStream_t my_stream) {
+  //if      (dataType=='D') gpu_set_one_complex<double> ( (double *)a_dev, my_stream);
+  //else if (dataType=='S') gpu_set_one_complex<float> (   (float *)a_dev, my_stream);
+  if (dataType=='Z') gpu_set_one_complex<gpuDoubleComplex> ( (gpuDoubleComplex *)a_dev, my_stream);
+  else if (dataType=='C') gpu_set_one_complex<gpuFloatComplex> (   (gpuFloatComplex *)a_dev, my_stream);
+  else {
+    printf("Error in gpu_set_one_complex_FromC: Unsupported data type\n");
+  }
+}
+
+
+
 //_________________________________________________________________________________________________
 
 template <typename T, typename T_real>
@@ -1023,4 +1057,3 @@ extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_Fr
 }
 
 //_________________________________________________________________________________________________
-

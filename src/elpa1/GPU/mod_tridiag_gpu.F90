@@ -59,6 +59,20 @@ module tridiag_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
 
   interface
+    subroutine gpu_set_one_complex_c(dataType, a_dev, my_stream) &
+#if   defined(WITH_NVIDIA_GPU_VERSION)
+                                            bind(C, name="cuda_set_one_complex_FromC")
+#endif
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value      :: dataType
+      integer(kind=c_intptr_t), value  :: a_dev
+      integer(kind=c_intptr_t), value  :: my_stream
+
+    end subroutine
+  end interface
+
+  interface
     subroutine gpu_copy_and_set_zeros_c(dataType, v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, &
                                         l_rows, l_cols, matrixRows, istep, &
                                         isOurProcessRow_int, isOurProcessCol_int, isOurProcessCol_prev_int, &
@@ -240,6 +254,19 @@ module tridiag_gpu
 
 
   contains
+    subroutine gpu_set_one_complex(dataType, a_dev, my_stream) 
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_intptr_t), value :: a_dev
+      integer(kind=c_intptr_t), value :: my_stream
+
+#if defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION)
+      call gpu_set_one_complex_c(dataType, a_dev, my_stream)
+#endif
+    end subroutine
+
+
 
 
     subroutine gpu_copy_and_set_zeros(dataType, v_row_dev, u_col_dev, a_dev, aux1_dev, vav_dev, d_vec_dev, &
