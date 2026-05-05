@@ -62,6 +62,7 @@
 #include <algorithm>
 #include <cmath>
 #include <type_traits>
+#include <cstring>
 #include "config-f90.h"
 
 #include "../../../GPU/common_device_functions.h"

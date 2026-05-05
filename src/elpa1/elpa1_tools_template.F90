@@ -129,8 +129,8 @@ subroutine hh_transform_complex_&
 #endif
     ALPHA = ALPHA + BETA
     IF ( BETA<0 ) THEN
+      TAU  = ALPHA / BETA
       BETA = -BETA
-      TAU  = -ALPHA / BETA
     ELSE ! ( BETA<0 )
 #if REALCASE == 1
       ALPHA = XNORM_SQ / ALPHA
