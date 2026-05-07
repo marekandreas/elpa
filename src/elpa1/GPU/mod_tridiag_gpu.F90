@@ -62,6 +62,10 @@ module tridiag_gpu
     subroutine gpu_set_one_complex_c(dataType, a_dev, my_stream) &
 #if   defined(WITH_NVIDIA_GPU_VERSION)
                                             bind(C, name="cuda_set_one_complex_FromC")
+#elif defined(WITH_AMD_GPU_VERSION)
+                                            bind(C, name="hip_set_one_complex_FromC")
+#elif defined(WITH_SYCL_GPU_VERSION)
+                                            bind(C, name="sycl_set_one_complex_FromC")
 #endif
       use, intrinsic :: iso_c_binding
       implicit none
