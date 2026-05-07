@@ -115,11 +115,16 @@ extern "C" void cuda_accumulate_device_info_FromC(int *info_abs_dev, int *info_n
 //________________________________________________________________
 
 template <typename T>
-__global__ void cuda_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
+__device__ void cuda_copy_a_tmatc_kernel_body(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
 
   int ii_index    = threadIdx.x +1; // range 1..nblk
   int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
   tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = elpaDeviceComplexConjugate(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
+}
+
+template <typename T>
+__global__ void cuda_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
+  cuda_copy_a_tmatc_kernel_body(a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1);
 }
 
 template <typename T>
@@ -169,7 +174,7 @@ extern "C" void cuda_copy_float_complex_a_tmatc_FromC(cuFloatComplex *a_dev, cuF
 
 
 template <typename T>
-__global__ void cuda_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk) {
+__device__ void cuda_set_a_lower_to_zero_kernel_body (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk) {
 
   // do i=1,na
   //   if (my_pcol==pcol(i, nblk, np_cols)) then
@@ -199,6 +204,11 @@ __global__ void cuda_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRow
         a_dev[((l_row1-1)+di_loc) + matrixRows*(l_col1-1)] = Zero;
       }
     }
+}
+
+template <typename T>
+__global__ void cuda_set_a_lower_to_zero_kernel (T *a_dev, int na, int matrixRows, int my_pcol, int np_cols, int my_prow, int np_rows, int nblk) {
+  cuda_set_a_lower_to_zero_kernel_body(a_dev, na, matrixRows, my_pcol, np_cols, my_prow, np_rows, nblk);
 }
 
 template <typename T>
