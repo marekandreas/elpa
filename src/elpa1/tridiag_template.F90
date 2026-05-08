@@ -1874,11 +1874,7 @@ subroutine tridiag_cpu_&
 #endif
       check_memcpy_gpu("tridiag: a_dev 8", successGPU)
     else !useGPU
-      if (isSkewsymmetric) then
-        d_vec(1) = 0.0_rk
-      else
-        d_vec(1) = a_mat(1,1)
-      endif
+      d_vec(1) = a_mat(1,1)
     endif !useGPU
   endif ! (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))
 #endif /* REALCASE */

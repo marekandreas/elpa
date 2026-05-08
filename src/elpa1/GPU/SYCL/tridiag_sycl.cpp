@@ -852,8 +852,8 @@ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_de
 #endif
     alpha = alpha + beta
     if ( beta<0 ) then
+      tau  = alpha / beta
       beta = -beta
-      tau  = -alpha / beta
     else
 #if realcase == 1
       alpha = xnorm_sq / alpha
