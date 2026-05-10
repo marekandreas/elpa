@@ -461,10 +461,14 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11 change to NB
 
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
+  sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
+  //sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host) {
+  /* Pointers allocated outside of sycl are unknown.
+   * 
+   */
+  if (memoryType == sycl::usm::alloc::host || memoryType == sycl::usm::alloc::unknown) /* Pointers allocated outside of sycl are unknown.*/
+    {
     T xf_host_value = *xf_host_or_dev;
 
     queue.submit([&](sycl::handler &cgh)
@@ -616,10 +620,10 @@ void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_r
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
 
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
+  sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
+  //sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host)
+  if (memoryType == sycl::usm::alloc::host or memoryType == sycl::usm::alloc::unknown)
     {
     T vav_host_value = *vav_host_or_dev;
     T tau_host_value = *tau_host_or_dev;

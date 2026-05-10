@@ -1711,6 +1711,9 @@ module elpa_impl
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       use openmp_offload_functions
 #endif
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+      use elpa_ccl_gpu
+#endif
 
       implicit none
 #ifdef WITH_MPI

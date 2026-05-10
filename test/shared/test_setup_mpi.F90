@@ -65,6 +65,9 @@ module test_setup_mpi
       use test_util
       use ELPA_utilities
       use precision_for_tests
+#ifdef WITH_ONEAPI_ONECCL
+      use test_oneccl_init_wrapper
+#endif
       implicit none
 
       TEST_INT_MPI_TYPE              :: mpierr
@@ -75,6 +78,9 @@ module test_setup_mpi
       TEST_INT_MPI_TYPE              :: required_mpi_thread_level, &
                                         provided_mpi_thread_level
 #endif
+#ifdef WITH_ONEAPI_ONECCL
+      integer(c_int)                :: oneccl_init_status
+#endif
 
 
 #ifdef WITH_MPI
@@ -84,6 +90,9 @@ module test_setup_mpi
 #else
       required_mpi_thread_level = MPI_THREAD_MULTIPLE
 
+#ifdef WITH_ONEAPI_ONECCL
+      call oneccl_init(oneccl_init_status)
+#endif
       call mpi_init_thread(required_mpi_thread_level,     &
                            provided_mpi_thread_level, mpierr)
 
