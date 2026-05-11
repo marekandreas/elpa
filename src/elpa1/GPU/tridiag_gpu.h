@@ -71,7 +71,7 @@ __global__ void gpu_set_one_complex_kernel(T *a_dev)
 
 
 template <typename T>
-void gpu_set_one_complex (T *a_dev, cudaStream_t my_stream){
+void gpu_set_one_complex (T *a_dev, gpuStream_t my_stream){
 #ifdef WITH_GPU_STREAMS
   gpu_set_one_complex_kernel <<<1, 1, 0, my_stream>>>(a_dev);
 #else
