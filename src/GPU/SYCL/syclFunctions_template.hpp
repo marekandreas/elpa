@@ -1148,5 +1148,31 @@ void syclblasCaxpy_elpa_wrapper (QueueData *handle, int n, std::complex<float> a
   axpy(queue, n, &alpha, x, incx, y, incy);
 }
 
+//_________________________________________________________________________________________________
+// cusolverXsyevd
+// syclsolverDsyevd_elpa_wrapper
+// syclsolverSsyevd_elpa_wrapper
+
+void syclsolverDsyevd_elpa_wrapper (QueueData *handle, int n, double *A, int lda, double *eigenvalues, int *info_dev) {
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+
+  int64_t scratchpad_size = oneapi::mkl::lapack::syevd_scratchpad_size<double>(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, lda);
+  double* scratchpad = qHandle->getScratchpadFor<double>(scratchpad_size);
+
+  oneapi::mkl::lapack::syevd(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, A, lda, eigenvalues, scratchpad, scratchpad_size);
+}
+
+
+void syclsolverSsyevd_elpa_wrapper (QueueData *handle, int n, float *A, int lda, float *eigenvalues, int *info_dev) {
+  QueueData *qHandle = getQueueDataOrDefault(handle);
+  sycl::queue queue = qHandle->queue;
+  
+  int64_t scratchpad_size = oneapi::mkl::lapack::syevd_scratchpad_size<float>(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, lda);
+  float* scratchpad = qHandle->getScratchpadFor<float>(scratchpad_size);
+
+  oneapi::mkl::lapack::syevd(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, A, lda, eigenvalues, scratchpad, scratchpad_size);
+}
+
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */
