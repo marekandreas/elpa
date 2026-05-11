@@ -293,4 +293,11 @@
     success = .true.
     call obj%timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
 
+#ifdef WITH_GPU_STREAMS
+    if (useGPU .and. .not. useGPUsolver) then
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("solve_tridi_single: final synchronize", successGPU)
+    endif
+#endif
+
   end subroutine
