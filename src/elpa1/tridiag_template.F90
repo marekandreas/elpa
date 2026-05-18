@@ -2100,7 +2100,6 @@ subroutine tridiag_cpu_&
     NVTX_RANGE_POP("ccl_allreduce")
 #endif /* defined(USE_CCL_TRIDIAG) */
 
-    if (wantDebug) call obj%timer%stop("nccl_communication")        
   endif ! (.not.(useGPU) .or. (useGPU .and. .not.(useCCL)))          
 #endif /* WITH_MPI */
 
