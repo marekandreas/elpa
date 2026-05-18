@@ -452,7 +452,7 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
       {
       //T xf_host_value = *xf_host_or_dev; // this causes problems with alignment between Fortran and C++ for complex numbers
       T xf_host_value;
-      std::memcpy(&xf_host_value, xf_host_or_dev, sizeof(T));
+      std::memcpy(&xf_host_value, reinterpret_cast<const void*>(xf_host_or_dev), sizeof(T));
 #ifdef WITH_GPU_STREAMS
       gpu_set_e_vec_scale_set_one_store_v_row_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(e_vec_dev, vrl_dev, a_dev, v_row_dev, tau_dev, xf_host_value,
                                                                                              l_rows, l_cols, matrixRows, istep, isOurProcessRow, useCCL);
