@@ -89,6 +89,35 @@ struct is_pointer<T*> { static const bool value = true; };
 
 //________________________________________________________________
 
+template <typename T>
+void gpu_set_one_complex_kernel(T *a_dev) {
+  using S = typename std::conditional<std::is_same<T, gpuFloatComplex>::value,
+                                      float, double>::type;
+  *a_dev = elpaDeviceNumberFromRealImag<T>(S(1.0), S(0.0));
+}
+
+template <typename T>
+void gpu_set_one_complex(T *a_dev, gpuStream_t my_stream) {
+  auto queue = getQueueOrDefault(my_stream);
+  sycl::range<1> blocksPerGrid(1);
+  sycl::range<1> threadsPerBlock(1);
+  queue.parallel_for(
+    sycl::nd_range<1>(blocksPerGrid * threadsPerBlock, threadsPerBlock),
+    [=](sycl::nd_item<1> it) {
+      gpu_set_one_complex_kernel(a_dev);
+    });
+}
+
+extern "C" void CONCATENATE(ELPA_GPU, _set_one_complex_FromC)(char dataType, intptr_t a_dev, gpuStream_t my_stream) {
+  if      (dataType=='Z') gpu_set_one_complex<gpuDoubleComplex>((gpuDoubleComplex *)a_dev, my_stream);
+  else if (dataType=='C') gpu_set_one_complex<gpuFloatComplex> ((gpuFloatComplex  *)a_dev, my_stream);
+  else {
+    printf("Error in gpu_set_one_complex_FromC: Unsupported data type\n");
+  }
+}
+
+//________________________________________________________________
+
 template <typename T, typename T_real>
 void gpu_copy_and_set_zeros (T *v_row_dev, T *u_col_dev, const T *a_dev,
                              T *aux1_dev, T *vav_dev, T_real *d_vec_dev,
@@ -461,10 +490,14 @@ void gpu_set_e_vec_scale_set_one_store_v_row (T_real *e_vec_dev, T *vrl_dev, T *
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(maxWgSize); // TODO_23_11 change to NB
 
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
+  sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)xf_host_or_dev, queue.get_context());
+  //sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host) {
+  /* Pointers allocated outside of sycl are unknown.
+   * 
+   */
+  if (memoryType == sycl::usm::alloc::host || memoryType == sycl::usm::alloc::unknown) /* Pointers allocated outside of sycl are unknown.*/
+    {
     T xf_host_value = *xf_host_or_dev;
 
     queue.submit([&](sycl::handler &cgh)
@@ -616,10 +649,10 @@ void gpu_store_u_v_in_uv_vu(T *vu_stored_rows_dev, T *uv_stored_cols_dev, T *v_r
   sycl::range<1> blocksPerGrid = sycl::range<1>(blocks);
   sycl::range<1> threadsPerBlock = sycl::range<1>(threads);
 
-  //sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
-  sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
+  sycl::usm::alloc memoryType = sycl::get_pointer_type((void *)vav_host_or_dev, queue.get_context());
+  //sycl::usm::alloc memoryType = sycl::usm::alloc::host; // for now, CCL is not supported for Intel GPUs, so the pointer is always host
 
-  if (memoryType == sycl::usm::alloc::host)
+  if (memoryType == sycl::usm::alloc::host or memoryType == sycl::usm::alloc::unknown)
     {
     T vav_host_value = *vav_host_or_dev;
     T tau_host_value = *tau_host_or_dev;
@@ -848,8 +881,8 @@ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev, T *tau_de
 #endif
     alpha = alpha + beta
     if ( beta<0 ) then
+      tau  = alpha / beta
       beta = -beta
-      tau  = -alpha / beta
     else
 #if realcase == 1
       alpha = xnorm_sq / alpha

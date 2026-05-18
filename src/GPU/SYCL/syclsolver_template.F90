@@ -217,6 +217,7 @@
 
   ! syclsolver_?syevd_c
 
+
   interface
     subroutine syclsolver_Dsyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev) &
                               bind(C,name="syclsolverDsyevd_elpa_wrapper")

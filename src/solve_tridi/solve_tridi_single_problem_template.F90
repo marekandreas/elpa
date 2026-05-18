@@ -136,6 +136,10 @@
     if (gpusolver_version >= 32802) useGPUsolver =.true. ! rocSOLVER 3.28.2 for ROCm 6.4.2 introduced improved stedc
     if (wantDebug) print *, "gpusolver_version=", gpusolver_version, "useGPUsolver=", useGPUsolver
 #endif
+#if defined(WITH_SYCL_GPU_VERSION) && defined(WITH_SYCL_SOLVER)
+    useGPUsolver =.true.
+#endif
+
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
     call obj%timer%start("solve_tridi_single" // PRECISION_SUFFIX)
@@ -168,6 +172,15 @@
       if (wantDebug) successGPU = gpu_DeviceSynchronize()
       NVTX_RANGE_POP("gpusolver_stedc")
       call obj%timer%stop("gpusolver_stedc")
+#endif
+#ifdef WITH_SYCL_SOLVER
+      call obj%timer%start("gpusolver_syevd")
+      NVTX_RANGE_PUSH("gpusolver_syevd")
+      ! as of ELPA release 2025.06, oneMKL still lacks stedc. Hopefully, this gets resolved by Intel
+      call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
+      if (wantDebug) successGPU = gpu_DeviceSynchronize()
+      NVTX_RANGE_POP("gpusolver_syevd")
+      call obj%timer%stop("gpusolver_syevd")
 #endif
 
       num = 1 * size_of_int
@@ -292,5 +305,12 @@
 
     success = .true.
     call obj%timer%stop("solve_tridi_single" // PRECISION_SUFFIX)
+
+#ifdef WITH_GPU_STREAMS
+    if (useGPU .and. .not. useGPUsolver) then
+      successGPU = gpu_stream_synchronize(my_stream)
+      check_stream_synchronize_gpu("solve_tridi_single: final synchronize", successGPU)
+    endif
+#endif
 
   end subroutine

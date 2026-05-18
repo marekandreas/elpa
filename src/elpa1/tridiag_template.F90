@@ -191,7 +191,7 @@ subroutine tridiag_cpu_&
 
   integer(kind=ik)                              :: istep, i, j, l_col_beg, l_col_end, l_row_beg, l_row_end
   integer(kind=ik)                              :: tile_size, l_rows_per_tile, l_cols_per_tile
-  integer(kind=c_intptr_t)                      :: offset_dev
+  integer(kind=c_intptr_t)                      :: offset_dev, offset1_dev
 
   integer(kind=ik), intent(in)                  :: max_threads_in
   integer(kind=ik)                              :: max_threads
@@ -206,6 +206,10 @@ subroutine tridiag_cpu_&
   integer(kind=c_intptr_t)                      :: aux_dev, aux1_dev, aux_complex_dev, vav_dev, vav_host_or_dev, dot_prod_dev, & 
                                                    xf_dev, a_updated_element_dev, xf_host_or_dev, tau_istep_host_or_dev
   integer(kind=c_intptr_t)                      :: vnorm2_dev, vrl_dev ! alias pointers for aux1_dev(1), aux1_dev(2)
+  integer(kind=c_intptr_t)                      :: zero_dev
+  MATH_DATATYPE(kind=rck)                       :: dummy_complex_one
+  integer(kind=c_intptr_t)                      :: d_e_vec_dev
+
 
 #if COMPLEXCASE == 1
   complex(kind=rck)                             :: aux3(1)
@@ -373,29 +377,11 @@ subroutine tridiag_cpu_&
 
   allocate(aux(2*max_stored_uv), stat=istat, errmsg=errorMessage)
 
-  !mpi_comm_all    = obj%mpi_setup%mpi_comm_parent
-  !mpi_comm_cols   = obj%mpi_setup%mpi_comm_cols
-  !mpi_comm_rows   = obj%mpi_setup%mpi_comm_rows
-
   my_prow = obj%mpi_setup%myRank_comm_rows
   my_pcol = obj%mpi_setup%myRank_comm_cols
 
   np_rows = obj%mpi_setup%nRanks_comm_rows
   np_cols = obj%mpi_setup%nRanks_comm_cols
-
-
-  !if (wantDebug) call obj%timer%start("mpi_communication")
-  !call mpi_comm_rank(int(mpi_comm_rows,kind=MPI_KIND), my_prowMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_rows,kind=MPI_KIND), np_rowsMPI, mpierr)
-  !call mpi_comm_rank(int(mpi_comm_cols,kind=MPI_KIND), my_pcolMPI, mpierr)
-  !call mpi_comm_size(int(mpi_comm_cols,kind=MPI_KIND), np_colsMPI, mpierr)
-
-
-  !my_prow = int(my_prowMPI, kind=c_int)
-  !np_rows = int(np_rowsMPI, kind=c_int)
-  !my_pcol = int(my_pcolMPI, kind=c_int)
-  !np_cols = int(np_colsMPI, kind=c_int)
-  !if (wantDebug) call obj%timer%stop("mpi_communication")
 
   ! Matrix is split into tiles; work is done only for tiles on the diagonal or above
   ! seems that tile is a square submatrix, consisting by several blocks
@@ -527,17 +513,19 @@ subroutine tridiag_cpu_&
       successGPU = gpu_host_register(int(loc(aux),kind=c_intptr_t), num, gpuHostRegisterDefault)
       check_host_register_gpu("tridiag: aux", successGPU)
 
-      num = na * size_of_datatype_real
-      successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t), num, gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: d_vec", successGPU)
+      if (.not.useCCL) then
+        num = na * size_of_datatype_real
+        successGPU = gpu_host_register(int(loc(d_vec),kind=c_intptr_t), num, gpuHostRegisterDefault)
+        check_host_register_gpu("tridiag: d_vec", successGPU)
 
-      num = na * size_of_datatype_real
-      successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t), num, gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: e_vec", successGPU)
+        num = na * size_of_datatype_real
+        successGPU = gpu_host_register(int(loc(e_vec),kind=c_intptr_t), num, gpuHostRegisterDefault)
+        check_host_register_gpu("tridiag: e_vec", successGPU)
 
-      num = na * size_of_datatype
-      successGPU = gpu_host_register(int(loc(tau),kind=c_intptr_t), num, gpuHostRegisterDefault)
-      check_host_register_gpu("tridiag: tau", successGPU)
+        num = na * size_of_datatype
+        successGPU = gpu_host_register(int(loc(tau),kind=c_intptr_t), num, gpuHostRegisterDefault)
+        check_host_register_gpu("tridiag: tau", successGPU)
+      endif
 
       num = 2 * size_of_datatype
       successGPU = gpu_host_register(int(loc(aux1),kind=c_intptr_t), num, gpuHostRegisterDefault)
@@ -587,6 +575,9 @@ subroutine tridiag_cpu_&
   u_col = 0
 
   if (useGPU) then
+    successGPU = gpu_malloc(zero_dev, 1 * size_of_datatype)
+    check_alloc_gpu("tridiag: zero_dev", successGPU)
+
     successGPU = gpu_malloc(v_row_dev, (max_local_rows+1) * size_of_datatype)
     check_alloc_gpu("tridiag: v_row_dev", successGPU)
 
@@ -647,12 +638,18 @@ subroutine tridiag_cpu_&
 #endif /* USE_CCL_TRIDIAG */
   endif !useGPU
 
-  d_vec(:) = 0
-  e_vec(:) = 0
-  tau(:) = 0
+  if (.not.useGPU .or. .not.useCCL) then
+    d_vec(:) = 0
+    e_vec(:) = 0
+    tau(:) = 0
+  endif
 
   if (useGPU) then
 #ifdef WITH_GPU_STREAMS
+    my_stream = obj%gpu_setup%my_stream
+    successGPU = gpu_memset_async(zero_dev, 0, 1 * size_of_datatype, my_stream)
+    check_memcpy_gpu("tridiag: zero_dev", successGPU)
+
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(d_vec_dev, 0, na * size_of_datatype_real, my_stream)
     check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
@@ -694,15 +691,27 @@ subroutine tridiag_cpu_&
 
   if (my_prow == prow(na, nblk, np_rows) .and. my_pcol == pcol(na, nblk, np_cols)) then
     if (useGPU) then
-      num = 1 * size_of_datatype_real
-      offset_dev = (l_rows-1 + (l_cols-1)*matrixRows) * size_of_datatype
+      if (useCCL) then
+        my_stream = obj%gpu_setup%my_stream
+        ! carefull only real-part in case of complex
+        num = 1 * size_of_datatype_real
+        offset_dev = (l_rows-1 + (l_cols-1)*matrixRows) * size_of_datatype
+        offset1_dev = (na-1) * size_of_datatype_real
+
+        successGPU = gpu_memcpy_async(d_vec_dev + offset1_dev, a_dev + offset_dev, num, gpuMemcpyDeviceToDevice, my_stream)
+        check_memcpy_gpu("tridiag: d_vec_dev 1", successGPU)
+      else ! useCCL
+       num = 1 * size_of_datatype_real
+       offset_dev = (l_rows-1 + (l_cols-1)*matrixRows) * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(d_vec(na)),kind=c_intptr_t), a_dev + offset_dev, num, gpuMemcpyDeviceToHost, my_stream)
-      successGPU = gpu_stream_synchronize(my_stream)
+       my_stream = obj%gpu_setup%my_stream
+       successGPU = gpu_memcpy_async(int(loc(d_vec(na)),kind=c_intptr_t), a_dev + offset_dev, num, gpuMemcpyDeviceToHost, my_stream)
+       successGPU = gpu_stream_synchronize(my_stream)
 #else
-      successGPU = gpu_memcpy      (int(loc(d_vec(na)),kind=c_intptr_t), a_dev + offset_dev, num, gpuMemcpyDeviceToHost)
+       successGPU = gpu_memcpy      (int(loc(d_vec(na)),kind=c_intptr_t), a_dev + offset_dev, num, gpuMemcpyDeviceToHost)
 #endif
-      check_memcpy_gpu("tridiag: a_dev", successGPU)
+       check_memcpy_gpu("tridiag: a_dev", successGPU)
+      endif ! useCCL
     else ! useGPU
 #if COMPLEXCASE == 1
       d_vec(na) = real(a_mat(l_rows,l_cols), kind=rk)
@@ -1773,71 +1782,143 @@ subroutine tridiag_cpu_&
     if (my_prow==prow(1, nblk, np_rows)) then
       ! We use last l_cols value of loop above
       if (useGPU) then
+        if (useCCL) then
+          ! copy directly vrl = a_mat(1,l_cols) on the device
+          my_stream = obj%gpu_setup%my_stream
+          num =  1 * size_of_datatype
+          offset_dev = ((1-1) + matrixRows * (l_cols - 1)) * size_of_datatype
+          successGPU = gpu_memcpy_async(vrl_dev, a_dev + offset_dev, 1 *size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+          check_memcpy_gpu("tridiag: vrl_dev 1", successGPU)      
+        else ! useCCL
 #ifdef WITH_GPU_STREAMS
-        successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
-                                      1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
-        successGPU = gpu_stream_synchronize(my_stream)
+          successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
+                                        1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
+          successGPU = gpu_stream_synchronize(my_stream)
 #else
-        successGPU = gpu_memcpy      (int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
-                                      1 * size_of_datatype, gpuMemcpyDeviceToHost)
-        check_memcpy_gpu("tridiag: a_dev 5", successGPU)
+          successGPU = gpu_memcpy      (int(loc(aux3(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
+                                        1 * size_of_datatype, gpuMemcpyDeviceToHost)
+          check_memcpy_gpu("tridiag: a_dev 5", successGPU)
 #endif
-        vrl = aux3(1)
+          vrl = aux3(1)
+        endif ! useCCL
       else !useGPU
         vrl = a_mat(1,l_cols)
       endif !useGPU
 
-      call hh_transform_complex_&
-            &PRECISION &
-            (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
-      e_vec(1) = real(vrl,kind=rk)
-      a_mat(1,l_cols) = 1. ! for consistency only
+      if (useGPU .and. useCCL) then
+        call gpu_hh_transform(PRECISION_CHAR, vrl_dev, zero_dev, xf_dev, tau_dev+(2-1)*size_of_datatype, &
+                              wantDebug, my_stream)
+
+        my_stream = obj%gpu_setup%my_stream
+        ! carefull copy only real part, hence size_of_datatype_real
+        successGPU = gpu_memcpy_async(e_vec_dev, vrl_dev, 1 *size_of_datatype_real, gpuMemcpyDeviceToDevice, my_stream)
+        check_memcpy_gpu("tridiag: e_vec_dev 1", successGPU)
+
+        ! Set a_dev(1, l_cols) = 1 on-device for consistency.
+        offset_dev = (matrixRows * (l_cols - 1)) * size_of_datatype
+        call gpu_set_one_complex (PRECISION_CHAR, a_dev + offset_dev, my_stream)
+
+      else ! useCCL
+        call hh_transform_complex_&
+              &PRECISION &
+              (obj, vrl, 0.0_rk, xf, tau(2), wantDebug)
+        e_vec(1) = real(vrl,kind=rk)
+        a_mat(1,l_cols) = 1. ! for consistency only
+      endif ! useCCL
     endif ! (my_prow==prow(1, nblk, np_rows))
 
 #ifdef WITH_MPI
-    if (useNonBlockingCollectivesRows) then
-      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-      call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                      int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
-      call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-    else
-      if (wantDebug) call obj%timer%start("mpi_communication")
-      call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
-                     int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
-      if (wantDebug) call obj%timer%stop("mpi_communication")
-    endif
+    if (useGPU .and. useCCL) then
+#ifdef USE_CCL_TRIDIAG
+      call obj%timer%start("ccl_bcast")
+      NVTX_RANGE_PUSH("ccl_bcast")
+      offset_dev = (2-1) * size_of_datatype
+      successGPU = ccl_Bcast(tau_dev+offset_dev, tau_dev+offset_dev, int(k_datatype*(1), kind=c_size_t), cclDataType, &
+                              int(prow(1, nblk, np_rows),kind=c_int), ccl_comm_rows, my_stream)
+
+      if (.not. successGPU) then
+        print *,"Error in ccl_Bcast"
+        stop 1
+      endif
+
+      successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need ccl_group_start() here and before ?
+      check_stream_synchronize_gpu("ccl_Bcast v_row_dev", successGPU)
+      call obj%timer%stop("ccl_bcast")
+      NVTX_RANGE_POP("ccl_bcast")
+#endif /* USE_CCL_TRIDIAG */
+    else ! useGPU .and. useCCL
+      if (useNonBlockingCollectivesRows) then
+        if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+        call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                        int(mpi_comm_rows,kind=MPI_KIND), bcast_request2, mpierr)
+        call mpi_wait(bcast_request2, MPI_STATUS_IGNORE, mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+      else
+        if (wantDebug) call obj%timer%start("mpi_communication")
+        call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(prow(1, nblk, np_rows),kind=MPI_KIND), &
+                       int(mpi_comm_rows,kind=MPI_KIND),  mpierr)
+        if (wantDebug) call obj%timer%stop("mpi_communication")
+      endif
+    endif ! useCCL
 #endif /* WITH_MPI */
 
   endif ! (my_pcol==pcol(2, nblk, np_cols))
 
 #ifdef WITH_MPI
-  if (useNonBlockingCollectivesCols) then
-    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-    call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                    int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
-    call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-  else
-    if (wantDebug) call obj%timer%start("mpi_communication")
-    call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
-                   int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_communication")
-  endif
+  if (useGPU .and. useCCL) then
+#ifdef USE_CCL_TRIDIAG
+    call obj%timer%start("ccl_bcast")
+    NVTX_RANGE_PUSH("ccl_bcast")
+    offset_dev = (2-1) * size_of_datatype
+    successGPU = ccl_Bcast(tau_dev+offset_dev, tau_dev+offset_dev, int(k_datatype*(1), kind=c_size_t), cclDataType, &
+                            int(pcol(2, nblk, np_cols),kind=c_int), ccl_comm_cols, my_stream)
+
+    if (.not. successGPU) then
+      print *,"Error in ccl_Bcast"
+      stop 1
+    endif
+
+    successGPU = gpu_stream_synchronize(my_stream) ! TODO_23_11: do we need ccl_group_start() here and before ?
+    check_stream_synchronize_gpu("ccl_Bcast v_row_dev", successGPU)
+    call obj%timer%stop("ccl_bcast")
+    NVTX_RANGE_POP("ccl_bcast")
+#endif /* USE_CCL_TRIDIAG */
+  else ! useGPU .and. useCCL
+    if (useNonBlockingCollectivesCols) then
+      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+      call mpi_ibcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                      int(mpi_comm_cols,kind=MPI_KIND), bcast_request3, mpierr)
+      call mpi_wait(bcast_request3, MPI_STATUS_IGNORE, mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+      if (wantDebug) call obj%timer%start("mpi_communication")
+      call mpi_bcast(tau(2), 1_MPI_KIND, MPI_COMPLEX_PRECISION, int(pcol(2, nblk, np_cols),kind=MPI_KIND), &
+                     int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
+  endif ! useCCL
 #endif /* WITH_MPI */
 
   if (my_prow == prow(1, nblk, np_rows) .and. my_pcol == pcol(1, nblk, np_cols))  then
     if (useGPU) then
-      num =  1 * size_of_datatype
+      if (useCCL) then
+        my_stream = obj%gpu_setup%my_stream
+        ! carefull copy only real part, hence size_of_datatype_real
+        successGPU = gpu_memcpy_async(d_vec_dev, a_dev, 1 *size_of_datatype_real, gpuMemcpyDeviceToDevice, my_stream)
+        check_memcpy_gpu("tridiag: e_vec_dev 1", successGPU)
+
+      else ! useCCL           
+        num =  1 * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
-      successGPU = gpu_stream_synchronize(my_stream)
+        successGPU = gpu_memcpy_async(int(loc(aux3(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = gpu_stream_synchronize(my_stream)
 #else
-      successGPU = gpu_memcpy      (int(loc(aux3(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
+        successGPU = gpu_memcpy      (int(loc(aux3(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
 #endif
-      check_memcpy_gpu("tridiag: a_dev 6", successGPU)
+        check_memcpy_gpu("tridiag: a_dev 6", successGPU)
       
-      d_vec(1) = PRECISION_REAL(aux3(1))
+        d_vec(1) = PRECISION_REAL(aux3(1))
+      endif ! useCCL
     else !useGPU
       d_vec(1) = PRECISION_REAL(a_mat(1,1))
     endif !useGPU
@@ -1849,14 +1930,21 @@ subroutine tridiag_cpu_&
 
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(2, nblk, np_cols)) then
     if (useGPU) then
+      if (useCCL) then
+        my_stream = obj%gpu_setup%my_stream
+        offset_dev = (matrixRows * (l_cols - 1)) * size_of_datatype
+        successGPU = gpu_memcpy_async(e_vec_dev, a_dev + offset_dev, 1 *size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+        check_memcpy_gpu("tridiag: e_vec_dev 1", successGPU)
+      else ! useCCL
 #ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
+        successGPU = gpu_memcpy_async(int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
                                     1 * size_of_datatype, gpuMemcpyDeviceToHost, my_stream)
 #else
-      successGPU = gpu_memcpy      (int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
+        successGPU = gpu_memcpy      (int(loc(e_vec(1)),kind=c_intptr_t), a_dev + (matrixRows * (l_cols-1)) * size_of_datatype, &
                                     1 * size_of_datatype, gpuMemcpyDeviceToHost)
 #endif
-      check_memcpy_gpu("tridiag: a_dev 7", successGPU)
+        check_memcpy_gpu("tridiag: a_dev 7", successGPU)
+      endif ! useCCL
     else !useGPU
       e_vec(1) = a_mat(1,l_cols) ! use last l_cols value of loop above
     endif !useGPU
@@ -1865,20 +1953,26 @@ subroutine tridiag_cpu_&
   ! Store d_vec(1)
   if (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols)) then
     if(useGPU) then
-      num = 1 * size_of_datatype
+      if (useCCL) then
 #ifdef WITH_GPU_STREAMS
-      successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
-      successGPU = gpu_stream_synchronize(my_stream)
+        my_stream = obj%gpu_setup%my_stream
+        successGPU = gpu_memcpy_async(d_vec_dev, a_dev, 1*size_of_datatype, gpuMemcpyDeviceToDevice, my_stream)
+        successGPU = gpu_stream_synchronize(my_stream)
+
+        check_stream_synchronize_gpu("tridiag: a_dev 8", successGPU)
+#endif /* WITH_GPU_STREAMS */
+      else ! useCCL
+        num = 1 * size_of_datatype
+#ifdef WITH_GPU_STREAMS
+        successGPU = gpu_memcpy_async(int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost, my_stream)
+        successGPU = gpu_stream_synchronize(my_stream)
 #else
-      successGPU = gpu_memcpy      (int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
+        successGPU = gpu_memcpy      (int(loc(d_vec(1)),kind=c_intptr_t), a_dev, num, gpuMemcpyDeviceToHost)
 #endif
-      check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+        check_memcpy_gpu("tridiag: a_dev 8", successGPU)
+      endif ! useCCL
     else !useGPU
-      if (isSkewsymmetric) then
-        d_vec(1) = 0.0_rk
-      else
-        d_vec(1) = a_mat(1,1)
-      endif
+      d_vec(1) = a_mat(1,1)
     endif !useGPU
   endif ! (my_prow==prow(1, nblk, np_rows) .and. my_pcol==pcol(1, nblk, np_cols))
 #endif /* REALCASE */
@@ -1886,78 +1980,128 @@ subroutine tridiag_cpu_&
   ! distribute the arrays d_vec and e_vec to all processors
   
   if (useGPU) then
-    offset_dev = 1 * size_of_datatype_real
-    ! first and last elements of d_vec are treated separately
+    if (.not.(useCCL)) then
+      offset_dev = 1 * size_of_datatype_real
+      ! first and last elements of d_vec are treated separately
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(int(loc(d_vec(2)),kind=c_intptr_t), &
+      successGPU = gpu_memcpy_async(int(loc(d_vec(2)),kind=c_intptr_t), &
                                   d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
-    successGPU = gpu_stream_synchronize(my_stream)
+      successGPU = gpu_stream_synchronize(my_stream)
 #else    
-    successGPU = gpu_memcpy      (int(loc(d_vec(2)),kind=c_intptr_t), &
+      successGPU = gpu_memcpy      (int(loc(d_vec(2)),kind=c_intptr_t), &
                                   d_vec_dev + offset_dev, (na-2) * size_of_datatype_real, gpuMemcpyDeviceToHost)
 #endif
-    check_memcpy_gpu("tridiag: d_vec", successGPU)
+      check_memcpy_gpu("tridiag: d_vec", successGPU)
+    endif
   endif ! useGPU
 
 
-  if (useCCL) then
-    ! e_vec(1) is treated separately
-    offset_dev = 1 * size_of_datatype_real
-#ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(int(loc(e_vec(2)),kind=c_intptr_t), &
-                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
-#else
-    successGPU = gpu_memcpy      (int(loc(e_vec(2)),kind=c_intptr_t), &
-                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost)
-#endif
-    check_memcpy_gpu("tridiag: e_vec", successGPU)
-  endif ! useCCL
-
-#ifdef WITH_GPU_STREAMS
-  if (useGPU) successGPU = gpu_stream_synchronize(my_stream)
-#endif
+!  if (useCCL) then
+!    ! e_vec(1) is treated separately
+!    offset_dev = 1 * size_of_datatype_real
+!#ifdef WITH_GPU_STREAMS
+!    successGPU = gpu_memcpy_async(int(loc(e_vec(2)),kind=c_intptr_t), &
+!                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost, my_stream)
+!#else
+!    successGPU = gpu_memcpy      (int(loc(e_vec(2)),kind=c_intptr_t), &
+!                                  e_vec_dev + offset_dev, (na-1) * size_of_datatype_real, gpuMemcpyDeviceToHost)
+!#endif
+!    check_memcpy_gpu("tridiag: e_vec", successGPU)
+!  endif ! useCCL
+!
+!#ifdef WITH_GPU_STREAMS
+!  if (useGPU) successGPU = gpu_stream_synchronize(my_stream)
+!#endif
 
 ! can be ported to CCL, but is tedious due to d_vec(1), d_vec(na), e_vec(1) treated separately
+
 #ifdef WITH_MPI
-  if (useNonBlockingCollectivesRows) then
-    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-    call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                        int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
-    call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
+  if (.not.(useGPU) .or. (useGPU .and. .not.(useCCL))) then
+    if (useNonBlockingCollectivesRows) then
+      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+      call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request4, mpierr)
+      call mpi_wait(allreduce_request4, MPI_STATUS_IGNORE, mpierr)
 
-    call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                        int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
-    call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-  else
-    if (wantDebug) call obj%timer%start("mpi_communication")
-    call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+      call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                          int(mpi_comm_rows,kind=MPI_KIND), allreduce_request6,mpierr)
+      call mpi_wait(allreduce_request6, MPI_STATUS_IGNORE, mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+      if (wantDebug) call obj%timer%start("mpi_communication")
+      call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
 
-    call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_rows,kind=MPI_KIND), mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_communication")
-  endif
+      call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_rows,kind=MPI_KIND), mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
 
-  if (useNonBlockingCollectivesCols) then
-    if (wantDebug) call obj%timer%start("mpi_nbc_communication")
-    call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                        int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
-    call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
-    
-    call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                        int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
-    call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
-  else
-    if (wantDebug) call obj%timer%start("mpi_communication")
-    call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+    if (useNonBlockingCollectivesCols) then
+      if (wantDebug) call obj%timer%start("mpi_nbc_communication")
+      call mpi_iallreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                          int(mpi_comm_cols,kind=MPI_KIND), allreduce_request5, mpierr)
+      call mpi_wait(allreduce_request5, MPI_STATUS_IGNORE, mpierr)
+      
+      call mpi_iallreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                          int(mpi_comm_cols,kind=MPI_KIND), allreduce_request7, mpierr)
+      call mpi_wait(allreduce_request7, MPI_STATUS_IGNORE, mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_nbc_communication")
+    else
+      if (wantDebug) call obj%timer%start("mpi_communication")
+      call mpi_allreduce(MPI_IN_PLACE, d_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
 
-    call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
-                       int(mpi_comm_cols,kind=MPI_KIND), mpierr)
-    if (wantDebug) call obj%timer%stop("mpi_communication")
-  endif
+      call mpi_allreduce(MPI_IN_PLACE, e_vec, int(na,kind=MPI_KIND), MPI_REAL_PRECISION, MPI_SUM, &
+                         int(mpi_comm_cols,kind=MPI_KIND), mpierr)
+      if (wantDebug) call obj%timer%stop("mpi_communication")
+    endif
+  else ! (.not.(useGPU) .or. (useGPU .and. .not.(useCCL)))
+#if defined(USE_CCL_TRIDIAG)
+    NVTX_RANGE_PUSH("ccl_allreduce")
+    call obj%timer%start("ccl_allreduce")
+    successGPU = ccl_allreduce(d_vec_dev, d_vec_dev, int(1*na,kind=c_size_t), &
+                               cclDatatype, cclSum, ccl_comm_rows, my_stream)
+
+    if (.not. successGPU) then
+      print *,"Error in ccl_allreduce"
+      stop 1
+    endif
+    successGPU = ccl_allreduce(e_vec_dev, e_vec_dev, int(1*na,kind=c_size_t), &
+                               cclDatatype, cclSum, ccl_comm_rows, my_stream)
+
+    if (.not. successGPU) then
+      print *,"Error in ccl_allreduce"
+      stop 1
+    endif
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("tridiag", successGPU)
+
+    successGPU = ccl_allreduce(d_vec_dev, d_vec_dev, int(1*na,kind=c_size_t), &
+                               cclDatatype, cclSum, ccl_comm_cols, my_stream)
+
+    if (.not. successGPU) then
+      print *,"Error in ccl_allreduce"
+      stop 1
+    endif
+    successGPU = ccl_allreduce(e_vec_dev, e_vec_dev, int(1*na,kind=c_size_t), &
+                               cclDatatype, cclSum, ccl_comm_cols, my_stream)
+
+    if (.not. successGPU) then
+      print *,"Error in ccl_allreduce"
+      stop 1
+    endif
+
+    successGPU = gpu_stream_synchronize(my_stream)
+    check_stream_synchronize_gpu("tridiag", successGPU)
+
+    call obj%timer%stop("ccl_allreduce")  
+    NVTX_RANGE_POP("ccl_allreduce")
+#endif /* defined(USE_CCL_TRIDIAG) */
+
+    if (wantDebug) call obj%timer%stop("nccl_communication")        
+  endif ! (.not.(useGPU) .or. (useGPU .and. .not.(useCCL)))          
 #endif /* WITH_MPI */
 
   if (useGPU) then
@@ -1971,32 +2115,32 @@ subroutine tridiag_cpu_&
   ! copy to device
 
   if (useGPU) then
-    num = na * size_of_datatype_real
+    if (.not.(useCCL)) then
+      num = na * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+      successGPU = gpu_memcpy_async(d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
-    successGPU = gpu_memcpy      (d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      successGPU = gpu_memcpy      (d_vec_dev, int(loc(d_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif
-    check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
+      check_memcpy_gpu("tridiag: d_vec_dev", successGPU)
 
-    num = na * size_of_datatype_real
+      num = na * size_of_datatype_real
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+      successGPU = gpu_memcpy_async(e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
-    successGPU = gpu_memcpy      (e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      successGPU = gpu_memcpy      (e_vec_dev, int(loc(e_vec(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif
-    check_memcpy_gpu("tridiag: e_vec_dev(1)", successGPU)
+      check_memcpy_gpu("tridiag: e_vec_dev(1)", successGPU)
 
-    ! copy tau(2) which is treated separately; tau(1) is actually not used
-    num = 2 * size_of_datatype
+      ! copy tau(2) which is treated separately; tau(1) is actually not used
+      num = 2 * size_of_datatype
 #ifdef WITH_GPU_STREAMS
-    successGPU = gpu_memcpy_async(tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
+      successGPU = gpu_memcpy_async(tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice, my_stream)
 #else
-    successGPU = gpu_memcpy      (tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
+      successGPU = gpu_memcpy      (tau_dev, int(loc(tau(1)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif
-    check_memcpy_gpu("tridiag: tau_dev(1)", successGPU)
-    
-    if (.not. useCCL) then ! (for useCCL case: tau_dev(3:) is already on device)
+      check_memcpy_gpu("tridiag: tau_dev(1)", successGPU)
+
       num = (na-2) * size_of_datatype
       offset_dev = 2 * size_of_datatype
 #ifdef WITH_GPU_STREAMS
@@ -2005,7 +2149,7 @@ subroutine tridiag_cpu_&
       successGPU = gpu_memcpy      (tau_dev+offset_dev, int(loc(tau(3)),kind=c_intptr_t), num, gpuMemcpyHostToDevice)
 #endif
       check_memcpy_gpu("tridiag: tau_dev", successGPU)
-    endif
+    endif ! useCCL
   endif ! useGPU
 
   ! free memory
@@ -2086,14 +2230,16 @@ subroutine tridiag_cpu_&
       successGPU = gpu_host_unregister(int(loc(vu_stored_rows),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: vu_stored_rows", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: d_vec", successGPU)
+      if (.not.useCCL) then
+        successGPU = gpu_host_unregister(int(loc(d_vec),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: d_vec", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: e_vec", successGPU)
+        successGPU = gpu_host_unregister(int(loc(e_vec),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: e_vec", successGPU)
 
-      successGPU = gpu_host_unregister(int(loc(tau),kind=c_intptr_t))
-      check_host_unregister_gpu("tridiag: tau", successGPU)
+        successGPU = gpu_host_unregister(int(loc(tau),kind=c_intptr_t))
+        check_host_unregister_gpu("tridiag: tau", successGPU)
+      endif
 
       successGPU = gpu_host_unregister(int(loc(aux),kind=c_intptr_t))
       check_host_unregister_gpu("tridiag: aux", successGPU)

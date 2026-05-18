@@ -58,6 +58,40 @@ struct is_pointer { static const bool value = false; };
 template <typename T>
 struct is_pointer<T*> { static const bool value = true; };
 
+
+template <typename T>
+__global__ void gpu_set_one_complex_kernel(T *a_dev)
+{
+  using S = typename std::conditional<std::is_same<T, gpuFloatComplex>::value,
+                                      float, double>::type;
+  if (threadIdx.x == 0 && blockIdx.x == 0)
+    *a_dev = elpaDeviceNumberFromRealImag<T>(S(1.0), S(0.0));
+}
+
+
+
+template <typename T>
+void gpu_set_one_complex (T *a_dev, gpuStream_t my_stream){
+#ifdef WITH_GPU_STREAMS
+  gpu_set_one_complex_kernel <<<1, 1, 0, my_stream>>>(a_dev);
+#else
+  gpu_set_one_complex_kernel <<<1, 1>>>              (a_dev);
+#endif
+
+}
+
+extern "C" void CONCATENATE(ELPA_GPU,  _set_one_complex_FromC)(char dataType, intptr_t *a_dev, gpuStream_t my_stream) {
+  //if      (dataType=='D') gpu_set_one_complex<double> ( (double *)a_dev, my_stream);
+  //else if (dataType=='S') gpu_set_one_complex<float> (   (float *)a_dev, my_stream);
+  if (dataType=='Z') gpu_set_one_complex<gpuDoubleComplex> ( (gpuDoubleComplex *)a_dev, my_stream);
+  else if (dataType=='C') gpu_set_one_complex<gpuFloatComplex> (   (gpuFloatComplex *)a_dev, my_stream);
+  else {
+    printf("Error in gpu_set_one_complex_FromC: Unsupported data type\n");
+  }
+}
+
+
+
 //_________________________________________________________________________________________________
 
 template <typename T, typename T_real>
@@ -709,6 +743,7 @@ __global__ void gpu_update_matrix_element_add_kernel(T *vu_stored_rows_dev, T *u
       i /= 2;
       }
 
+    // here we do only update of d_vec_dev by dot product. Initial value is already set in gpu_copy_and_set_zeros
     if (threadIdx.x==0) 
       {
       atomicAdd(&a_dev[(l_rows-1) + matrixRows*(l_cols-1)], cache[0]);
@@ -806,8 +841,8 @@ __global__ void gpu_hh_transform_kernel(T *alpha_dev, T *xnorm_sq_dev, T *xf_dev
 #endif
     alpha = alpha + beta
     if ( beta<0 ) then
+      tau  = alpha / beta
       beta = -beta
-      tau  = -alpha / beta
     else
 #if realcase == 1
       alpha = xnorm_sq / alpha
@@ -1022,4 +1057,3 @@ extern "C" void CONCATENATE(ELPA_GPU, _transpose_reduceadd_vectors_copy_block_Fr
 }
 
 //_________________________________________________________________________________________________
-

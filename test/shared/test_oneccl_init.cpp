@@ -1,5 +1,3 @@
-//    Copyright 2023, P. Karpov
-//
 //    This file is part of ELPA.
 //
 //    The ELPA library was originally created by the ELPA consortium,
@@ -17,9 +15,6 @@
 //      and
 //    - IBM Deutschland GmbH
 //
-//    This particular source code file contains additions, changes and
-//    enhancements authored by Intel Corporation which is not part of
-//    the ELPA consortium.
 //
 //    More information can be found here:
 //    http://elpa.mpcdf.mpg.de/
@@ -44,28 +39,18 @@
 //    any derivatives of ELPA under the same license that we chose for
 //    the original distribution, the GNU Lesser General Public License.
 //
-//    This file was written by P. Karpov, MPCDF
+//
+// --------------------------------------------------------------------------------------------------
 
-#include <stdio.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <alloca.h>
-#include <complex.h>
-#include <hip/hip_complex.h>
-#include "hip/hip_runtime.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include <iostream>
-#include <algorithm>
-#include <cmath>
-#include <type_traits>
-#include <cstring>
+#include <oneapi/ccl.hpp>
+
 #include "config-f90.h"
 
-#include "../../../GPU/common_device_functions.h"
-#include "../../../GPU/gpu_to_cuda_and_hip_interface.h"
+extern "C" {
 
-#include "../tridiag_gpu.h"
+int onecclInitFromC() {
+    ccl::init();
+    return 1;
+}
+
+}

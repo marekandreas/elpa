@@ -57,11 +57,36 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#if COMPLEXCASE == 1
 #include <cuComplex.h>
-#endif
+#include <type_traits>
 
 #define MAX_BLOCK_SIZE 1024
+
+#ifndef MY_PACK_C_CUDA_KERNEL_BODY_DEFINED
+#define MY_PACK_C_CUDA_KERNEL_BODY_DEFINED
+template <typename T>
+__device__ void my_pack_c_cuda_kernel_body(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, T *src, T *dst, int i_off)
+{
+    int b_id = blockIdx.y;
+    int t_id = threadIdx.x + i_off * blockDim.x;
+    int dst_ind = b_id * stripe_width + t_id;
+
+    if (dst_ind < max_idx)
+    {
+        // dimension of dst - lnev, nblk
+        // dimension of src - stripe_width, a_dim2, stripe_count
+        if constexpr (std::is_same_v<T, cuDoubleComplex> || std::is_same_v<T, cuFloatComplex>)
+        {
+            dst[dst_ind + (l_nev * blockIdx.x)].x = src[t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2)].x;
+            dst[dst_ind + (l_nev * blockIdx.x)].y = src[t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2)].y;
+        }
+        else
+        {
+            *(dst + dst_ind + (l_nev * blockIdx.x)) = *(src + t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2));
+        }
+    }
+}
+#endif /* MY_PACK_C_CUDA_KERNEL_BODY_DEFINED */
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
@@ -78,23 +103,32 @@ __global__ void my_pack_c_cuda_kernel_complex_single(const int n_offset, const i
 #endif
 #endif
 {
+    my_pack_c_cuda_kernel_body(n_offset, max_idx, stripe_width, a_dim2, l_nev, src, dst, i_off);
+}
+
+#ifndef MY_UNPACK_C_CUDA_KERNEL_BODY_DEFINED
+#define MY_UNPACK_C_CUDA_KERNEL_BODY_DEFINED
+template <typename T>
+__device__ void my_unpack_c_cuda_kernel_body(const int n_offset, const int max_idx, const int stripe_width, const int a_dim2, const int l_nev, T *src, T *dst, int i_off)
+{
     int b_id = blockIdx.y;
     int t_id = threadIdx.x + i_off * blockDim.x;
-    int dst_ind = b_id * stripe_width + t_id;
+    int src_ind = b_id * stripe_width + t_id;
 
-    if (dst_ind < max_idx)
+    if (src_ind < max_idx)
     {
-        // dimension of dst - lnev, nblk
-        // dimension of src - stripe_width, a_dim2, stripe_count
-#if REALCASE == 1
-        *(dst + dst_ind + (l_nev * blockIdx.x)) = *(src + t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2));
-#endif
-#if COMPLEXCASE == 1
-        dst[dst_ind + (l_nev * blockIdx.x)].x = src[t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2)].x;
-        dst[dst_ind + (l_nev * blockIdx.x)].y = src[t_id + (stripe_width * (n_offset + blockIdx.x)) + (b_id * stripe_width * a_dim2)].y;
-#endif
+        if constexpr (std::is_same_v<T, cuDoubleComplex> || std::is_same_v<T, cuFloatComplex>)
+        {
+            dst[t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2)].x = src[src_ind + (blockIdx.x) * l_nev].x;
+            dst[t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2)].y = src[src_ind + (blockIdx.x) * l_nev].y;
+        }
+        else
+        {
+            *(dst + (t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2))) = *(src + src_ind + (blockIdx.x) * l_nev);
+        }
     }
 }
+#endif /* MY_UNPACK_C_CUDA_KERNEL_BODY_DEFINED */
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
@@ -111,21 +145,51 @@ __global__ void my_unpack_c_cuda_kernel_complex_single(const int n_offset, const
 #endif
 #endif
 {
-    int b_id = blockIdx.y;
-    int t_id = threadIdx.x + i_off * blockDim.x;
-    int src_ind = b_id * stripe_width + t_id;
+    my_unpack_c_cuda_kernel_body(n_offset, max_idx, stripe_width, a_dim2, l_nev, src, dst, i_off);
+}
 
-    if (src_ind < max_idx)
+#ifndef EXTRACT_HH_TAU_C_CUDA_KERNEL_BODY_DEFINED
+#define EXTRACT_HH_TAU_C_CUDA_KERNEL_BODY_DEFINED
+template <typename T>
+__device__ void extract_hh_tau_c_cuda_kernel_body(T *hh, T *hh_tau, const int nbw, const int n, int val)
+{
+    int h_idx = (blockIdx.x) * blockDim.x + threadIdx.x;
+
+    if (h_idx < n)
     {
-#if REALCASE == 1
-        *(dst + (t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2))) = *(src + src_ind + (blockIdx.x) * l_nev);
-#endif
-#if COMPLEXCASE == 1
-        dst[t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2)].x = src[src_ind + (blockIdx.x) * l_nev].x;
-        dst[t_id + ((n_offset + blockIdx.x) * stripe_width) + (b_id * stripe_width * a_dim2)].y = src[src_ind + (blockIdx.x) * l_nev].y;
-#endif
+        //dimension of hh - (nbw, max_blk_size)
+        //dimension of hh_tau - max_blk_size
+        if constexpr (std::is_same_v<T, cuDoubleComplex> || std::is_same_v<T, cuFloatComplex>)
+        {
+            hh_tau[h_idx] = hh[h_idx * nbw];
+            // Replace the first element in the HH reflector with 1.0 or 0.0
+            if (val == 0)
+            {
+                hh[(h_idx * nbw)].x = 1.0;
+                hh[h_idx * nbw].y = 0.0;
+            }
+            else
+            {
+                hh[(h_idx * nbw)].x = 0.0;
+                hh[h_idx * nbw].y = 0.0;
+            }
+        }
+        else
+        {
+            *(hh_tau + h_idx) = *(hh + (h_idx * nbw));
+            // Replace the first element in the HH reflector with 1.0 or 0.0
+            if (val == 0)
+            {
+                *(hh + (h_idx * nbw)) = 1.0;
+            }
+            else
+            {
+                *(hh + (h_idx * nbw)) = 0.0;
+            }
+        }
     }
 }
+#endif /* EXTRACT_HH_TAU_C_CUDA_KERNEL_BODY_DEFINED */
 
 #if REALCASE == 1
 #ifdef DOUBLE_PRECISION_REAL
@@ -142,42 +206,7 @@ __global__ void extract_hh_tau_c_cuda_kernel_complex_single(cuFloatComplex *hh, 
 #endif
 #endif
 {
-    int h_idx = (blockIdx.x) * blockDim.x + threadIdx.x;
-
-    if (h_idx < n)
-    {
-        //dimension of hh - (nbw, max_blk_size)
-        //dimension of hh_tau - max_blk_size
-#if REALCASE == 1
-        *(hh_tau + h_idx) = *(hh + (h_idx * nbw));
-#endif
-#if COMPLEXCASE == 1
-        hh_tau[h_idx] = hh[h_idx * nbw];
-#endif
-        // Replace the first element in the HH reflector with 1.0 or 0.0
-#if REALCASE == 1
-        if (val == 0)
-        {
-            *(hh + (h_idx * nbw)) = 1.0;
-        }
-        else
-        {
-            *(hh + (h_idx * nbw)) = 0.0;
-        }
-#endif
-#if COMPLEXCASE == 1
-        if (val == 0)
-        {
-            hh[(h_idx * nbw)].x = 1.0;
-            hh[h_idx * nbw].y= 0.0;
-        }
-        else
-        {
-            hh[(h_idx * nbw)].x = 0.0;
-            hh[h_idx * nbw].y =0.0;
-        }
-#endif
-     }
+    extract_hh_tau_c_cuda_kernel_body(hh, hh_tau, nbw, n, val);
 }
 
 #if REALCASE == 1
