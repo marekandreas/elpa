@@ -582,10 +582,9 @@
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
-! not yet available in mkl
-!      if (use_gpu_vendor == sycl_gpu) then
-!        call mkl_sycl_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
-!      endif
+      if (use_gpu_vendor == sycl_gpu) then
+        call syclsolver_Ssyevd(n, a_dev, lda, eigenvalues_dev, info_dev, handle)
+      endif
 #endif
     end subroutine
 
