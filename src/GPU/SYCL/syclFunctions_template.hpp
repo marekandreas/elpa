@@ -1160,9 +1160,7 @@ void syclsolverDsyevd_elpa_wrapper (QueueData *handle, int n, double *A, int lda
     *info_dev = 0;
   }).wait();
   int64_t scratchpad_size = oneapi::mkl::lapack::syevd_scratchpad_size<double>(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, lda);
-  std::cout << "syclsolverDsyevd_elpa_wrapper: scratchpad_size = " <<  scratchpad_size << std::endl;
   double* scratchpad = qHandle->getScratchpadFor<double>(scratchpad_size);
-  std::cout << "syclsolverDsyevd_elpa_wrapper: scratchpad = " <<  std::hex << scratchpad << std::endl;
   try {
     oneapi::mkl::lapack::syevd(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, A, lda, eigenvalues, scratchpad, scratchpad_size).wait_and_throw();
   } catch (oneapi::mkl::lapack::exception const& e) {
@@ -1171,7 +1169,6 @@ void syclsolverDsyevd_elpa_wrapper (QueueData *handle, int n, double *A, int lda
       *info_dev = info;
     }).wait();
   }
-  oneapi::mkl::lapack::syevd(queue, oneapi::mkl::job::vec, oneapi::mkl::uplo::lower, n, A, lda, eigenvalues, scratchpad, scratchpad_size).wait_and_throw();
 }
 
 
@@ -1192,6 +1189,5 @@ void syclsolverSsyevd_elpa_wrapper (QueueData *handle, int n, float *A, int lda,
     }).wait();
   }
 }
-
 } // extern C
 #endif /* WITH_SYCL_GPU_VERSION */
