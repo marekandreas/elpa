@@ -124,7 +124,7 @@
     my_stream = obj%gpu_setup%my_stream
 #endif
 
-#if defined(WITH_NVIDIA_CUSOLVER)
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_SYCL_SOLVER)
     useGPUsolver =.true.
 #endif
 #if defined(WITH_AMD_ROCSOLVER)
@@ -136,9 +136,7 @@
     if (gpusolver_version >= 32802) useGPUsolver =.true. ! rocSOLVER 3.28.2 for ROCm 6.4.2 introduced improved stedc
     if (wantDebug) print *, "gpusolver_version=", gpusolver_version, "useGPUsolver=", useGPUsolver
 #endif
-#if defined(WITH_SYCL_GPU_VERSION) && defined(WITH_SYCL_SOLVER)
-    useGPUsolver =.true.
-#endif
+
 
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
@@ -148,7 +146,7 @@
     if (useGPUsolver) then
       gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
       
-#if defined(WITH_NVIDIA_CUSOLVER)
+#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_SYCL_SOLVER)
       call gpu_construct_full_from_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
 #endif
 
