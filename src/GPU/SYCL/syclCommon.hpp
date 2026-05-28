@@ -157,7 +157,7 @@ template<int numDims> sycl::range<numDims> maxWorkgroupSize(sycl::queue d);
 
 template <typename T>
 inline T* sycl_be::QueueData::getScratchpadFor(size_t numElements) {
-  if (numElements > oneMklScratchpadSize / numElements) {
+  if (numElements > oneMklScratchpadSize / sizeof(T)) {
     if (oneMklScratchpad != nullptr) {
       sycl::free(oneMklScratchpad, queue);
     }
