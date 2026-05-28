@@ -74,7 +74,7 @@
 #endif
 
 #ifdef WITH_NVTX
-#include <nvToolsExt.h>
+#include <nvtx3/nvToolsExt.h>
 #define NVTX_RANGE_PUSH(msg) nvtxRangePushA(msg)
 #define NVTX_RANGE_POP(msg) nvtxRangePop()
 #else

@@ -3364,7 +3364,7 @@ if test x"$use_real_nvidia_gpu" = x"yes" -o x"$use_complex_nvidia_gpu" = x"yes" 
   if test x"${enable_nvtx}" = x"yes"; then
     AC_DEFINE([WITH_NVTX],[1],[enable NVTX support])
     AC_LANG_PUSH([C])
-    AC_SEARCH_LIBS([nvtxRangePop],[nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
+    AC_SEARCH_LIBS([nvtxRangePop],[nvtx3interop nvToolsExt],[have_nvtoolsext=yes],[have_nvtoolsext=no])
     if test x"${have_nvtoolsext}" = x"no"; then
       AC_MSG_ERROR([Could not link nvToolsExt; try to set the cuda-path or disable nvtx support ])
     fi
