@@ -59,7 +59,35 @@ if(_elpa_math_backend STREQUAL "MKL")
         set(MKL_ARCH "ia32" CACHE STRING "MKL architecture")
     endif()
     set(MKL_LINK "dynamic" CACHE STRING "MKL link mode (static|dynamic)")
-    set(MKL_THREADING "intel_thread" CACHE STRING "MKL threading model")
+
+    # Choose an MKL threading layer that matches the OpenMP runtime normally
+    # used by the active compiler toolchain.  In particular, GNU compilers use
+    # libgomp via -fopenmp, so the default should be mkl_gnu_thread rather than
+    # forcing Intel's libiomp5 into downstream link/run-time environments.
+    # Users can still override this explicitly with -DMKL_THREADING=...
+    if(NOT DEFINED MKL_THREADING)
+        if(
+            CMAKE_C_COMPILER_ID STREQUAL "GNU"
+            OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+            OR CMAKE_Fortran_COMPILER_ID STREQUAL "GNU"
+        )
+            set(_elpa_default_mkl_threading "gnu_thread")
+        else()
+            set(_elpa_default_mkl_threading "intel_thread")
+        endif()
+        set(
+            MKL_THREADING
+            "${_elpa_default_mkl_threading}"
+            CACHE STRING
+            "MKL threading model"
+        )
+        unset(_elpa_default_mkl_threading)
+    endif()
+    set_property(
+        CACHE MKL_THREADING
+        PROPERTY STRINGS intel_thread gnu_thread sequential tbb_thread
+    )
+
     if(ELPA_64BIT_INTEGER_MATH)
         set(MKL_INTERFACE "ilp64" CACHE STRING "MKL integer interface" FORCE)
     else()
