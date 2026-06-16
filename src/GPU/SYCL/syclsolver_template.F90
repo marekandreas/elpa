@@ -41,7 +41,7 @@
 !    any derivatives of ELPA under the same license that we chose for
 !    the original distribution, the GNU Lesser General Public License.
 !
-! Author: Peter Karpov, MPCDF
+! Author: Peter Karpov, MPCDF and Alexander Pöppl, Intel Corporation
 ! This file is the generated version. Do NOT edit
 
 
@@ -433,7 +433,7 @@
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
       integer(kind=C_intptr_T)        :: syclsolverHandle
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_SYCL_SOLVER
       call syclsolver_Dsyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
 #endif
     end subroutine
@@ -444,7 +444,7 @@
       integer(kind=C_INT)             :: n, lda
       integer(kind=c_intptr_t)        :: a_dev, info_dev, eigenvalues_dev
       integer(kind=C_intptr_T)        :: syclsolverHandle
-#ifdef WITH_OPENMP_OFFLOAD_SOLVER
+#ifdef WITH_SYCL_SOLVER
       call syclsolver_Ssyevd_c(syclsolverHandle, n, a_dev, lda, eigenvalues_dev, info_dev)
 #endif
     end subroutine

@@ -3013,7 +3013,7 @@ AC_ARG_ENABLE([gpu-streams],
             use_hip_streams=yes
             use_gpu_streams=yes
           fi
-          if test x"$need_sycl_gpu" = x"yes"; then
+          if test x"$need_intel_gpu_sycl" = x"yes"; then
             use_sycl_streams=yes
             use_gpu_streams=yes
           fi
@@ -3037,7 +3037,7 @@ if test x"$use_gpu_streams" = x"yes"; then
     if test x"$need_amd_gpu" = x"yes"; then
       use_hip_streams=yes
     fi
-    if test x"$need_sycl_gpu" = x"yes"; then
+    if test x"$need_intel_gpu_sycl" = x"yes"; then
       use_sycl_streams=yes
     fi
   fi
@@ -3050,7 +3050,7 @@ if test x"$use_cuda_streams" = x"yes"; then
   if test x"$need_amd_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you cannot set --enable-amd-gpu]) 
   fi
-  if test x"$need_sycl_gpu" = x"yes"; then
+  if test x"$need_intel_gpu_sycl" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-streams=nvidia is set, you cannot set --enable-sycl-gpu]) 
   fi
   #if test x"${enable_openmp}" = x"yes"; then
@@ -3123,7 +3123,7 @@ fi
 
 
 if test x"$use_sycl_streams" = x"yes"; then
-  if test x"$need_sycl_gpu" = x"no"; then
+  if test x"$need_intel_gpu_sycl" = x"no"; then
     AC_MSG_ERROR([If --enable-gpu-streams=sycl is set, you must also use --enable-sycl-gpu])
   fi
   if test x"$need_nvidia_gpu" = x"yes"; then
@@ -3137,7 +3137,7 @@ if test x"$use_sycl_streams" = x"yes"; then
   #fi
   AC_DEFINE([WITH_GPU_STREAMS],[1],[enable streams in GPU code])
 fi
-if test x"$need_sycl_gpu" = x"yes"; then
+if test x"$need_intel_gpu_sycl" = x"yes"; then
   if test x"$use_sycl_streams" = x"no"; then
     echo ""
     echo ""
@@ -3255,9 +3255,12 @@ if test x"$need_amd_gpu" = x"yes"; then
     AC_LANG_POP([C])
   fi
 fi
-
-if test x"$need_sycl_gpu" = x"yes"; then
+  
+AC_MSG_WARN([------------------------------------------------------------------------------------------])
+if test x"$need_intel_gpu_sycl" = x"yes"; then
+  AC_MSG_WARN([need sycl gpu is yes])
   if test x"$use_gpu_streams" = x"yes"; then
+    AC_MSG_WARN([need sycl gpu is yes and gpu streams is yes])
     AC_MSG_CHECKING(whether oneMKL library should be used (since streams are activated))
     AC_ARG_WITH(
       [syclsolver],
@@ -3271,11 +3274,15 @@ if test x"$need_sycl_gpu" = x"yes"; then
 	    ],
       [relied_on_default_syclsolver="yes"])
     if test x"${relied_on_default_syclsolver}" = x"yes"; then
-      with_cusolver=yes
+      AC_MSG_WARN([relied on default syclsolver is yes])
+      with_syclsolver=yes
     fi
     AC_MSG_RESULT([${with_syclsolver}])
     if test x"${with_syclsolver}" = x"no"; then
-      if test x"${need_sycl_gpu}" = x"yes"; then
+      AC_MSG_WARN([with syclsolver is no])
+      if test x"${need_intel_gpu_sycl}" = x"yes"; then
+        AC_MSG_WARN([but need sycl gpu])
+
         AC_MSG_WARN([------------------------------------------------------------------------------------------])
         AC_MSG_WARN([])
         AC_MSG_WARN([Not using oneMKL solver components might lead to performance drops, it is not recommended!])
@@ -3285,12 +3292,15 @@ if test x"$need_sycl_gpu" = x"yes"; then
     fi
   fi
   if test x"${with_syclsolver}" = x"yes"; then
+    AC_MSG_WARN([with syclsolver is yes])
     AC_LANG_PUSH([C])
     # Nothing to add, already included with oneMKL, which has to be configured manually anyways.    
     AC_DEFINE([WITH_SYCL_SOLVER],[1],[enable SYCL solver])
     AC_LANG_POP([C])
   fi
 fi
+AC_MSG_WARN([------------------------------------------------------------------------------------------])
+
 
 ##################################################################################################
 #
@@ -3499,7 +3509,7 @@ if test x"$use_nvidia_nccl" = x"yes"; then
   if test x"$need_amd_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-amd-gpu])
   fi
-  if test x"$need_sycl_gpu" = x"yes"; then
+  if test x"$need_intel_gpu_sycl" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=nccl is set, you cannot set --enable-sycl-gpu])
   fi
   if test x"${enable_openmp}" = x"yes"; then
@@ -3540,7 +3550,7 @@ if test x"$use_amd_rccl" = x"yes"; then
   if test x"$need_nvidia_gpu" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-nvidia-gpu])
   fi
-  if test x"$need_sycl_gpu" = x"yes"; then
+  if test x"$need_intel_gpu_sycl" = x"yes"; then
     AC_MSG_ERROR([If --enable-gpu-ccl=rccl is set, you cannot set --enable-sycl-gpu])
   fi
   if test x"${enable_openmp}" = x"yes"; then
