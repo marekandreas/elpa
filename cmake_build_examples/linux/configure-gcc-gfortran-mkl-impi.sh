@@ -104,7 +104,7 @@ cmake_args=(
     -DMPI_CXX_HEADER_DIR="${MPI_ROOT}/include"
 
     # MKL — gnu_thread uses libmkl_gnu_thread + libgomp (consistent with gcc)
-    -DELPA_MKL_ROOT="${MKL_ROOT}"
+    -DMKL_ROOT="${MKL_ROOT}"
     -DMKL_THREADING=gnu_thread
 
     # Features

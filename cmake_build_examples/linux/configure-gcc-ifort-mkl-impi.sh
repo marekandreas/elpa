@@ -111,7 +111,7 @@ cmake_args=(
     -DMPI_CXX_HEADER_DIR="${MPI_ROOT}/include"
 
     # MKL
-    -DELPA_MKL_ROOT="${MKL_ROOT}"
+    -DMKL_ROOT="${MKL_ROOT}"
     -DOMP_LIBRARY="${IOMP5_LIBRARY}"
 
     # Features

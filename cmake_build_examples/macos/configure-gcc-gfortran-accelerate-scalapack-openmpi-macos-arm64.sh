@@ -64,7 +64,6 @@ cmake_args=(
     -DELPA_MPI_Fortran_COMPILER="${OMPI_PREFIX}/bin/mpifort"
 
     # Clean macOS math stack: Accelerate for BLAS/LAPACK, source-built ScaLAPACK.
-    -DELPA_USE_MKL=OFF
     -DBLA_VENDOR=Apple
     -DSCALAPACK_LIBRARY="${SCALAPACK_PREFIX}/lib/libscalapack.dylib"
 

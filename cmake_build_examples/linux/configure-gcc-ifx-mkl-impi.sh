@@ -113,7 +113,7 @@ cmake_args=(
     -DCMAKE_BUILD_RPATH="${COMPILER_ROOT}/lib"
 
     # MKL — intel_thread uses libmkl_intel_thread + libiomp5
-    -DELPA_MKL_ROOT="${MKL_ROOT}"
+    -DMKL_ROOT="${MKL_ROOT}"
     -DOMP_LIBRARY="${IOMP5_LIBRARY}"
 
     # Features

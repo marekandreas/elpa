@@ -113,7 +113,7 @@ cmake_args=(
     -DCMAKE_Fortran_COMPILER="flang-new${LLVM_VER}"
 
     # MKL with OpenMPI BLACS variant
-    -DELPA_MKL_ROOT="${MKL_ROOT}"
+    -DMKL_ROOT="${MKL_ROOT}"
     -DCMAKE_PREFIX_PATH="${MKL_ROOT};${COMPILER_ROOT}"
     -DMKL_MPI=openmpi
     -DOMP_LIBRARY="${IOMP5_LIBRARY}"

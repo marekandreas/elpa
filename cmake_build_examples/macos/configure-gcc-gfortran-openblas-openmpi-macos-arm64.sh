@@ -63,7 +63,7 @@ cmake_args=(
     -DELPA_MPI_Fortran_COMPILER="${OMPI_PREFIX}/bin/mpifort"
 
     # Community BLAS/LAPACK/ScaLAPACK — not MKL, not Accelerate
-    -DELPA_USE_MKL=OFF
+    -DELPA_BLAS_VENDOR=OpenBLAS
     -DBLAS_LIBRARIES="${OPENBLAS_PREFIX}/lib/libopenblas.dylib"
     -DLAPACK_LIBRARIES="${OPENBLAS_PREFIX}/lib/libopenblas.dylib"
     -DSCALAPACK_LIBRARY="${SCALAPACK_PREFIX}/lib/libscalapack.dylib"

@@ -107,7 +107,7 @@ $cmake_args = @(
     "-DCMAKE_CXX_COMPILER=$CXX",
     "-DCMAKE_Fortran_COMPILER=$FC",
     # Intel dependencies
-    "-DELPA_MKL_ROOT=$MKL_ROOT",
+    "-DMKL_ROOT=$MKL_ROOT",
     "-DELPA_MPI_ROOT=$MPI_ROOT",
     # Features
     "-DELPA_OPENMP=ON",
