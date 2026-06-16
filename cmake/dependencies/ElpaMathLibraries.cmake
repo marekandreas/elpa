@@ -1,13 +1,4 @@
-set(
-    ELPA_BLAS_VENDOR
-    "AUTO"
-    CACHE STRING
-    "BLAS/LAPACK vendor (AUTO, MKL, BLAS, or a CMake BLA_VENDOR value)"
-)
-set_property(
-    CACHE ELPA_BLAS_VENDOR
-    PROPERTY STRINGS AUTO MKL BLAS OpenBLAS FlexiBLAS Generic
-)
+# ELPA_BLAS_VENDOR is declared centrally in CMakeBuildOptions.cmake.
 
 # Deprecated command-line variables are recognized below but are no longer
 # exposed as ELPA build options.

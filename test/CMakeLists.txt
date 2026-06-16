@@ -1,15 +1,12 @@
 set(ELPA_LIB_TARGET "elpa${ELPA_SUFFIX}")
 
 if(WITH_MPI)
-    set(ELPA_TEST_NPROCS "2" CACHE STRING "Number of MPI processes for tests")
     if(NOT MPIEXEC_EXECUTABLE)
         find_program(MPIEXEC_EXECUTABLE NAMES mpiexec mpirun srun)
     endif()
     if(NOT MPIEXEC_NUMPROC_FLAG)
         set(MPIEXEC_NUMPROC_FLAG "-np")
     endif()
-else()
-    set(ELPA_TEST_NPROCS "1")
 endif()
 
 set(_test_lib_sources "")
@@ -101,10 +98,6 @@ elpa_apply_flang_diagnostic_suppressions()
 
 set(_config_vars_file "${CMAKE_BINARY_DIR}/test_config_vars.txt")
 elpa_write_test_config_vars("${_config_vars_file}")
-
-set(ELPA_TEST_MATRIX_SIZE "200" CACHE STRING "Matrix size for ELPA tests")
-set(ELPA_TEST_NEV "30" CACHE STRING "Number of eigenvectors for ELPA tests")
-set(ELPA_TEST_NBLK "16" CACHE STRING "Block size for ELPA tests")
 
 elpa_prepare_fortran_test_source(_f_src "${CMAKE_CURRENT_SOURCE_DIR}/Fortran/test.F90")
 set(_c_src "${CMAKE_CURRENT_SOURCE_DIR}/C/test.c")
