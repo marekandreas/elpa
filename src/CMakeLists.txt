@@ -20,6 +20,13 @@ endforeach()
 # fortran_constants.F90 is included by elpa_constants.F90 and remains only as a
 # dependency of elpa_fortran_constants.
 
+# Non-MPI support
+if(NOT WITH_MPI)
+    foreach(_src IN LISTS ELPA_NON_MPI_SOURCES)
+        list(APPEND _all_sources "${CMAKE_SOURCE_DIR}/${_src}")
+    endforeach()
+endif()
+
 # Timing
 if(HAVE_DETAILED_TIMINGS)
     foreach(_src IN LISTS ELPA_TIMING_SOURCES)
