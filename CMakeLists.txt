@@ -57,6 +57,7 @@ option(
     ON
 )
 option(BUILD_TESTING "Build tests" ON)
+option(BUILD_SHARED_LIBS "Build ELPA as a shared library" ON)
 option(
     ELPA_TEST_EXTENDED
     "Enable the extended test set (larger matrices, all MPI layouts; disabled by default)"
