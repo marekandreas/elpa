@@ -80,13 +80,13 @@ if(ELPA_INSTALL_CMAKE_PACKAGE)
         EXPORT ElpaTargets
         FILE ElpaTargets.cmake
         NAMESPACE ELPA::
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/elpa"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Elpa"
     )
 
     configure_package_config_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ElpaConfigPackage.cmake.in"
         "${CMAKE_BINARY_DIR}/ElpaConfig.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/elpa"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Elpa"
     )
 
     write_basic_package_version_file(
@@ -99,6 +99,6 @@ if(ELPA_INSTALL_CMAKE_PACKAGE)
         FILES
             "${CMAKE_BINARY_DIR}/ElpaConfig.cmake"
             "${CMAKE_BINARY_DIR}/ElpaConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/elpa"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Elpa"
     )
 endif()

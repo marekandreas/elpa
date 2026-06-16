@@ -67,7 +67,7 @@ cmake_args=(
     -DCMAKE_Fortran_COMPILER=gfortran
 
     # Community BLAS/LAPACK/ScaLAPACK (not MKL)
-    -DELPA_USE_MKL=OFF
+    -DELPA_BLAS_VENDOR=OpenBLAS
 
     # Features
     -DELPA_OPENMP=ON

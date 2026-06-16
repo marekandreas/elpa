@@ -1,15 +1,12 @@
 set(ELPA_LIB_TARGET "elpa${ELPA_SUFFIX}")
 
 if(WITH_MPI)
-    set(ELPA_TEST_NPROCS "2" CACHE STRING "Number of MPI processes for tests")
     if(NOT MPIEXEC_EXECUTABLE)
         find_program(MPIEXEC_EXECUTABLE NAMES mpiexec mpirun srun)
     endif()
     if(NOT MPIEXEC_NUMPROC_FLAG)
         set(MPIEXEC_NUMPROC_FLAG "-np")
     endif()
-else()
-    set(ELPA_TEST_NPROCS "1")
 endif()
 
 set(_test_lib_sources "")
@@ -102,10 +99,6 @@ elpa_apply_flang_diagnostic_suppressions()
 set(_config_vars_file "${CMAKE_BINARY_DIR}/test_config_vars.txt")
 elpa_write_test_config_vars("${_config_vars_file}")
 
-set(ELPA_TEST_MATRIX_SIZE "200" CACHE STRING "Matrix size for ELPA tests")
-set(ELPA_TEST_NEV "30" CACHE STRING "Number of eigenvectors for ELPA tests")
-set(ELPA_TEST_NBLK "16" CACHE STRING "Block size for ELPA tests")
-
 elpa_prepare_fortran_test_source(_f_src "${CMAKE_CURRENT_SOURCE_DIR}/Fortran/test.F90")
 set(_c_src "${CMAKE_CURRENT_SOURCE_DIR}/C/test.c")
 set(_cpp_src "${CMAKE_CURRENT_SOURCE_DIR}/C++/test.cpp")
@@ -140,26 +133,40 @@ set(_elpa_tests_cmake "${CMAKE_BINARY_DIR}/ElpaTests.cmake")
 elpa_generate_tests_include("${_config_vars_file}" "${_elpa_tests_cmake}")
 include("${_elpa_tests_cmake}")
 
-# Hand-written tests from Makefile.am that are not part of test_programs.am.
-set(_elpa2_test_dir "${CMAKE_CURRENT_SOURCE_DIR}/Fortran/elpa2")
-set(_handwritten_tests
-    "validate_double_instance:double_instance.F90"
-    "validate_real_2stage_banded:real_2stage_banded.F90"
-    "validate_complex_2stage_banded:complex_2stage_banded.F90"
-    "validate_single_real_2stage_banded:single_real_2stage_banded.F90"
-    "validate_single_complex_2stage_banded:single_complex_2stage_banded.F90"
-)
-foreach(_entry IN LISTS _handwritten_tests)
-    string(REPLACE ":" ";" _parts "${_entry}")
-    list(GET _parts 0 _name)
-    list(GET _parts 1 _src_file)
-
-    set(_full_name "${_name}${ELPA_SUFFIX}")
-    set(_src "${_elpa2_test_dir}/${_src_file}")
-    if(EXISTS "${_src}")
-        elpa_prepare_fortran_test_source(_prepared_src "${_src}")
-        elpa_add_test(${_full_name}_default ${_prepared_src} Fortran)
+# Hand-written extra tests from Makefile.am that are not part of
+# test_programs.am.
+if(ELPA_TEST_PROGRAMS STREQUAL "all")
+    set(_elpa2_test_dir "${CMAKE_CURRENT_SOURCE_DIR}/Fortran/elpa2")
+    set(_handwritten_tests
+        "validate_double_instance:double_instance.F90"
+        "validate_real_2stage_banded:real_2stage_banded.F90"
+        "validate_complex_2stage_banded:complex_2stage_banded.F90"
+    )
+    if(WANT_SINGLE_PRECISION_REAL)
+        list(
+            APPEND _handwritten_tests
+            "validate_single_real_2stage_banded:single_real_2stage_banded.F90"
+        )
     endif()
-endforeach()
+    if(WANT_SINGLE_PRECISION_COMPLEX)
+        list(
+            APPEND _handwritten_tests
+            "validate_single_complex_2stage_banded:single_complex_2stage_banded.F90"
+        )
+    endif()
+
+    foreach(_entry IN LISTS _handwritten_tests)
+        string(REPLACE ":" ";" _parts "${_entry}")
+        list(GET _parts 0 _name)
+        list(GET _parts 1 _src_file)
+
+        set(_full_name "${_name}${ELPA_SUFFIX}")
+        set(_src "${_elpa2_test_dir}/${_src_file}")
+        if(EXISTS "${_src}")
+            elpa_prepare_fortran_test_source(_prepared_src "${_src}")
+            elpa_add_test(${_full_name}_default ${_prepared_src} Fortran)
+        endif()
+    endforeach()
+endif()
 
 message(STATUS "ELPA: Test infrastructure configured")

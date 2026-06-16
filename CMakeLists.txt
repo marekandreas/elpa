@@ -34,39 +34,9 @@ if(WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # ===========================================================================
-# Build options (matching autotools --enable/--with flags)
+# Build options
 # ===========================================================================
-option(ELPA_MPI "Build with MPI support" ON)
-option(ELPA_OPENMP "Build with OpenMP support" OFF)
-option(ELPA_CUDA "Build with NVIDIA CUDA GPU support" OFF)
-option(ELPA_SINGLE_PRECISION "Build single-precision variants" ON)
-option(ELPA_SKEWSYMMETRIC "Build skew-symmetric matrix support" ON)
-option(ELPA_TIMINGS "Build with detailed timing support" ON)
-option(ELPA_AUTOTUNE "Enable autotuning support" ON)
-option(ELPA_64BIT_INTEGER_MATH "Use 64-bit integers for BLAS/LAPACK" OFF)
-option(ELPA_64BIT_INTEGER_MPI "Use 64-bit integers for MPI" OFF)
-option(ELPA_STORE_BUILD_CONFIG "Embed build config in library" OFF)
-option(
-    ELPA_OPTIONAL_C_ERROR_ARGUMENT
-    "Add optional error argument to C API"
-    OFF
-)
-option(
-    ELPA_INSTALL_CMAKE_PACKAGE
-    "Install the ELPA CMake package config alongside the library"
-    ON
-)
-option(BUILD_TESTING "Build tests" ON)
-option(
-    ELPA_TEST_EXTENDED
-    "Enable the extended test set (larger matrices, all MPI layouts; disabled by default)"
-    OFF
-)
-option(
-    ELPA_TEST_AUTOTUNE
-    "Enable autotuning tests (very long runtime; disabled by default)"
-    OFF
-)
+include("${CMAKE_CURRENT_SOURCE_DIR}/CMakeBuildOptions.cmake")
 
 # SO version: libtool convention current:revision:age → SOVERSION=current-age
 # ELPA_SO_VERSION = 24:1:5  →  SOVERSION=19, VERSION=19.5.1

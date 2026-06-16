@@ -98,7 +98,7 @@ cmake_args=(
     # MKL with OpenMPI BLACS variant and Intel OpenMP. ELPA's OpenMP helper
     # keeps -fopenmp for GNU compilation but strips it from link commands so
     # the final link uses explicit libiomp5 instead of libgomp.
-    -DELPA_MKL_ROOT="${MKL_ROOT}"
+    -DMKL_ROOT="${MKL_ROOT}"
     -DCMAKE_PREFIX_PATH="${MKL_ROOT};${COMPILER_ROOT}"
     -DMKL_MPI=openmpi
     -DMKL_THREADING=intel_thread

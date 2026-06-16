@@ -105,7 +105,6 @@ cmake_args=(
     -DCMAKE_Fortran_COMPILER="flang-new${LLVM_VER}"
 
     # AOCL BLAS/LAPACK/ScaLAPACK
-    -DELPA_USE_MKL=OFF
     -DBLAS_LIBRARIES="${AOCL_ROOT}/lib/libblis-mt.so"
     -DLAPACK_LIBRARIES="${AOCL_ROOT}/lib/libflame.so"
     -DSCALAPACK_LIBRARY="${AOCL_ROOT}/lib/libscalapack.so"

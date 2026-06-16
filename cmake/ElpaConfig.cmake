@@ -52,5 +52,5 @@ set(PACKAGE_URL "")
 
 message(
     STATUS
-    "ELPA: suffix='${ELPA_SUFFIX}' MPI=${ELPA_MPI} OpenMP=${ELPA_OPENMP} MKL=${WITH_MKL}"
+    "ELPA: suffix='${ELPA_SUFFIX}' MPI=${ELPA_MPI} OpenMP=${ELPA_OPENMP} BLAS=${ELPA_BLAS_VENDOR} MKL=${WITH_MKL}"
 )

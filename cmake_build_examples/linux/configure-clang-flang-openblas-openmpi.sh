@@ -85,7 +85,7 @@ cmake_args=(
     -DCMAKE_Fortran_COMPILER="flang-new${LLVM_VER}"
 
     # Community BLAS/LAPACK/ScaLAPACK
-    -DELPA_USE_MKL=OFF
+    -DELPA_BLAS_VENDOR=OpenBLAS
 
     # Features
     -DELPA_OPENMP=ON

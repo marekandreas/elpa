@@ -1,9 +1,4 @@
-set(ELPA_FRAMEWORK_ISA
-    "native"
-    CACHE STRING
-    "Baseline SIMD ISA for framework (non-kernel) Fortran and C code (native, avx2, avx512)"
-)
-set_property(CACHE ELPA_FRAMEWORK_ISA PROPERTY STRINGS "native" "avx2" "avx512")
+# ELPA_FRAMEWORK_ISA is declared centrally in CMakeBuildOptions.cmake.
 
 # On non-x86 platforms, force ISA to "native" — avx2/avx512 are meaningless.
 if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")

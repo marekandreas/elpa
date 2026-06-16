@@ -12,47 +12,9 @@ include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
 
 # ===========================================================================
-# 1. Kernel family options (matching autotools --enable-<type>-kernels)
+# 1. Kernel family option validation
 # ===========================================================================
-option(ELPA_ENABLE_GENERIC_KERNELS "Build generic kernels" ON)
-
-# x86-only kernel families default to ON only on x86 platforms
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
-    set(_X86_KERNEL_DEFAULT ON)
-else()
-    set(_X86_KERNEL_DEFAULT OFF)
-endif()
-option(ELPA_ENABLE_SSE_KERNELS "Build SSE intrinsics kernels" ${_X86_KERNEL_DEFAULT})
-option(ELPA_ENABLE_SSE_ASSEMBLY_KERNELS "Build SSE assembly kernels" ${_X86_KERNEL_DEFAULT})
-option(ELPA_ENABLE_AVX_KERNELS "Build AVX kernels" ${_X86_KERNEL_DEFAULT})
-option(ELPA_ENABLE_AVX2_KERNELS "Build AVX2 kernels" ${_X86_KERNEL_DEFAULT})
-option(ELPA_ENABLE_AVX512_KERNELS "Build AVX512 kernels" ${_X86_KERNEL_DEFAULT})
-option(ELPA_ENABLE_SVE128_KERNELS "Build SVE128 kernels" OFF)
-option(ELPA_ENABLE_SVE256_KERNELS "Build SVE256 kernels" OFF)
-option(ELPA_ENABLE_SVE512_KERNELS "Build SVE512 kernels" OFF)
-option(ELPA_ENABLE_SPARC64_KERNELS "Build SPARC64 kernels" OFF)
-
-# Auto-enable NEON on aarch64 platforms (mirrors x86 auto-enable logic)
-# macOS Apple Silicon reports "arm64"; Linux AArch64 reports "aarch64".
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64|arm64")
-    set(_NEON_DEFAULT ON)
-else()
-    set(_NEON_DEFAULT OFF)
-endif()
-option(ELPA_ENABLE_NEON_ARCH64_KERNELS "Build NEON AARCH64 kernels" ${_NEON_DEFAULT})
-unset(_NEON_DEFAULT)
-
-option(ELPA_ENABLE_VSX_KERNELS "Build VSX (PPC) kernels" OFF)
-unset(_X86_KERNEL_DEFAULT)
-# GPU kernels are gated by ElpaCUDA/ElpaAMD/ElpaSYCL, but we declare the option
-option(ELPA_ENABLE_NVIDIA_GPU_KERNELS "Build NVIDIA GPU kernels" OFF)
-option(
-    ELPA_ENABLE_NVIDIA_SM80_GPU_KERNELS
-    "Build NVIDIA SM80 (A100+) kernels"
-    OFF
-)
-option(ELPA_ENABLE_AMD_GPU_KERNELS "Build AMD GPU (ROCm) kernels" OFF)
-option(ELPA_ENABLE_INTEL_GPU_SYCL_KERNELS "Build Intel GPU (SYCL) kernels" OFF)
+# User-facing kernel options are declared centrally in CMakeBuildOptions.cmake.
 
 if(WIN32 OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-6]86")
     # GNU .s kernels are x86-only and not portable to other architectures

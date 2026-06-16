@@ -107,11 +107,6 @@ endif()
 #   "native"      auto-detect GPU architecture(s) at configure time.
 #   "75;80;90"    semicolon-separated explicit SM numbers: SASS for each,
 #                 PTX only for the highest arch (JIT-able on future GPUs).
-set(ELPA_CUDA_ARCHITECTURES
-    "native"
-    CACHE STRING
-    "CUDA compute capabilities: semicolon-separated SM list or \"native\" to auto-detect the host GPU"
-)
 if(ELPA_CUDA_ARCHITECTURES STREQUAL "native")
     # Set CMAKE_CUDA_ARCHITECTURES before enable_language(CUDA) so CMake
     # queries the host GPU during the configure step and populates
@@ -244,7 +239,6 @@ endif()
 # ---------------------------------------------------------------------------
 # cuSOLVER (optional, enabled by default when GPU streams are active)
 # ---------------------------------------------------------------------------
-option(ELPA_CUSOLVER "Use NVIDIA cuSOLVER library" ON)
 if(ELPA_CUSOLVER)
     if(TARGET CUDA::cusolver)
         set(WITH_NVIDIA_CUSOLVER 1)
@@ -343,7 +337,6 @@ endif()
 # ---------------------------------------------------------------------------
 # NCCL (optional)
 # ---------------------------------------------------------------------------
-option(ELPA_NCCL "Use NVIDIA NCCL library" OFF)
 set(ELPA_NCCL_ROOT
     ""
     CACHE PATH
@@ -388,7 +381,6 @@ endif()
 # Upstream default is ON. Was causing access violations on Windows due to
 # private(my_stream) in an OMP parallel directive (should be firstprivate).
 # ---------------------------------------------------------------------------
-option(ELPA_GPU_STREAMS "Use CUDA streams" ON)
 if(ELPA_GPU_STREAMS)
     set(WITH_GPU_STREAMS 1)
 else()
@@ -398,7 +390,6 @@ endif()
 # ---------------------------------------------------------------------------
 # CUDA-aware MPI
 # ---------------------------------------------------------------------------
-option(ELPA_CUDA_AWARE_MPI "Use CUDA-aware MPI" OFF)
 if(ELPA_CUDA_AWARE_MPI)
     set(WITH_CUDA_AWARE_MPI 1)
 endif()
@@ -406,7 +397,6 @@ endif()
 # ---------------------------------------------------------------------------
 # GPU memory debugging
 # ---------------------------------------------------------------------------
-option(ELPA_CUDA_DEBUG "Enable CUDA memory debugging" OFF)
 if(ELPA_CUDA_DEBUG)
     set(DEBUG_CUDA 1)
 endif()
@@ -414,7 +404,6 @@ endif()
 # ---------------------------------------------------------------------------
 # CUB usage for real GPU kernels
 # ---------------------------------------------------------------------------
-option(ELPA_NVIDIA_CUB "Use CUB reductions in real NVIDIA GPU kernel" OFF)
 if(ELPA_NVIDIA_CUB)
     set(NVIDIA_REAL_KERNEL_WITH_CUB 1)
 endif()
@@ -428,7 +417,6 @@ endif()
 # emit the symbols.  We only need the include path for <nvtx3/nvToolsExt.h>.
 #
 # The legacy libnvToolsExt (NVTX v1/v2) is also accepted as a fallback.
-option(ELPA_NVTX "Enable NVTX profiler annotations" OFF)
 set(ELPA_NVTX_ROOT
     ""
     CACHE PATH

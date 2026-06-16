@@ -20,6 +20,13 @@ endforeach()
 # fortran_constants.F90 is included by elpa_constants.F90 and remains only as a
 # dependency of elpa_fortran_constants.
 
+# Non-MPI support
+if(NOT WITH_MPI)
+    foreach(_src IN LISTS ELPA_NON_MPI_SOURCES)
+        list(APPEND _all_sources "${CMAKE_SOURCE_DIR}/${_src}")
+    endforeach()
+endif()
+
 # Timing
 if(HAVE_DETAILED_TIMINGS)
     foreach(_src IN LISTS ELPA_TIMING_SOURCES)
@@ -99,7 +106,8 @@ elpa_preprocess_fortran(_pp_sources
     DEFINES      ${_pp_defines}
 )
 
-add_library(${_libname} SHARED ${_pp_sources})
+add_library(${_libname} ${_pp_sources})
+set_target_properties(${_libname} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_features(${_libname} PUBLIC c_std_11 cxx_std_17)
 
 elpa_apply_ifort_diagnostic_suppressions()
@@ -107,8 +115,10 @@ elpa_apply_gfortran_argument_mismatch_workaround()
 elpa_apply_clang_diagnostic_suppressions()
 elpa_apply_flang_diagnostic_suppressions()
 
-include(ElpaSelectiveExport)
-elpa_selective_export(${_libname})
+if(BUILD_SHARED_LIBS)
+    include(ElpaSelectiveExport)
+    elpa_selective_export(${_libname})
+endif()
 
 # Depend on generated headers and config
 add_dependencies(${_libname} elpa_generated_headers elpa_fortran_constants)

@@ -132,7 +132,10 @@ set(ELPA_TIMING_SOURCES
 
 set(ELPA_TIMER_DUMMY_SOURCES src/helpers/timer_dummy.F90)
 
-# When !WITH_MPI && !HAVE_DETAILED_TIMINGS, time.c is also needed
+# Non-MPI builds need the Fortran interface to the wall-clock helper.
+set(ELPA_NON_MPI_SOURCES src/helpers/mod_time_c.F90)
+
+# When !WITH_MPI && !HAVE_DETAILED_TIMINGS, time.c is also needed.
 set(ELPA_TIME_ONLY_SOURCES src/ftimings/time.c)
 
 # ===========================================================================

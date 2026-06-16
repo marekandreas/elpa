@@ -164,7 +164,7 @@ This enables selective runs such as `ctest -L double_precision` or
 
 | Variable | Default | Description |
 |---|---|---|
-| `ELPA_USE_MKL` | `ON` | ON = Intel MKL; OFF = generic BLAS/LAPACK/ScaLAPACK |
+| `ELPA_BLAS_VENDOR` | `AUTO` | `AUTO`, `MKL`, `BLAS`, or a CMake `BLA_VENDOR` value such as `OpenBLAS` or `FlexiBLAS` |
 | `ELPA_OPENMP` | `OFF` | Enable OpenMP threading |
 | `ELPA_CUDA` | `OFF` | Enable NVIDIA CUDA kernels |
 | `ELPA_CUDA_ARCHITECTURES` | `native` | Auto-detect host GPU, or explicit SM list (`75;80;90`) |
