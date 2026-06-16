@@ -8,23 +8,6 @@ set(ELPA_INTEL_COMPILER_RUNTIME_LDFLAGS
     "Optional extra linker flags for Intel compiler runtime"
 )
 
-if(DEFINED ELPA_USE_MKL)
-    message(
-        DEPRECATION
-        "ELPA_USE_MKL is deprecated; use ELPA_BLAS_VENDOR=MKL or a BLAS vendor name"
-    )
-    if(ELPA_USE_MKL)
-        set(ELPA_BLAS_VENDOR "MKL" CACHE STRING "" FORCE)
-    else()
-        set(ELPA_BLAS_VENDOR "BLAS" CACHE STRING "" FORCE)
-    endif()
-endif()
-
-if(DEFINED ELPA_MKL_ROOT AND ELPA_MKL_ROOT)
-    message(DEPRECATION "ELPA_MKL_ROOT is deprecated; use MKL_ROOT instead")
-    set(MKL_ROOT "${ELPA_MKL_ROOT}" CACHE PATH "MKL root directory" FORCE)
-endif()
-
 string(TOUPPER "${ELPA_BLAS_VENDOR}" _elpa_blas_vendor_upper)
 set(_elpa_math_backend "GENERIC")
 
@@ -34,8 +17,8 @@ if(_elpa_blas_vendor_upper STREQUAL "AUTO")
         if(BLA_VENDOR MATCHES "^Intel" OR BLA_VENDOR STREQUAL "MKL")
             set(_elpa_math_backend "MKL")
         endif()
-    # As in ABACUS, an MKL environment/root hint is treated as an explicit
-    # request. Otherwise use the generic CMake BLAS/LAPACK discovery path.
+    # An MKL environment/root hint is treated as an explicit request.
+    # Otherwise use the generic CMake BLAS/LAPACK discovery path.
     elseif(MKL_ROOT OR DEFINED ENV{MKLROOT})
         set(_elpa_math_backend "MKL")
     endif()
