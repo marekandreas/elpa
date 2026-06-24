@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set(_elpa_saved_module_path "${CMAKE_MODULE_PATH}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/modules")
+
+set(ELPA_BUILD_STATIC @ELPA_BUILD_STATIC@)
+if(ELPA_BUILD_STATIC)
+  set(ELPA_USE_MPI @ELPA_USE_MPI@)
+  set(ELPA_USE_OPENMP @ELPA_USE_OPENMP@)
+  set(ELPA_ACCELERATOR @ELPA_ACCELERATOR@)
+  set(ELPA_USE_PAPI @ELPA_USE_PAPI@)
+
+  set(BLA_SIZEOF_INTEGER @BLA_SIZEOF_INTEGER@)
+  set(ELPA_BLAS_INTERFACE @ELPA_BLAS_INTERFACE@)
+  set(ELPA_BUILD_USES_MKL @ELPA_BUILD_USES_MKL@)
+  set(ELPA_MKL_THREADING @ELPA_MKL_THREADING@)
+  set(ELPA_MKL_FORTRAN_INTERFACE @ELPA_MKL_FORTRAN_INTERFACE@)
+
+  if(ELPA_USE_MPI)
+    find_dependency(MPI COMPONENTS C Fortran)
+  endif()
+
+  if(ELPA_BUILD_USES_MKL)
+    set(_elpa_mkl_components BLAS LAPACK)
+    if(ELPA_ACCELERATOR STREQUAL "SYCL")
+      list(APPEND _elpa_mkl_components SYCL)
+    endif()
+    find_dependency(MKL COMPONENTS ${_elpa_mkl_components})
+    set(SCALAPACK_BLAS_TARGETS MKL::MKL)
+  else()
+    set(_Elpa_build_bla_vendor "@ELPA_BUILD_BLA_VENDOR@")
+    if(NOT _Elpa_build_bla_vendor STREQUAL "")
+      set(BLA_VENDOR "${_Elpa_build_bla_vendor}")
+    endif()
+    find_dependency(BLAS)
+    find_dependency(LAPACK)
+    set(SCALAPACK_BLAS_TARGETS BLAS::BLAS LAPACK::LAPACK)
+  endif()
+
+  if(ELPA_USE_MPI)
+    set(SCALAPACK_PROVIDER @ELPA_SCALAPACK_VENDOR_RESOLVED@)
+    set(SCALAPACK_BLAS_INTERFACE @ELPA_BLAS_INTERFACE@)
+    set(SCALAPACK_MKL_BLACS "@ELPA_BUILD_MKL_BLACS@")
+    find_dependency(SCALAPACK)
+  endif()
+
+  if(ELPA_USE_OPENMP OR ELPA_ACCELERATOR STREQUAL "OPENMP")
+    find_dependency(OpenMP COMPONENTS C CXX Fortran)
+  endif()
+
+  if(ELPA_ACCELERATOR STREQUAL "CUDA")
+    find_dependency(CUDAToolkit)
+  elseif(ELPA_ACCELERATOR STREQUAL "HIP")
+    find_dependency(hip CONFIG)
+    find_dependency(rocblas CONFIG)
+  endif()
+
+  if(ELPA_USE_PAPI AND NOT TARGET PAPI::PAPI)
+    find_path(PAPI_INCLUDE_DIR NAMES papi.h REQUIRED)
+    find_library(PAPI_LIBRARY NAMES papi REQUIRED)
+    add_library(PAPI::PAPI UNKNOWN IMPORTED)
+    set_target_properties(
+      PAPI::PAPI
+      PROPERTIES
+        IMPORTED_LOCATION "${PAPI_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PAPI_INCLUDE_DIR}"
+    )
+  endif()
+endif()
+
+set(CMAKE_MODULE_PATH "${_elpa_saved_module_path}")
+unset(_elpa_saved_module_path)
+unset(_elpa_mkl_components)
+unset(_Elpa_build_bla_vendor)
+unset(_Elpa_build_mkl_blacs)
+unset(ELPA_BUILD_USES_MKL)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ElpaTargets.cmake")
+check_required_components(Elpa)

@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@ELPA_INSTALL_INCLUDEDIR@
+
+Name: elpa@ELPA_LIBRARY_SUFFIX@
+Description: Eigenvalue SoLvers for Petaflop-Applications
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -l@ELPA_OUTPUT_NAME@
+Libs.private: @ELPA_PC_PRIVATE_LIBS@
+Cflags: -I${includedir}
+fcflags: -I${includedir}/modules
