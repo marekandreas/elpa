@@ -28,7 +28,7 @@ AM_SILENT_RULES([yes])
 #
 # Note that this number translates into the library file name like this:
 # c:r:a  --->  libelpa.so.(c-a).a.r
-AC_SUBST([ELPA_SO_VERSION], [24:1:5])
+AC_SUBST([ELPA_SO_VERSION], [24:2:5])
 
 # AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
 # -----------------------------------------
@@ -4324,9 +4324,9 @@ fi
 
 #echo " "
 #echo "***********************************************************************"
-#echo "*  This is the first release candidate of ELPA 2026.02.001.rc1        *"
+#echo "*  This is the first release candidate of ELPA 2026.02.002.rc1        *"
 #echo "*  There might be still some changes until the final release of       *"
-#echo "*  ELPA 2026.02.001                                                   *"
+#echo "*  ELPA 2026.02.002                                                   *"
 #echo "***********************************************************************"
 #echo " "
 
