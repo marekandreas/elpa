@@ -206,7 +206,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: l_cols_nev, l_rows, matrixRows
       integer(kind=c_intptr_t)           :: q_dev, q_real_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -226,7 +226,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: l_cols_nev, l_rows, matrixRows
       integer(kind=c_intptr_t)           :: q_dev, q_real_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -246,7 +246,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -267,7 +267,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -290,7 +290,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -313,7 +313,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -336,7 +336,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -358,7 +358,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -379,7 +379,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -402,7 +402,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: i, matrixRows, matrixCols, negative_or_positive
       integer(kind=c_intptr_t)           :: q_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -425,7 +425,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0
@@ -448,7 +448,7 @@ module elpa1_sycl
       integer(kind=c_int), intent(in)    :: matrixRows, matrixCols
       integer(kind=c_intptr_t)           :: q_dev, q2nd_dev
       integer(kind=c_intptr_t), optional :: my_stream
-      integer(kind=c_intptr_t)           :: my_stream2
+      integer(kind=c_intptr_t)           :: my_stream2 = 0_c_intptr_t
 
 #ifdef WITH_SYCL_GPU_VERSION
       my_stream2 = 0

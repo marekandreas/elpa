@@ -17,9 +17,16 @@
  */
 
 #include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 long ftimings_resident_set_size() {
+#ifdef _WIN32
+	return 0L;
+#else
 	long rss = 0L;
 	FILE* fp = NULL;
 	if ((fp = fopen( "/proc/self/statm", "r" )) == NULL ) {
@@ -31,4 +38,5 @@ long ftimings_resident_set_size() {
 	}
 	fclose(fp);
 	return rss * sysconf( _SC_PAGESIZE);
+#endif
 }

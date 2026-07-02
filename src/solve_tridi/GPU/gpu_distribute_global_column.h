@@ -61,10 +61,7 @@ __global__ void gpu_distribute_global_column_kernel(T *g_col, T *l_col,
     int nbs = noff/(nblk*np_rows);
     int nbe = (noff+nlen-1)/(nblk*np_rows);
 
-    int number_of_entries;
     int entries_in_started_col;
-    int entries_in_sub_matrix;
-    int columns_in_sub_matrix;
 
     int index_sub_matrix;
     int col_sub_matrix;
@@ -102,10 +99,7 @@ __global__ void gpu_distribute_global_column_kernel(T *g_col, T *l_col,
 
 	    if (index >= js2 && index <= je2) {
 		    
-              number_of_entries = (g_col_dim2-g_col_offset2)*g_col_dim1+g_col_dim1-g_col_offset1+1;
               entries_in_started_col=g_col_dim1-g_col_offset1+1;
-              entries_in_sub_matrix=number_of_entries-entries_in_started_col;
-              columns_in_sub_matrix=entries_in_sub_matrix/g_col_dim1;
 
               if (g_off2-noff+index > entries_in_started_col) {
                 index_sub_matrix = g_off2-noff+index - entries_in_started_col;
@@ -124,10 +118,7 @@ __global__ void gpu_distribute_global_column_kernel(T *g_col, T *l_col,
               }
 
 
-              number_of_entries = (matrixCols-l_col_offset2)*ldq+ldq-l_col_offset1+1;
               entries_in_started_col=ldq-l_col_offset1+1;
-              entries_in_sub_matrix=number_of_entries-entries_in_started_col;
-              columns_in_sub_matrix=entries_in_sub_matrix/ldq;
 
               if (l_off2+index > entries_in_started_col) {
                 index_sub_matrix = l_off2+index - entries_in_started_col;

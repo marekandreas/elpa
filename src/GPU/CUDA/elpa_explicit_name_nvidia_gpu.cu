@@ -53,9 +53,11 @@ extern "C" {
     cudaPointerAttributes attributes;
     cudaError_t cuerr = cudaPointerGetAttributes(&attributes, a_void_ptr);  
     if (cuerr != cudaSuccess)
-		  {    
-		  printf("Error in is_device_ptr: cudaPointerGetAttributes: %s\n", cudaGetErrorString(cuerr));
-		  exit(1);
+		  {
+		  printf("Warning in is_device_ptr(): cudaPointerGetAttributes: %s\n", cudaGetErrorString(cuerr));
+		  printf("Pointer wasn't allocated via CUDA, so we use an all host array (a_h_a) function\n");
+		  cudaGetLastError();  /* clear the sticky error */
+		  return 0;
 		  }
     
     if (attributes.type==cudaMemoryTypeDevice) return 1;

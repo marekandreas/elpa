@@ -68,6 +68,9 @@
 #ifdef __cplusplus
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
+#elif defined(_WIN32)
+#define double_complex double _Complex
+#define float_complex float _Complex
 #else
 #define double_complex double complex
 #define float_complex float complex
@@ -268,7 +271,8 @@ int main(int argc, char** argv) {
 #endif
 
   /* Setup */
-  assert_elpa_ok(elpa_setup(handle));
+  error_elpa = elpa_setup(handle);
+  assert_elpa_ok(error_elpa);
 
   elpa_set(handle, "nvidia-gpu", 0, &error_elpa);
   assert_elpa_ok(error_elpa);

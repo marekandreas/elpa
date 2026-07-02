@@ -313,7 +313,11 @@ subroutine ROUTINE_NAME&
 
 #ifdef WITH_OPENMP_TRADITIONAL
         !$omp barrier
+#ifdef HAVE_OMP_MASKED
+        !$omp masked
+#else
         !$omp master
+#endif
 #endif
 
 #ifdef WITH_MPI
@@ -344,7 +348,11 @@ subroutine ROUTINE_NAME&
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP_TRADITIONAL
+#ifdef HAVE_OMP_MASKED
+        !$omp end masked
+#else
         !$omp end master
+#endif
         !$omp barrier
 
         !$omp do

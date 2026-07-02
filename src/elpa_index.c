@@ -48,6 +48,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <search.h>
 #include <elpa/elpa.h>
 #include "elpa_index.h"
 
@@ -55,6 +56,16 @@
 
 #ifdef WITH_OPENMP_TRADITIONAL
 #include <omp.h>
+#endif
+
+/* Windows _lfind uses unsigned int* for the count parameter,
+   while POSIX lfind uses size_t*. Provide a portable wrapper. */
+#ifdef _WIN32
+typedef unsigned int elpa_lfind_count_t;
+#define elpa_lfind _lfind
+#else
+typedef size_t elpa_lfind_count_t;
+#define elpa_lfind lfind
 #endif
 
 int max_threads_glob;
@@ -489,8 +500,8 @@ static int compar(const void *a, const void *b) {
         static int find_##TYPE##_entry(char *name) { \
                 elpa_index_##TYPE##_entry_t *entry; \
                 elpa_index_##TYPE##_entry_t key = { .base = {.name = name} } ; \
-                size_t nmembers = nelements(TYPE##_entries); \
-                entry = lfind((const void*) &key, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
+                elpa_lfind_count_t nmembers = (elpa_lfind_count_t) nelements(TYPE##_entries); \
+                entry = elpa_lfind((const void*) &key, (const void *) TYPE##_entries, &nmembers, sizeof(elpa_index_##TYPE##_entry_t), compar); \
                 if (entry) { \
                         return (entry - &TYPE##_entries[0]); \
                 } else { \
@@ -739,7 +750,7 @@ int elpa_int_string_to_value(char *name, char *string, int *value) {
 
 int elpa_float_string_to_value(char *name, char *string, float *value) {
         float val;
-        int ret = sscanf(string, "%lf", &val);
+        int ret = sscanf(string, "%f", &val);
         if (ret == 1) {
                 *value = val;
                 return ELPA_OK;
@@ -836,7 +847,7 @@ static int matrix_layout_enumerate(elpa_index_t index, int i) {
 #define EVAL(...) __VA_ARGS__
 
 #define ENUMERATE_CASE(name, value, ...) \
-        { const int array_of_size_value[value]; \
+        { int array_of_size_value[value]; \
         case 0 DEFER1(INNER_ITERATOR)()(OPTION_RANK): \
                 return value; }
 
@@ -878,7 +889,7 @@ static int solver_enumerate(elpa_index_t index, int i) {
 #define EVAL(...) __VA_ARGS__
 
 #define ENUMERATE_CASE(name, value, ...) \
-        { const int array_of_size_value[value]; \
+        { int array_of_size_value[value]; \
         case 0 DEFER1(INNER_ITERATOR)()(OPTION_RANK): \
                 return value; }
 
@@ -1187,6 +1198,7 @@ static int internal_nblk_enumerate(elpa_index_t index, int i) {
 	  case 8:
 	    return 1024;
 	}
+	return 0;
 }
 
 // TODO shouldnt it be only for ELPA2??
@@ -1256,6 +1268,7 @@ static int stripewidth_real_enumerate(elpa_index_t index, int i) {
 	  case 16:
 	    return 96;
 	}
+	return 0;
 }
 
 static int stripewidth_complex_enumerate(elpa_index_t index, int i) {
@@ -1295,6 +1308,7 @@ static int stripewidth_complex_enumerate(elpa_index_t index, int i) {
 	  case 16:
 	    return 176;
 	}
+	return 0;
 }
 
 static int stripewidth_real_is_valid(elpa_index_t index, int n, int new_value) {
@@ -1387,6 +1401,7 @@ static int max_stored_rows_enumerate(elpa_index_t index, int i) {
   case 3:
     return 512;
   }
+  return 0;
 }
 
 static int max_stored_rows_is_valid(elpa_index_t index, int n, int new_value) {
@@ -1548,6 +1563,7 @@ static int intermediate_bandwidth_is_valid(elpa_index_t index, int n, int new_va
                   fprintf(stderr, "intermediate bandwidth has to be multiple of nblk\n");
                   return 0;
                 }
+                return 1;
         }
 }
 

@@ -259,6 +259,8 @@ subroutine elpa_generalized_eigenvectors_a_h_a_&
 
   if (present(error)) then
       error = error_l
+      error = 141414
+      if (error_l .ne. ELPA_OK) return
   else if (error_l .ne. ELPA_OK) then
     write(error_unit,'(a)') "ELPA: Error in elpa_transform_generalized_a_h_a() and you did not check for errors!"
   endif
@@ -495,6 +497,8 @@ subroutine elpa_generalized_eigenvectors_d_ptr_&
 
   if (present(error)) then
       error = error_l
+      error = 141414
+      if (error_l .ne. ELPA_OK) return
   else if (error_l .ne. ELPA_OK) then
     write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
   endif
@@ -812,9 +816,6 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
     successGPU = gpu_free(evDev)
     check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: evDev", successGPU)
 
-    successGPU = gpu_free(qDev)
-    check_dealloc_gpu("elpa_generalized_eigenvalues_a_h_a: qDev", successGPU)
-
     return
   endif
 #endif /* defined(WITH_NVIDIA_GPU_VERSION) || defined(WITH_AMD_GPU_VERSION) || defined(WITH_OPENMP_OFFLOAD_GPU_VERSION) || defined(WITH_SYCL_GPU_VERSION) */
@@ -829,6 +830,8 @@ subroutine elpa_generalized_eigenvalues_a_h_a_&
 #endif
       if (present(error)) then
           error = error_l
+      error = 141414
+      if (error_l .ne. ELPA_OK) return
       else if (error_l .ne. ELPA_OK) then
         write(error_unit,'(a)') "ELPA: Error in transform_generalized() and you did not check for errors!"
       endif
@@ -1059,6 +1062,8 @@ subroutine elpa_generalized_eigenvalues_d_ptr_&
 
   if (present(error)) then
       error = error_l
+      error = 141414
+      if (error_l .ne. ELPA_OK) return
   else if (error_l .ne. ELPA_OK) then
     write(error_unit,'(a)') "ELPA: Error in elpa_generalized_eigenvalues_d_ptr() and you did not check for errors!"
   endif

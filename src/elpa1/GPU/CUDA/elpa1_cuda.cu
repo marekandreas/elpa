@@ -52,7 +52,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _MSC_VER
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include <complex.h>
 #include <cuComplex.h>
 #include <stdint.h>
@@ -77,7 +81,7 @@ __global__ void cuda_copy_real_part_to_q_double_complex_kernel(cuDoubleComplex *
     }
 }
 
-extern "C" void cuda_copy_real_part_to_q_double_complex_FromC(double _Complex *q_dev, double *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
+extern "C" void cuda_copy_real_part_to_q_double_complex_FromC(cuDoubleComplex *q_dev, double *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
   int l_rows = *l_rows_in;
   int l_cols_nev = *l_cols_nev_in;
   int matrixRows = *matrixRows_in;
@@ -110,7 +114,7 @@ __global__ void cuda_copy_real_part_to_q_float_complex_kernel(cuFloatComplex *q,
     }
 }
 
-extern "C" void cuda_copy_real_part_to_q_float_complex_FromC(float _Complex *q_dev, float *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
+extern "C" void cuda_copy_real_part_to_q_float_complex_FromC(cuFloatComplex *q_dev, float *q_real_dev, int *matrixRows_in, int *l_rows_in, int *l_cols_nev_in, cudaStream_t  my_stream){
   int l_rows = *l_rows_in;
   int l_cols_nev = *l_cols_nev_in;
   int matrixRows = *matrixRows_in;
@@ -365,7 +369,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_double_minus_kernel(double 
 extern "C" void cuda_copy_skewsymmetric_first_half_q_double_FromC(double *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
-  int negative_or_positive = *negative_or_positive_in;
+  (void)negative_or_positive_in; /* always negates — parameter kept for API symmetry with _second_half */
   int i = *i_in;
 
   dim3 threadsPerBlock(1024);
@@ -395,7 +399,7 @@ __global__ void cuda_copy_skewsymmetric_first_half_q_float_minus_kernel(float *q
 extern "C" void cuda_copy_skewsymmetric_first_half_q_float_FromC(float *q_dev, int *i_in, int *matrixRows_in, int *matrixCols_in, int *negative_or_positive_in, cudaStream_t  my_stream){
   int matrixRows = *matrixRows_in;
   int matrixCols = *matrixCols_in;
-  int negative_or_positive = *negative_or_positive_in;
+  (void)negative_or_positive_in; /* always negates — parameter kept for API symmetry with _second_half */
   int i = *i_in;
 
   dim3 threadsPerBlock(1024);

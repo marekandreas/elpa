@@ -56,6 +56,14 @@
 #define C_INT_TYPE int
 #endif
 
+#ifdef _WIN32
+#define ELPA_C_DOUBLE_COMPLEX double _Complex
+#define ELPA_C_FLOAT_COMPLEX float _Complex
+#else
+#define ELPA_C_DOUBLE_COMPLEX double complex
+#define ELPA_C_FLOAT_COMPLEX float complex
+#endif
+
 void dlacpy_(char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, double*, C_INT_TYPE_PTR, double*, C_INT_TYPE_PTR);
 void dgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, double*, double*, C_INT_TYPE_PTR, double*, C_INT_TYPE_PTR, double*, double*, C_INT_TYPE_PTR); 
 
@@ -66,11 +74,11 @@ void sgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, float*
 
 
 
-void zlacpy_(char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, double complex*, C_INT_TYPE_PTR, double complex*, C_INT_TYPE_PTR);
-void zgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, double complex*, double complex*, C_INT_TYPE_PTR, double complex*, C_INT_TYPE_PTR, double complex*, double complex*, C_INT_TYPE_PTR); 
+void zlacpy_(char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, ELPA_C_DOUBLE_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_DOUBLE_COMPLEX*, C_INT_TYPE_PTR);
+void zgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, ELPA_C_DOUBLE_COMPLEX*, ELPA_C_DOUBLE_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_DOUBLE_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_DOUBLE_COMPLEX*, ELPA_C_DOUBLE_COMPLEX*, C_INT_TYPE_PTR);
 
 
-void clacpy_(char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, float complex*, C_INT_TYPE_PTR, float complex*, C_INT_TYPE_PTR);
-void cgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, float complex*, float complex*, C_INT_TYPE_PTR, float complex*, C_INT_TYPE_PTR, float complex*, float complex*, C_INT_TYPE_PTR); 
+void clacpy_(char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, ELPA_C_FLOAT_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_FLOAT_COMPLEX*, C_INT_TYPE_PTR);
+void cgemm_(char*, char*, C_INT_TYPE_PTR, C_INT_TYPE_PTR, C_INT_TYPE_PTR, ELPA_C_FLOAT_COMPLEX*, ELPA_C_FLOAT_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_FLOAT_COMPLEX*, C_INT_TYPE_PTR, ELPA_C_FLOAT_COMPLEX*, ELPA_C_FLOAT_COMPLEX*, C_INT_TYPE_PTR);
 
 

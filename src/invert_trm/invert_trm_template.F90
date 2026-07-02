@@ -290,6 +290,7 @@
     successGPU = gpu_malloc(tmat2_dev, nblk*l_cols*size_of_datatype)
     check_alloc_gpu("elpa_invert_trm: tmat2_dev", successGPU)
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 
@@ -374,6 +375,7 @@
 
 #ifndef DEVICE_POINTER
   if (useGPU) then
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 
@@ -431,6 +433,7 @@
           ! still have to use cpu blas -> a generic GPU implementation would be needed
 #ifndef DEVICE_POINTER
           call obj%timer%start("lapack")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           num = matrixRows*matrixCols* size_of_datatype
@@ -449,6 +452,7 @@
                              infoBLAS)
           info = int(infoBLAS,kind=ik)
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
 
@@ -466,6 +470,7 @@
 #else /* DEVICE_POINTER */
 
           call obj%timer%start("lapack")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
 
@@ -485,6 +490,7 @@
                              infoBLAS)
           info = int(infoBLAS,kind=ik)
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
 
@@ -550,6 +556,7 @@
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
         num = nblk*(nblk+1)/2
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -607,6 +614,7 @@
 
       if (useGPU .and. .not. useCCL) then  
         num = nblk*(nblk+1)/2
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -692,6 +700,7 @@
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
         num = l_rows*nblk
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
@@ -783,6 +792,7 @@
       if (useGPU .and. .not. useCCL) then
         ! cuda aware MPI here
         num = l_rows*nblk
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
@@ -822,6 +832,7 @@
 
       if (useGPU .and. .not. useCCL) then
         num = nblk*l_cols
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
@@ -864,6 +875,7 @@
 
       if (useGPU .and. .not. useCCL) then
         num = nblk*l_cols
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
 
@@ -911,6 +923,7 @@
   if (useGPU) then
     ! copy results back
     num = matrixRows*matrixCols
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &

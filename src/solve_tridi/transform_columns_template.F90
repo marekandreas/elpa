@@ -126,6 +126,7 @@ subroutine transform_columns_cpu_&
   useCCL = obj%gpu_setup%useCCL
 
   if (useGPU) then
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif

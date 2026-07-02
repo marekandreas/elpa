@@ -67,9 +67,16 @@
 #endif
 
 #ifdef __cplusplus
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0)
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
-#define Complex_I std::complex<EV_TYPE> (0.0,1.0); 
+#elif defined(_WIN32)
+#define double_complex double _Complex
+#define float_complex float _Complex
+/* MSVC UCRT _Complex_I is an opaque struct (_Fcomplex) that doesn't support
+   arithmetic operators.  Use clang's __builtin_complex to construct a
+   double _Complex imaginary unit compatible with multiplication. */
+#define Complex_I __builtin_complex(0.0, 1.0)
 #else
 #define double_complex double complex
 #define float_complex float complex
@@ -235,6 +242,7 @@ int main(int argc, char** argv) {
      nblk = atoi(argv[3]);
    } else {
 #ifdef __cplusplus
+#define Complex_I std::complex<EV_TYPE> (0.0,1.0)
      na = 100;
      nev = 50;
      nblk = 4;
@@ -376,7 +384,8 @@ int main(int argc, char** argv) {
 #endif
 
    /* Setup */
-   assert_elpa_ok(elpa_setup(handle_complex));
+   error_elpa = elpa_setup(handle_complex);
+   assert_elpa_ok(error_elpa);
 
    elpa_get(handle_complex, "solver", &value, &error_elpa);
    if (myid == 0) {
@@ -456,7 +465,8 @@ int main(int argc, char** argv) {
 
 
    /* Setup */
-   assert_elpa_ok(elpa_setup(handle_skewsymmetric));
+   error_elpa = elpa_setup(handle_skewsymmetric);
+   assert_elpa_ok(error_elpa);
 
    elpa_get(handle_skewsymmetric, "solver", &value, &error_elpa);
    if (myid == 0) {
@@ -484,7 +494,7 @@ int main(int argc, char** argv) {
 #ifdef TEST_SINGLE
        if (fabs(ev_complex[i]-ev_skewsymmetric[i])/fabs(ev_complex[i]) > 1e-4) {
 #endif
-	 printf("ev: i= %d,%f,%f\n",i,ev_complex[i],ev_skewsymmetric[i]);
+         printf("ev: i= %ld,%f,%f\n",i,ev_complex[i],ev_skewsymmetric[i]);
          status = 1;
        }
      }

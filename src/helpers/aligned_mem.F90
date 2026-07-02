@@ -56,7 +56,11 @@ module aligned_mem
   end interface
 
   interface
+#ifdef _WIN32
+    subroutine free(ptr) bind(C, name="elpa_aligned_free")
+#else
     subroutine free(ptr) bind(C, name="free")
+#endif
       import c_ptr
       type(c_ptr), value :: ptr
     end subroutine

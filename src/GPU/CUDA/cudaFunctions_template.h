@@ -547,9 +547,9 @@ void cublasSgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int
   }
 }
 
-void cublasZgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int n, double _Complex alpha,
-                              const double _Complex *A, int lda,  const double _Complex *x, int incx,
-                              double _Complex beta, double _Complex *y, int incy) {
+void cublasZgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int n, cuDoubleComplex alpha,
+                              const cuDoubleComplex *A, int lda,  const cuDoubleComplex *x, int incx,
+                              cuDoubleComplex beta, cuDoubleComplex *y, int incy) {
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
   cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
@@ -566,9 +566,9 @@ void cublasZgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int
   }
 }
 
-void cublasCgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int n, float _Complex alpha,
-                              const float _Complex *A, int lda,  const float _Complex *x, int incx,
-                              float _Complex beta, float _Complex *y, int incy) {
+void cublasCgemv_elpa_wrapper (cublasHandle_t cudaHandle, char trans, int m, int n, cuFloatComplex alpha,
+                              const cuFloatComplex *A, int lda,  const cuFloatComplex *x, int incx,
+                              cuFloatComplex beta, cuFloatComplex *y, int incy) {
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
   cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
@@ -615,9 +615,9 @@ void cublasSgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char tran
 }
 
 void cublasZgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char transb, int m, int n, int k,
-                              double _Complex alpha, const double _Complex *A, int lda,
-                              const double _Complex *B, int ldb, double _Complex beta,
-                              double _Complex *C, int ldc) {
+                              cuDoubleComplex alpha, const cuDoubleComplex *A, int lda,
+                              const cuDoubleComplex *B, int ldb, cuDoubleComplex beta,
+                              cuDoubleComplex *C, int ldc) {
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
   cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
@@ -635,9 +635,9 @@ void cublasZgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char tran
 }
 
 void cublasCgemm_elpa_wrapper (cublasHandle_t cudaHandle, char transa, char transb, int m, int n, int k,
-                              float _Complex alpha, const float _Complex *A, int lda,
-                              const float _Complex *B, int ldb, float _Complex beta,
-                              float _Complex *C, int ldc) {
+                              cuFloatComplex alpha, const cuFloatComplex *A, int lda,
+                              const cuFloatComplex *B, int ldb, cuFloatComplex beta,
+                              cuFloatComplex *C, int ldc) {
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
   cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
@@ -682,9 +682,9 @@ void cublasSgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, 
 }
 
 void cublasZgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
-                              double _Complex alpha, const double _Complex *A, int lda,
-                              const double _Complex *B, int ldb, double _Complex beta,
-                              double _Complex *C, int ldc) {
+                              cuDoubleComplex alpha, const cuDoubleComplex *A, int lda,
+                              const cuDoubleComplex *B, int ldb, cuDoubleComplex beta,
+                              cuDoubleComplex *C, int ldc) {
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
   cuDoubleComplex beta_casted = *((cuDoubleComplex*)(&beta));
@@ -701,9 +701,9 @@ void cublasZgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, 
 }
 
 void cublasCgemm_elpa_wrapper_intptr_handle (intptr_t* cudaHandle, char transa, char transb, int m, int n, int k,
-                              float _Complex alpha, const float _Complex *A, int lda,
-                              const float _Complex *B, int ldb, float _Complex beta,
-                              float _Complex *C, int ldc) {
+                              cuFloatComplex alpha, const cuFloatComplex *A, int lda,
+                              const cuFloatComplex *B, int ldb, cuFloatComplex beta,
+                              cuFloatComplex *C, int ldc) {
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
   cuFloatComplex beta_casted = *((cuFloatComplex*)(&beta));
@@ -743,7 +743,7 @@ void cublasScopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float *x, int i
   }
 }
 
-void cublasZcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex *x, int incx, double _Complex *y, int incy){
+void cublasZcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuDoubleComplex *x, int incx, cuDoubleComplex *y, int incy){
   const cuDoubleComplex* X_casted = (const cuDoubleComplex*) x;
         cuDoubleComplex* Y_casted = (      cuDoubleComplex*) y;
 
@@ -754,7 +754,7 @@ void cublasZcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex
   }
 }
 
-void cublasCcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex *x, int incx, float _Complex *y, int incy){
+void cublasCcopy_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuFloatComplex *x, int incx, cuFloatComplex *y, int incy){
   const cuFloatComplex* X_casted = (const cuFloatComplex*) x;
         cuFloatComplex* Y_casted = (      cuFloatComplex*) y;
 
@@ -790,8 +790,8 @@ void cublasStrsm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, 
 }
 
 void cublasZtrsm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
-                              int m, int n, double _Complex alpha, const double _Complex *A,
-                              int lda, double _Complex *B, int ldb){
+                              int m, int n, cuDoubleComplex alpha, const cuDoubleComplex *A,
+                              int lda, cuDoubleComplex *B, int ldb){
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
 
@@ -806,8 +806,8 @@ void cublasZtrsm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, 
 }
 
 void cublasCtrsm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
-                              int m, int n, float _Complex alpha, const float _Complex *A,
-                              int lda, float _Complex *B, int ldb){
+                              int m, int n, cuFloatComplex alpha, const cuFloatComplex *A,
+                              int lda, cuFloatComplex *B, int ldb){
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
 
@@ -848,8 +848,8 @@ void cublasStrmm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, 
 }
 
 void cublasZtrmm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
-                              int m, int n, double _Complex alpha, const double _Complex *A,
-                              int lda, double _Complex *B, int ldb){
+                              int m, int n, cuDoubleComplex alpha, const cuDoubleComplex *A,
+                              int lda, cuDoubleComplex *B, int ldb){
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
 
@@ -865,8 +865,8 @@ void cublasZtrmm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, 
 }
 
 void cublasCtrmm_elpa_wrapper (cublasHandle_t cudaHandle, char side, char uplo, char transa, char diag,
-                              int m, int n, float _Complex alpha, const float _Complex *A,
-                              int lda, float _Complex *B, int ldb){
+                              int m, int n, cuFloatComplex alpha, const cuFloatComplex *A,
+                              int lda, cuFloatComplex *B, int ldb){
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
 
@@ -904,7 +904,7 @@ void cublasStrmv_elpa_wrapper(cublasHandle_t cublasHandle, char uplo, char trans
 }
 
 void cublasZtrmv_elpa_wrapper(cublasHandle_t cublasHandle, char uplo,  char trans, char diag,
-                              int n, const double _Complex *A, int lda, double _Complex *x, int incx){
+                              int n, const cuDoubleComplex *A, int lda, cuDoubleComplex *x, int incx){
 
   cuDoubleComplex* A_casted = (cuDoubleComplex*) A;
   cuDoubleComplex* x_casted = (cuDoubleComplex*) x;
@@ -917,7 +917,7 @@ void cublasZtrmv_elpa_wrapper(cublasHandle_t cublasHandle, char uplo,  char tran
 }
 
 void cublasCtrmv_elpa_wrapper(cublasHandle_t cublasHandle, char uplo,  char trans, char diag,
-                              int n, const float _Complex *A, int lda, float _Complex *x, int incx){
+                              int n, const cuFloatComplex *A, int lda, cuFloatComplex *x, int incx){
 
   cuFloatComplex* A_casted = (cuFloatComplex*) A;
   cuFloatComplex* x_casted = (cuFloatComplex*) x;
@@ -957,11 +957,11 @@ void cublasSsyrk_elpa_wrapper(cublasHandle_t cublasHandle, char uplo, char trans
 
 void cublasZherk_elpa_wrapper(cublasHandle_t cudaHandle, char uplo, char trans, 
                               int n, int k, 
-                              double _Complex alpha, const double _Complex *A, int lda,
-                              double _Complex beta, double _Complex *C, int ldc){
+                              cuDoubleComplex alpha, const cuDoubleComplex *A, int lda,
+                              cuDoubleComplex beta, cuDoubleComplex *C, int ldc){
 
-  double alpha_real = creal(alpha);
-  double beta_real  = creal(beta);
+  double alpha_real = alpha.x;
+  double beta_real  = beta.x;
   
   const cuDoubleComplex* A_casted = (const cuDoubleComplex*) A;
   cuDoubleComplex* C_casted = (cuDoubleComplex*) C;
@@ -975,11 +975,11 @@ void cublasZherk_elpa_wrapper(cublasHandle_t cudaHandle, char uplo, char trans,
 
 void cublasCherk_elpa_wrapper(cublasHandle_t cudaHandle, char uplo, char trans, 
                               int n, int k, 
-                              float _Complex alpha, const float _Complex *A, int lda,
-                              float _Complex beta, float _Complex *C, int ldc){
+                              cuFloatComplex alpha, const cuFloatComplex *A, int lda,
+                              cuFloatComplex beta, cuFloatComplex *C, int ldc){
 
-  float alpha_real = creal(alpha);
-  float beta_real  = creal(beta);
+  float alpha_real = alpha.x;
+  float beta_real  = beta.x;
 
   const cuFloatComplex* A_casted = (const cuFloatComplex*) A;
   cuFloatComplex* C_casted = (cuFloatComplex*) C;
@@ -1010,7 +1010,7 @@ void cublasSdot_elpa_wrapper (cublasHandle_t cudaHandle, int length, const float
   }
 }
 
-void cublasZdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const double _Complex *X, int incx, const double _Complex *Y, int incy, double _Complex *result) {
+void cublasZdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const cuDoubleComplex *X, int incx, const cuDoubleComplex *Y, int incy, cuDoubleComplex *result) {
 
   //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
   const cuDoubleComplex* X_casted = (const cuDoubleComplex*) X;
@@ -1031,7 +1031,7 @@ void cublasZdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length,
   //cuDoubleComplex* result = (cuDoubleComplex*) result_casted;
 }
 
-void cublasCdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const float _Complex *X, int incx, const float _Complex *Y, int incy, float _Complex *result) {
+void cublasCdot_elpa_wrapper (char conju, cublasHandle_t cudaHandle, int length, const cuFloatComplex *X, int incx, const cuFloatComplex *Y, int incy, cuFloatComplex *result) {
 
   //cublasSetPointerMode(cudaHandle, CUBLAS_POINTER_MODE_DEVICE);
   const cuFloatComplex* X_casted = (const cuFloatComplex*) X;
@@ -1090,7 +1090,7 @@ void cublasSscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float alpha, fl
   }
 }
 
-void cublasZscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex alpha, double _Complex *x, int incx){
+void cublasZscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuDoubleComplex alpha, cuDoubleComplex *x, int incx){
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
   cuDoubleComplex* X_casted     = (cuDoubleComplex*) x;
 
@@ -1100,7 +1100,7 @@ void cublasZscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex
   }
 }
 
-void cublasCscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx){
+void cublasCscal_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuFloatComplex alpha, cuFloatComplex *x, int incx){
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
   cuFloatComplex* X_casted     = (cuFloatComplex*) x;
 
@@ -1126,7 +1126,7 @@ void cublasSaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float alpha, fl
   }
 }
 
-void cublasZaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex alpha, double _Complex *x, int incx, double _Complex *y, int incy){
+void cublasZaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuDoubleComplex alpha, cuDoubleComplex *x, int incx, cuDoubleComplex *y, int incy){
 
   cuDoubleComplex alpha_casted = *((cuDoubleComplex*)(&alpha));
   cuDoubleComplex* X_casted     = (cuDoubleComplex*) x;
@@ -1138,7 +1138,7 @@ void cublasZaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, double _Complex
   }
 }
 
-void cublasCaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, float _Complex alpha, float _Complex *x, int incx, float _Complex *y, int incy){
+void cublasCaxpy_elpa_wrapper (cublasHandle_t cudaHandle, int n, cuFloatComplex alpha, cuFloatComplex *x, int incx, cuFloatComplex *y, int incy){
 
   cuFloatComplex alpha_casted = *((cuFloatComplex*)(&alpha));
   cuFloatComplex* X_casted     = (cuFloatComplex*) x;

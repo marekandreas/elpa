@@ -62,16 +62,16 @@
   ! the following variables, as long as they are not stored in the ELPA object
   ! prohibit to run ELPA at the same time on different GPUs of different vendors!
   integer(kind=c_int)            :: use_gpu_vendor
-  integer(kind=c_int)            :: gpuHostRegisterDefault    
-  integer(kind=c_int)            :: gpuMemcpyHostToDevice    
-  integer(kind=c_int)            :: gpuMemcpyDeviceToHost   
-  integer(kind=c_int)            :: gpuMemcpyDeviceToDevice
-  integer(kind=c_int)            :: gpuHostRegisterMapped
-  integer(kind=c_int)            :: gpuHostRegisterPortable
+  integer(kind=c_int)            :: gpuHostRegisterDefault    = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyHostToDevice     = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyDeviceToHost     = 0_c_int
+  integer(kind=c_int)            :: gpuMemcpyDeviceToDevice   = 0_c_int
+  integer(kind=c_int)            :: gpuHostRegisterMapped     = 0_c_int
+  integer(kind=c_int)            :: gpuHostRegisterPortable   = 0_c_int
 
-  integer(kind=c_int)            :: gpublasPointerModeHost
-  integer(kind=c_int)            :: gpublasPointerModeDevice
-  integer(kind=c_int)            :: gpublasDefaultPointerMode
+  integer(kind=c_int)            :: gpublasPointerModeHost    = 0_c_int
+  integer(kind=c_int)            :: gpublasPointerModeDevice  = 0_c_int
+  integer(kind=c_int)            :: gpublasDefaultPointerMode = 0_c_int
 
   !! per task information should be stored elsewhere
   !integer(kind=C_intptr_T), allocatable :: gpublasHandleArray(:)
@@ -198,23 +198,15 @@
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then
-        cudaMemcpyHostToDevice   = cuda_memcpyHostToDevice()
-        gpuMemcpyHostToDevice    = cudaMemcpyHostToDevice
-        cudaMemcpyDeviceToHost   = cuda_memcpyDeviceToHost()
-        gpuMemcpyDeviceToHost    = cudaMemcpyDeviceToHost
-        cudaMemcpyDeviceToDevice = cuda_memcpyDeviceToDevice()
-        gpuMemcpyDeviceToDevice  = cudaMemcpyDeviceToDevice
-        cudaHostRegisterPortable = cuda_hostRegisterPortable()
-        gpuHostRegisterPortable  = cudaHostRegisterPortable
-        cudaHostRegisterMapped   = cuda_hostRegisterMapped()
-        gpuHostRegisterMapped    = cudaHostRegisterMapped
-        cudaHostRegisterDefault  = cuda_hostRegisterDefault()
-        gpuHostRegisterDefault   = cudaHostRegisterDefault
+        gpuMemcpyHostToDevice    = cuda_memcpyHostToDevice()
+        gpuMemcpyDeviceToHost    = cuda_memcpyDeviceToHost()
+        gpuMemcpyDeviceToDevice  = cuda_memcpyDeviceToDevice()
+        gpuHostRegisterPortable  = cuda_hostRegisterPortable()
+        gpuHostRegisterMapped    = cuda_hostRegisterMapped()
+        gpuHostRegisterDefault   = cuda_hostRegisterDefault()
 
-        cublasPointerModeDevice  = cublas_PointerModeDevice()
-        gpublasPointerModeDevice = cublasPointerModeDevice
-        cublasPointerModeHost    = cublas_PointerModeHost()
-        gpublasPointerModeHost   = cublasPointerModeHost
+        gpublasPointerModeDevice = cublas_PointerModeDevice()
+        gpublasPointerModeHost   = cublas_PointerModeHost()
       endif
 #endif
 
@@ -235,6 +227,7 @@
       endif
 #endif
 
+#ifndef _WIN32
       cclSum  = ccl_redOp_cclSum()
       cclMax  = ccl_redOp_cclMax()
       cclMin  = ccl_redOp_cclMin()
@@ -248,6 +241,7 @@
       cclFloat32 = ccl_dataType_cclFloat32()
       cclFloat64 = ccl_dataType_cclFloat64()
       cclDouble  = ccl_dataType_cclDouble()
+#endif
 
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
       if (use_gpu_vendor == openmp_offload_gpu) then
@@ -427,6 +421,7 @@
 
       integer(kind=c_int)           :: n
       logical                       :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       success = cuda_getdevicecount(n)
@@ -478,6 +473,7 @@
 
       integer(kind=c_int), intent(in) :: n
       logical                         :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_GPU_VERSION
       if (use_gpu_vendor == nvidia_gpu) then

@@ -281,6 +281,7 @@ subroutine tridiag_cpu_&
     SM_count = obj%gpu_setup%gpuSMcount
     gpuHandle = obj%gpu_setup%gpublasHandleArray(0)
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif
@@ -652,6 +653,7 @@ subroutine tridiag_cpu_&
   tau(:) = 0
 
   if (useGPU) then
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_memset_async(d_vec_dev, 0, na * size_of_datatype_real, my_stream)
@@ -1127,7 +1129,8 @@ subroutine tridiag_cpu_&
 !$omp parallel &
 !$omp num_threads(max_threads) &
 !$omp default(none) &
-!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, my_stream, num) &
+!$omp private(my_thread, n_threads, n_iter, i, l_col_beg, l_col_end, j, l_row_beg, l_row_end, num) &
+!$omp firstprivate(my_stream) &
 !$omp shared(obj, gpuHandle, useGPU, isSkewsymmetric, gpuMemcpyDeviceToHost, successGPU, u_row, u_row_dev, &
 !$omp &      v_row, v_row_dev, v_col, v_col_dev, u_col, u_col_dev, a_dev, offset_dev, &
 !$omp&       max_local_cols, max_local_rows, wantDebug, l_rows_per_tile, l_cols_per_tile, &

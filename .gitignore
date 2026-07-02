@@ -36,5 +36,6 @@ m4/lt~obsolete.m4
 */m4/lt~obsolete.m4
 test_programs.am
 build*
+install/
 py-compile
 workspace.code-workspace

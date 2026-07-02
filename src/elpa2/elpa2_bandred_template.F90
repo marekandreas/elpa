@@ -450,6 +450,7 @@ max_threads, isSkewsymmetric)
     cur_l_cols = 0
 #endif
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     successGPU = gpu_stream_synchronize(my_stream)
@@ -661,6 +662,7 @@ max_threads, isSkewsymmetric)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -873,6 +875,7 @@ max_threads, isSkewsymmetric)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
@@ -990,6 +993,7 @@ max_threads, isSkewsymmetric)
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
         if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)
@@ -1109,6 +1113,7 @@ max_threads, isSkewsymmetric)
       endif ! useGPU
 
       if (useGPU) then
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1183,7 +1188,7 @@ max_threads, isSkewsymmetric)
               if (isSkewsymmetric) then
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
                                     -ONE, a_dev + (lrs-1 + (lcs-1)*matrixRows)*size_of_datatype, matrixRows, &
-                                    umc_dev + (lcs-1 + (n_cols+1+1)*max_l_cols)*size_of_datatype, max_l_cols, &
+                                    umc_dev + (lcs-1 + (n_cols+1-1)*max_l_cols)*size_of_datatype, max_l_cols, &
                                     ZERO, vmr_dev + (lrs-1+(n_cols+1-1)*max_l_rows)*size_of_datatype, max_l_rows, gpuHandle)
               else
                 call gpublas_PRECISION_GEMM('N', 'N', lre-lrs+1, n_cols, l_cols-lcs+1, &
@@ -1236,6 +1241,7 @@ max_threads, isSkewsymmetric)
       endif ! l_cols>0 .and. l_rows>0
 
       if (useGPU) then
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         successGPU = gpu_stream_synchronize(my_stream)
@@ -1283,6 +1289,7 @@ max_threads, isSkewsymmetric)
           if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_stream_synchronize(my_stream)
@@ -1312,6 +1319,7 @@ max_threads, isSkewsymmetric)
           endif
 #endif
 
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_stream_synchronize(my_stream)

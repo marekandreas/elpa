@@ -73,6 +73,7 @@
     useCCL = obj%gpu_setup%useCCL
 
     if (useGPU) then
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
 #endif
@@ -134,6 +135,7 @@
           ! send and recieve column are local
           if (useGPU) then
             num = l_rows*size_of_datatype
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_memcpy_async(qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
@@ -151,6 +153,7 @@
 #ifdef WITH_MPI
           if (useGPU .and. .not. useCCL) then
             num = l_rows*size_of_datatype
+            my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
             my_stream = obj%gpu_setup%my_stream
             successGPU = gpu_memcpy_async(int(loc(q(l_rqs,lc1)),kind=c_intptr_t), &
@@ -192,6 +195,7 @@
 
         if (useGPU .and. .not. useCCL) then
           num = l_rows*size_of_datatype
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_memcpy_async(qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
@@ -207,6 +211,7 @@
 #else /* WITH_MPI */
         if (useGPU) then
           num = l_rows*size_of_datatype
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_memcpy_async(qtmp_dev+(nc-1)*l_rows*size_of_datatype, &
@@ -249,6 +254,7 @@
 
         if (useGPU) then
           num = l_rows*size_of_datatype
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           successGPU = gpu_memcpy_async(q_dev+(l_rqs-1+(lc2-1)*ldq)*size_of_datatype, &

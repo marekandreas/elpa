@@ -49,12 +49,12 @@
 #include <stdint.h> // for intptr_t
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int gpuMemcpyHostToDevice;
 extern int gpuMemcpyDeviceToHost;
-
-#ifdef __cplusplus
-extern "C" {    
-#endif
     
 void set_gpu_parameters_tests();
 

@@ -511,12 +511,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* COMPLEXCASE */
     endif ! useGPU
 
-    if (useGPU) then
-      !new
-      last_stripe_width = l_nev - (stripe_count-1)*stripe_width
-      ! not needed in OpenMP case
-      ! last_stripe_width = l_nev - (stripe_count-1)*stripe_width
-    endif ! useGPU
+    last_stripe_width = l_nev - (stripe_count-1)*stripe_width
 
 #else /* WITH_OPENMP_TRADITIONAL */
 
@@ -738,6 +733,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(aIntern_dev , 0, num, my_stream)
@@ -802,6 +798,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_memset_async(row_group_dev , 0, num, my_stream)
@@ -878,6 +875,7 @@ subroutine trans_ev_tridi_to_band_&
     if (gpu_vendor() /= OPENMP_OFFLOAD_GPU .and. gpu_vendor() /= SYCL_GPU) then
 #endif
 
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       successGPU = gpu_stream_synchronize(my_stream)
@@ -977,6 +975,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
             if (allComputeOnGPU) then
               ! memcopy row_dev -> row_group_dev
+              my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)
@@ -1074,6 +1073,7 @@ subroutine trans_ev_tridi_to_band_&
 #else /* WITH_MPI */
             if (allComputeOnGPU) then
               ! memcpy row_dev -> row_group_dev
+              my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
               my_stream = obj%gpu_setup%my_stream
               successGPU = gpu_stream_synchronize(my_stream)

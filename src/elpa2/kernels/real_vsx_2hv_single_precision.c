@@ -57,7 +57,7 @@
 #include <stdlib.h>
 
 
-#define __forceinline __attribute__((always_inline)) static
+#define __forceinline __attribute__((always_inline)) static inline
 #ifdef DOUBLE_PRECISION_REAL
 #define __SSE_DATATYPE __vector double
 #define _SSE_LOAD vec_ld

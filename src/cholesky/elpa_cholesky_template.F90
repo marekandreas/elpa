@@ -205,6 +205,7 @@
   if(useGPU) then
     gpuString = "_gpu"
 
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
 #endif
@@ -457,6 +458,7 @@
   if (useGPU) then
     call obj%timer%start("gpu_memcpy")
     num = matrixRows*matrixCols
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &
@@ -537,6 +539,7 @@
           call obj%timer%start("lapack")
           num = matrixRows*matrixCols
 #ifndef DEVICE_POINTER
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -553,6 +556,7 @@
           info = int(infoBLAS,kind=ik)
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
 
@@ -567,6 +571,7 @@
 #else /* DEVICE_POINTER */
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -582,6 +587,7 @@
           info = int(infoBLAS,kind=ik)
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -680,6 +686,7 @@
           num = matrixRows*matrixCols
 #ifndef DEVICE_POINTER
           NVTX_RANGE_PUSH("memcpy D-H a_dev->a")
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -698,6 +705,7 @@
           NVTX_RANGE_POP("POTRF")
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -712,6 +720,7 @@
 #else /* DEVICE_POINTER */
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -727,6 +736,7 @@
           info = int(infoBLAS,kind=ik)
 
           num = matrixRows*matrixCols
+          my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
           my_stream = obj%gpu_setup%my_stream
           call gpu_memcpy_async_and_stream_synchronize &
@@ -797,6 +807,7 @@
 #ifdef WITH_MPI
       if (useGPU .and. .not. useCCL) then
         num = nblk*(nblk+1)/2
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -841,6 +852,7 @@
 
       if (useGPU .and. .not. useCCL) then
         num = nblk*(nblk+1)/2
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -938,6 +950,7 @@
     if (matrixCols-l_colx+1 > 0) then
       if (useGPU .and. .not. useCCL) then
         num = matrixCols*nblk
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -1003,6 +1016,7 @@
 
       if (useGPU .and. .not. useCCL) then
         num = matrixCols*nblk
+        my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
         my_stream = obj%gpu_setup%my_stream
         call gpu_memcpy_async_and_stream_synchronize &
@@ -1020,6 +1034,7 @@
 #if !defined(WITH_MPI)
     if (useGPU  .and. .not. useCCL) then
       num = matrixCols*nblk
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       call gpu_memcpy_async_and_stream_synchronize &
@@ -1035,6 +1050,7 @@
 
     if (useGPU .and. .not. useCCL) then
       num = matrixRows*nblk
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       call gpu_memcpy_async_and_stream_synchronize &
@@ -1075,6 +1091,7 @@
 
     if (useGPU .and. .not. useCCL) then
       num = matrixRows*nblk
+      my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
       my_stream = obj%gpu_setup%my_stream
       call gpu_memcpy_async_and_stream_synchronize &
@@ -1219,6 +1236,7 @@
 #ifndef DEVICE_POINTER
   if (useGPU) then
     num = matrixRows*matrixCols
+    my_stream = 0_c_intptr_t
 #ifdef WITH_GPU_STREAMS
     my_stream = obj%gpu_setup%my_stream
     call gpu_memcpy_async_and_stream_synchronize &

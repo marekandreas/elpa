@@ -166,7 +166,11 @@ subroutine elpa_reduce_add_vectors_&
       k = nvc * aux_stride
 #ifdef WITH_OPENMP_TRADITIONAL
       !$omp barrier
+#ifdef HAVE_OMP_MASKED
+      !$omp masked
+#else
       !$omp master
+#endif
 #endif
 
 #ifdef WITH_MPI
@@ -188,7 +192,11 @@ subroutine elpa_reduce_add_vectors_&
 #endif /* WITH_MPI */
 
 #ifdef WITH_OPENMP_TRADITIONAL
+#ifdef HAVE_OMP_MASKED
+      !$omp end masked
+#else
       !$omp end master
+#endif
       !$omp barrier
 #endif
       if (mypt == ipt) then

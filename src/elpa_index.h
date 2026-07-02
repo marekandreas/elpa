@@ -61,7 +61,7 @@
 
 #define FOR_ALL_TYPES(X) \
         X(int, "%d", "%d", -1) \
-        X(float, "%g", "%lg", NAN) \
+        X(float, "%g", "%g", NAN) \
         X(double, "%g", "%lg", NAN)
 
 /* A simple structure for storing values to a pre-set

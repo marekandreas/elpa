@@ -8,10 +8,10 @@ The current version for autotuning is also 202600202 and down to version 2017040
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotuning
 implementation is used, and for 20211125 and higher the new implementation is used.
 
-[![Build 
+[![Build
 status](https://gitlab.mpcdf.mpg.de/elpa/elpa/badges/master/build.svg)](https://gitlab.mpcdf.mpg.de/elpa/elpa/commits/master)
 
-[![Code 
+[![Code
 coverage](https://gitlab.mpcdf.mpg.de/elpa/badges/master/coverage.svg)](https://elpa.pages.mpcdf.de/elpa/coverage_summary)
 
 ![License LGPL v3][license-badge]
@@ -85,22 +85,22 @@ Nonetheless, we are grateful if you cite the following publications:
   structure theory and computational science",
   Journal of Physics Condensed Matter, 26, 213201 (2014)
   doi:10.1088/0953-8984/26/21/213201
-  
+
   If you use the GPU version of ELPA:
 
   Kus, P; Marek, A.; Lederer, H.
   "GPU Optimization of Large-Scale Eigenvalue Solver",
-  In: Radu F., Kumar K., Berre I., Nordbotten J., Pop I. (eds) 
-  Numerical Mathematics and Advanced Applications ENUMATH 2017. ENUMATH 2017. 
+  In: Radu F., Kumar K., Berre I., Nordbotten J., Pop I. (eds)
+  Numerical Mathematics and Advanced Applications ENUMATH 2017. ENUMATH 2017.
   Lecture Notes in Computational Science and Engineering, vol 126. Springer, Cham
-  
+
   Yu, V.; Moussa, J.; Kus, P.; Marek, A.; Messmer, P.; Yoon, M.; Lederer, H.; Blum, V.
   "GPU-Acceleration of the ELPA2 Distributed Eigensolver for Dense Symmetric and Hermitian Eigenproblems",
   Computer Physics Communications, 262, 107808 (2021)
   doi:10.1016/j.cpc.2020.107808
 
   If you use the new API and/or autotuning:
- 
+
   Kus, P.; Marek, A.; Koecher, S. S.; Kowalski H.-H.; Carbogno, Ch.; Scheurer, Ch.; Reuter, K.; Scheffler, M.; Lederer, H.
   "Optimizations of the Eigenvaluesolvers in the ELPA Library",
   Parallel Computing 85, 167-177 (2019)
@@ -124,6 +124,10 @@ configure *ELPA*):
   - Scalapack routines
   - a working MPI library
 
+An alternative CMake-based build system is also available. For the current
+CMake entry points, validated example configurations, and the main differences
+from the autotools setup, see [cmake_build_examples/README.md](./cmake_build_examples/README.md).
+
 Please refer to the [INSTALL document](./documentation/INSTALL.md) on details of the installation process and
 the possible configure options.
 
@@ -142,5 +146,3 @@ It has been, and is, a tremendous effort to develop and maintain the
 
 Thus every effort and help to improve the *ELPA* library is highly appreciated.
 For details please see the [CONTRIBUTING](CONTRIBUTING.md) document.
-
-

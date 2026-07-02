@@ -52,7 +52,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include <complex.h>
 
 #include "./test_gpu_vendor_agnostic_layerFunctions.h"
@@ -71,6 +75,13 @@
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+
+/* Authoritative definitions for the gpuMemcpy direction constants used by
+ * the test layer. Using bare definitions in a header (common symbols) is
+ * non-portable: it relies on ELF tentative-definition merging and breaks
+ * under -fno-common (GCC default since GCC 10) and on COFF (Windows). */
+int gpuMemcpyHostToDevice;
+int gpuMemcpyDeviceToHost;
 
 
 void set_gpu_parameters_tests(){
@@ -120,6 +131,7 @@ int gpuSetDevice_tests(int n){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif
+   return -1;
 }
 
 int gpuMalloc_tests(intptr_t *a, size_t width_height) {
@@ -135,6 +147,7 @@ int gpuMalloc_tests(intptr_t *a, size_t width_height) {
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif   
+   return -1;
 }
 
 int gpuFree_tests(intptr_t *a) {
@@ -151,6 +164,7 @@ int gpuFree_tests(intptr_t *a) {
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif   
+   return -1;
 }
 
 int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir){
@@ -166,4 +180,5 @@ int gpuMemcpy_tests(intptr_t *dest, intptr_t *src, size_t count, int dir){
 #ifdef WITH_OPENMP_OFFLOAD_GPU_VERSION
 #error "openmp_offload missing"
 #endif  
+   return -1;
 }

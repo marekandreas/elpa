@@ -73,6 +73,9 @@
 #ifdef __cplusplus
 #define double_complex std::complex<double>
 #define float_complex std::complex<float>
+#elif defined(_WIN32)
+#define double_complex double _Complex
+#define float_complex float _Complex
 #else
 #define double_complex double complex
 #define float_complex float complex
@@ -481,7 +484,8 @@ int main(int argc, char** argv) {
   assert_elpa_ok(error_elpa);
 
   /* Setup */
-  assert_elpa_ok(elpa_setup(handle));
+  error_elpa = elpa_setup(handle);
+  assert_elpa_ok(error_elpa);
 
   /* Set solver and ELPA2 kernel */
 
@@ -579,7 +583,8 @@ int main(int argc, char** argv) {
 #endif
 
 #if (TEST_NVIDIA_GPU == 1) || (TEST_AMD_GPU == 1) || (TEST_INTEL_GPU == 1) || (TEST_INTEL_GPU_OPENMP == 1) || (TEST_INTEL_GPU_SYCL == 1)
-  assert_elpa_ok(elpa_setup_gpu(handle));
+  error_elpa = elpa_setup_gpu(handle);
+  assert_elpa_ok(error_elpa);
 #endif
 
 #if TEST_GPU_DEVICE_POINTER_API == 1
@@ -1072,7 +1077,7 @@ int main(int argc, char** argv) {
 
 #else /* TEST_EXPLICIT_NAME */
 #if defined(TEST_GENERALIZED_DECOMP_EIGENPROBLEM)
-  elpa_timer_start(handle, "is_already_decomposed=.false.");
+  elpa_timer_start(handle, (char*) "is_already_decomposed=.false.");
 #endif
   elpa_generalized_eigenvectors(handle, a, b, ev, q, 0, &error_elpa);
   assert_elpa_ok(error_elpa);

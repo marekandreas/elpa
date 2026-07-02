@@ -170,7 +170,7 @@
 #define MONE -1.0f
 #endif
 
-#define __forceinline __attribute__((always_inline)) static
+#define __forceinline __attribute__((always_inline)) static inline
 
 #if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE
 #define ADDITIONAL_ARGUMENT
@@ -266,7 +266,7 @@
 #define _SIMD_SUB vsubq_f32
 #define _SIMD_NEG vnegq_f32
 #define _SIMD_FMA(a, b, c) vfmaq_f32(c ,b, a)
-#define _SIMD_NFMA(a, b, c) vfmsq_f32(a, b, c)
+#define _SIMD_NFMA(a, b, c) vfmsq_f32(c, b, a)
 #define _SIMD_FMSUB(a, b, c) vnegq_f32(vfmsq_f32(c, b, a))
 //#define _SIMD_XOR _mm_xor_ps
 #define _SIMD_SET1 vdupq_n_f32
@@ -776,6 +776,10 @@ __forceinline void CONCAT_8ARGS(hh_trafo_kernel_,ROW_LENGTH,_,SIMD_SET,_,BLOCK,h
 #ifdef BLOCK6
 	DATA_TYPE_PTR scalarprods);
 #endif
+/* ROW_LENGTH was used above only for the kernel function name; undefine it
+   here so the production-section VEC_SET blocks below can redefine it cleanly
+   without triggering -Wmacro-redefined. */
+#undef ROW_LENGTH
 
 void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA_TYPE_PTR q, DATA_TYPE_PTR hh, int* pnb, int* pnq, int* pldq, int* pldh);
 
@@ -2149,6 +2153,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif
@@ -2256,6 +2261,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
 #endif
@@ -2272,6 +2278,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       }
 
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
+#undef ROW_LENGTH
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
 #endif

@@ -58,7 +58,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _MSC_VER
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include <stdint.h>
 #include <stddef.h>
 #include <complex.h>

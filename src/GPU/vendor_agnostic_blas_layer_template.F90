@@ -258,6 +258,7 @@
       integer(kind=c_int),      intent(out) :: version
       logical                               :: success
 
+      version = 0
       success = .true.
 #ifdef WITH_NVIDIA_GPU_VERSION
 #ifdef WITH_GPU_STREAMS

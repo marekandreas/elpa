@@ -47,19 +47,19 @@
 #endif
 
 
-  integer(kind=c_int) :: cclSum
-  integer(kind=c_int) :: cclMax
-  integer(kind=c_int) :: cclMin
-  integer(kind=c_int) :: cclAvg
-  integer(kind=c_int) :: cclProd
+  integer(kind=c_int) :: cclSum   = 0_c_int
+  integer(kind=c_int) :: cclMax   = 0_c_int
+  integer(kind=c_int) :: cclMin   = 0_c_int
+  integer(kind=c_int) :: cclAvg   = 0_c_int
+  integer(kind=c_int) :: cclProd  = 0_c_int
 
-  integer(kind=c_int) :: cclInt
-  integer(kind=c_int) :: cclInt32
-  integer(kind=c_int) :: cclInt64
-  integer(kind=c_int) :: cclFloat
-  integer(kind=c_int) :: cclFloat32
-  integer(kind=c_int) :: cclFloat64
-  integer(kind=c_int) :: cclDouble
+  integer(kind=c_int) :: cclInt    = 0_c_int
+  integer(kind=c_int) :: cclInt32  = 0_c_int
+  integer(kind=c_int) :: cclInt64  = 0_c_int
+  integer(kind=c_int) :: cclFloat  = 0_c_int
+  integer(kind=c_int) :: cclFloat32 = 0_c_int
+  integer(kind=c_int) :: cclFloat64 = 0_c_int
+  integer(kind=c_int) :: cclDouble  = 0_c_int
 
 !  !type, BIND(C,name="ncclUniqueId") :: uniqueId_c
 !  type, BIND(C) ::ncclUniqueId
@@ -98,6 +98,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_redOp_ncclSum()
 #endif
@@ -121,6 +122,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_redOp_ncclMax()
 #endif
@@ -144,6 +146,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_redOp_ncclMin()
 #endif
@@ -167,6 +170,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_redOp_ncclAvg()
 #endif
@@ -190,6 +194,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_redOp_ncclProd()
 #endif
@@ -213,6 +218,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclInt()
 #endif
@@ -236,6 +242,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclInt32()
 #endif
@@ -259,6 +266,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclInt64()
 #endif
@@ -282,6 +290,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclFloat()
 #endif
@@ -305,6 +314,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclFloat32()
 #endif
@@ -328,6 +338,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclFloat64()
 #endif
@@ -351,6 +362,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       integer(kind=c_int) :: flag
+      flag = -1
 #ifdef WITH_NVIDIA_NCCL
       flag = nccl_dataType_ncclDouble()
 #endif
@@ -374,6 +386,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       logical :: success
+      success = .false.
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_group_start()
 #endif
@@ -396,6 +409,7 @@
       use, intrinsic :: iso_c_binding
       implicit none
       logical :: success
+      success = .false.
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_group_end()
 #endif
@@ -434,6 +448,7 @@
 #endif
       logical             :: success
       integer :: i
+      success = .false.
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_get_unique_id(cclId)
 #endif
@@ -473,6 +488,7 @@
 #endif
       integer(kind=c_int)                       :: myRank
       logical                                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_comm_init_rank(cclComm, nRanks, cclId, myRank)
@@ -507,6 +523,7 @@
       implicit none
       integer(kind=C_intptr_t)                  :: cclComm
       logical                                   :: success
+      success = .false.
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_comm_destroy(cclComm)
 #endif
@@ -532,6 +549,7 @@
       integer(kind=C_intptr_t)                  :: cclComm
       integer(kind=C_intptr_t)                  :: gpuStream
       logical                                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_allreduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
@@ -564,6 +582,7 @@
       integer(kind=C_intptr_t)                  :: cclComm
       integer(kind=C_intptr_t)                  :: gpuStream
       logical                                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_allreduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, cclComm, gpuStream)
@@ -596,6 +615,7 @@
       integer(kind=C_intptr_t)                  :: cclComm
       integer(kind=C_intptr_t)                  :: gpuStream
       logical                                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_reduce_intptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
@@ -628,6 +648,7 @@
       integer(kind=C_intptr_t)  :: cclComm
       integer(kind=C_intptr_t)  :: gpuStream
       logical                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_reduce_cptr(sendbuff, recvbuff, nrElements, cclDatatype, cclOp, root, cclComm, gpuStream)
@@ -659,6 +680,7 @@
       integer(kind=C_intptr_t)                  :: cclComm
       integer(kind=C_intptr_t)                  :: gpuStream
       logical                                   :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_bcast_intptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
@@ -690,6 +712,7 @@
       integer(kind=C_intptr_t)     :: cclComm
       integer(kind=C_intptr_t)     :: gpuStream
       logical                      :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_bcast_cptr(sendbuff, recvbuff, nrElements, cclDatatype, root, cclComm, gpuStream)
@@ -720,6 +743,7 @@
       integer(kind=C_intptr_t)       :: cclComm
       integer(kind=C_intptr_t)       :: gpuStream
       logical                        :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_send_intptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
@@ -750,6 +774,7 @@
       integer(kind=C_intptr_t)       :: cclComm
       integer(kind=C_intptr_t)       :: gpuStream
       logical                        :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_send_cptr(sendbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
@@ -780,6 +805,7 @@
       integer(kind=C_intptr_t)      :: cclComm
       integer(kind=C_intptr_t)      :: gpuStream
       logical                       :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_recv_intptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
@@ -810,6 +836,7 @@
       integer(kind=C_intptr_t)      :: cclComm
       integer(kind=C_intptr_t)      :: gpuStream
       logical                       :: success
+      success = .false.
 
 #ifdef WITH_NVIDIA_NCCL
       success = nccl_recv_cptr(recvbuff, nrElements, cclDatatype, peer, cclComm, gpuStream)
