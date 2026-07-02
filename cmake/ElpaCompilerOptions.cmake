@@ -35,6 +35,7 @@ set(ELPA_FORTRAN_ISA_FLAGS "")
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
     if(WIN32)
+        # Windows stacks are small by default; /heap-arrays is needed for large arrays in ELPA.
         add_compile_options($<$<COMPILE_LANGUAGE:Fortran>:/heap-arrays>)
         set(ELPA_FORTRAN_OPT_FLAGS /Qunroll)
         set(ELPA_FORTRAN_DEBUG_FLAGS
@@ -44,7 +45,6 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
             -traceback
         )
     else()
-        add_compile_options($<$<COMPILE_LANGUAGE:Fortran>:-heap-arrays>)
         set(ELPA_FORTRAN_OPT_FLAGS -unroll)
         set(ELPA_FORTRAN_DEBUG_FLAGS
             -check
