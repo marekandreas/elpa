@@ -707,10 +707,9 @@ void rocsolverSsyevd_elpa_wrapper (SOLVER_handle gpusolverHandle, int n, float *
   }
 }
 
-// PETERDEBUG111: test and fix intptr_t* --> intptr_t
 void rocsolver_stedc_elpa_wrapper(char dataType, SOLVER_handle gpusolverHandle, int n,
-                                  intptr_t *d_dev, intptr_t *e_dev, intptr_t *q_dev,
-                                  int ldq, intptr_t *info_dev) {
+                                  intptr_t d_dev, intptr_t e_dev, intptr_t q_dev,
+                                  int ldq, intptr_t info_dev) {
 #ifdef WITH_AMD_HIPSOLVER_API
   printf("hipsolver_stedc doesn't exist yet, aborting...");
   exit(1);
