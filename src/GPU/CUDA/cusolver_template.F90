@@ -248,6 +248,18 @@
     end subroutine
   end interface
 
+  interface
+    subroutine cusolver_stedc_c(dataType, cusolverHandle, n, d_dev, e_dev, q_dev, ldq, info_dev) &
+                              bind(C,name="cusolver_stedc_elpa_wrapper")
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int), value      :: n, ldq
+      integer(kind=c_intptr_t), value :: d_dev, e_dev, q_dev, info_dev
+      integer(kind=c_intptr_t), value :: cusolverHandle
+    end subroutine
+  end interface
+
 
   contains
 
@@ -466,3 +478,14 @@
 #endif
     end subroutine
 
+    subroutine cusolver_stedc(dataType, n, d_dev, e_dev, q_dev, ldq, info_dev, cusolverHandle)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      character(1, c_char), value     :: dataType
+      integer(kind=c_int)             :: n, ldq
+      integer(kind=c_intptr_t)        :: d_dev, e_dev, q_dev, info_dev
+      integer(kind=c_intptr_t)        :: cusolverHandle
+#ifdef WITH_NVIDIA_CUSOLVER
+      call cusolver_stedc_c(dataType, cusolverHandle, n, d_dev, e_dev, q_dev, ldq, info_dev)
+#endif
+    end subroutine
