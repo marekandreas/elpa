@@ -704,5 +704,68 @@ void cusolverSsyevd_elpa_wrapper (cusolverDnHandle_t cudaHandle, int n, float *A
   }
 }
 
+//_________________________________________________________________________________________________
+// cusolverDnXstedc
+
+void cusolver_stedc_elpa_wrapper(char dataType, cusolverDnHandle_t cusolverHandle, int n,
+                                 intptr_t D, intptr_t E, intptr_t Z, int ldz, intptr_t info_dev) {
+#ifdef WITH_NVIDIA_CUSOLVER_STEDC
+  cusolverStatus_t status;
+  cudaError_t cuerr;
+  cudaDataType cuda_data_type =  getCudaDataType(dataType);
+
+  cusolverDnParams_t params;
+  status = cusolverDnCreateParams(&params);
+  if (status != CUSOLVER_STATUS_SUCCESS) {
+    elpa_cusolverPrintError(status);
+    errormessage("Error in cusolverDnCreateParams %s\n", "aborting");
+  }
+
+  void *bufferOnDevice = NULL, *bufferOnHost = NULL;
+  size_t workspaceInBytesOnDevice = 0;
+  size_t workspaceInBytesOnHost = 0;
+
+  status = cusolverDnXstedc_bufferSize(cusolverHandle, params, CUSOLVER_EIG_COMP_I,
+                                       (int64_t) n, cuda_data_type, (const void *) D, (const void *) E,
+                                       cuda_data_type, (const void *) Z, (int64_t) ldz, cuda_data_type,
+                                       &workspaceInBytesOnDevice, &workspaceInBytesOnHost);
+  if (status != CUSOLVER_STATUS_SUCCESS) {
+    elpa_cusolverPrintError(status);
+    errormessage("Error in cusolverDnXstedc_bufferSize %s\n", "aborting");
+  }
+
+  cuerr = cudaMalloc(&bufferOnDevice, workspaceInBytesOnDevice);
+  if (cuerr != cudaSuccess) {
+    errormessage("Error in cusolver_stedc_elpa_wrapper cudaMalloc(bufferOnDevice): %s\n", cudaGetErrorString(cuerr));
+  }
+
+  bufferOnHost = malloc(workspaceInBytesOnHost);
+
+  status = cusolverDnXstedc(cusolverHandle, params, CUSOLVER_EIG_COMP_I,
+                            (int64_t) n, cuda_data_type, (void *) D, (void *) E,
+                            cuda_data_type, (void *) Z, (int64_t) ldz, cuda_data_type,
+                            bufferOnDevice, workspaceInBytesOnDevice,
+                            bufferOnHost, workspaceInBytesOnHost, (int *) info_dev);
+
+  if (status != CUSOLVER_STATUS_SUCCESS) {
+    elpa_cusolverPrintError(status);
+    errormessage("Error in cusolverDnXstedc %s\n", "aborting");
+  }
+
+  cuerr = cudaFree(bufferOnDevice);
+  if (cuerr != cudaSuccess) {
+    errormessage("Error in cusolver_stedc_elpa_wrapper cudaFree(bufferOnDevice): %s\n", cudaGetErrorString(cuerr));
+  }
+
+  free(bufferOnHost);
+
+  status = cusolverDnDestroyParams(params);
+  if (status != CUSOLVER_STATUS_SUCCESS) {
+    elpa_cusolverPrintError(status);
+    errormessage("Error in cusolverDnDestroyParams %s\n", "aborting");
+  }
+#endif
+}
+
   
 } // extern "C"

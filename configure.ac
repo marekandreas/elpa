@@ -3202,6 +3202,13 @@ if test x"$need_nvidia_gpu" = x"yes"; then
       AC_MSG_ERROR([Could not link cusolver;  try to set the path to cusolver.so or disable it: --with-cusolver=no])
     fi
     AC_DEFINE([WITH_NVIDIA_CUSOLVER],[1],[enable CUDA cusolver])
+
+    AC_SEARCH_LIBS([cusolverDnXstedc], [cusolver],[have_cusolver_stedc=yes],[have_cusolver_stedc=no])
+    if test x"${have_cusolver_stedc}" = x"yes"; then
+      AC_DEFINE([WITH_NVIDIA_CUSOLVER_STEDC],[1],[cuSOLVER provides cusolverDnXstedc])
+    fi
+    AC_MSG_CHECKING([whether cuSOLVER provides cusolverDnXstedc])
+    AC_MSG_RESULT([${have_cusolver_stedc}])
     AC_LANG_POP([C])
   fi
 fi

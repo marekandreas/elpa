@@ -85,7 +85,7 @@
 #endif
     implicit none
     class(elpa_abstract_impl_t), intent(inout) :: obj
-    logical                                    :: useGPU, useGPUsolver
+    logical                                    :: useGPU, useGPUsolver, useGPUsolver_stedc
     integer(kind=ik)                           :: nlen, ldq
     real(kind=REAL_DATATYPE)                   :: d(nlen), e(nlen), q(ldq,nlen)
 
@@ -118,6 +118,7 @@
     
     useGPU =.false.
     useGPUsolver =.false.
+    useGPUsolver_stedc =.false.
 #ifdef SOLVE_TRIDI_GPU_BUILD
     useGPU =.true.
 #ifdef WITH_GPU_STREAMS
@@ -126,8 +127,11 @@
 
 #if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_SYCL_SOLVER)
     useGPUsolver =.true.
+#if defined(WITH_NVIDIA_CUSOLVER_STEDC)
+    useGPUsolver_stedc =.true.
 #endif
-#if defined(WITH_AMD_ROCSOLVER)
+    ! as of 2026, oneMKL still lacks stedc. Hopefully, this gets resolved by Intel
+#elif defined(WITH_AMD_ROCSOLVER)
     useGPUsolver =.false.
     gpusolver_version = gpusolver_get_version()
     if (gpusolver_version<=0 .or. gpusolver_version>999999) then
@@ -135,8 +139,8 @@
     endif
     if (gpusolver_version >= 32802) useGPUsolver =.true. ! rocSOLVER 3.28.2 for ROCm 6.4.2 introduced improved stedc
     if (wantDebug) print *, "gpusolver_version=", gpusolver_version, "useGPUsolver=", useGPUsolver
+    useGPUsolver_stedc = useGPUsolver
 #endif
-
 
 #endif /* SOLVE_TRIDI_GPU_BUILD */
 
@@ -146,40 +150,30 @@
     if (useGPUsolver) then
       gpusolverHandle = obj%gpu_setup%gpusolverHandleArray(0)
       
-#if defined(WITH_NVIDIA_CUSOLVER) || defined(WITH_SYCL_SOLVER)
-      call gpu_construct_full_from_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
-#endif
+      if (.not. useGPUsolver_stedc) then
+        call gpu_construct_full_from_tridi_matrix(PRECISION_CHAR, q_dev, d_dev, e_dev, nlen, ldq, debug, my_stream)
+      endif
 
       num = 1 * size_of_int
       successGPU = gpu_malloc(info_dev, num)
       check_alloc_gpu("solve_tridi_single info_dev: ", successGPU)
 
-#if defined(WITH_NVIDIA_CUSOLVER)
-      call obj%timer%start("gpusolver_syevd")
-      NVTX_RANGE_PUSH("gpusolver_syevd")
-      ! as of ELPA release 2025.06, cuSOLVER still lacks stedc. Hopefully, this gets resolved by NVIDIA
-      call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
-      if (wantDebug) successGPU = gpu_DeviceSynchronize()
-      NVTX_RANGE_POP("gpusolver_syevd")
-      call obj%timer%stop("gpusolver_syevd")
-#endif
-#if defined(WITH_AMD_ROCSOLVER)
-      call obj%timer%start("gpusolver_stedc")
-      NVTX_RANGE_PUSH("gpusolver_stedc")
-      call gpusolver_stedc (PRECISION_CHAR, nlen, d_dev, e_dev, q_dev, ldq, info_dev, gpusolverHandle)
-      if (wantDebug) successGPU = gpu_DeviceSynchronize()
-      NVTX_RANGE_POP("gpusolver_stedc")
-      call obj%timer%stop("gpusolver_stedc")
-#endif
-#ifdef WITH_SYCL_SOLVER
-      call obj%timer%start("gpusolver_syevd")
-      NVTX_RANGE_PUSH("gpusolver_syevd")
-      ! as of ELPA release 2025.06, oneMKL still lacks stedc. Hopefully, this gets resolved by Intel
-      call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
-      if (wantDebug) successGPU = gpu_DeviceSynchronize()
-      NVTX_RANGE_POP("gpusolver_syevd")
-      call obj%timer%stop("gpusolver_syevd")
-#endif
+      if (useGPUsolver_stedc) then
+        call obj%timer%start("gpusolver_stedc")
+        NVTX_RANGE_PUSH("gpusolver_stedc")
+        call gpusolver_stedc (PRECISION_CHAR, nlen, d_dev, e_dev, q_dev, ldq, info_dev, gpusolverHandle)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        NVTX_RANGE_POP("gpusolver_stedc")
+        call obj%timer%stop("gpusolver_stedc")
+      else
+        call obj%timer%start("gpusolver_syevd")
+        NVTX_RANGE_PUSH("gpusolver_syevd")
+        call gpusolver_PRECISION_syevd (nlen, q_dev, ldq, d_dev, info_dev, gpusolverHandle)
+        if (wantDebug) successGPU = gpu_DeviceSynchronize()
+        NVTX_RANGE_POP("gpusolver_syevd")
+        call obj%timer%stop("gpusolver_syevd")
+      endif
+
 
       num = 1 * size_of_int
 #ifdef WITH_GPU_STREAMS
@@ -193,10 +187,12 @@
       check_memcpy_gpu("solve_tridi_single: info_dev", successGPU)
 #endif
 
+#if !defined(WITH_NVIDIA_CUSOLVER_STEDC) /* as of 2026, cusolver stedc ignores the info return value, hopefully this gets fixed by NVIDIA */
       if (info .ne. 0) then
-        write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd, info=", info, ", aborting..."
+        write(error_unit,'(a,i8,a)') "Error in gpusolver_PRECISION_syevd/stedc, info=", info, ", aborting..."
         stop 1
       endif
+#endif
 
       successGPU = gpu_free(info_dev)
       check_dealloc_gpu("solve_tridi_single: info_dev", successGPU)

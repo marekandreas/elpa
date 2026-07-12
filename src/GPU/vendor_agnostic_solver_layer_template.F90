@@ -606,15 +606,13 @@
       integer(kind=c_intptr_t)        :: handle
 
 #ifdef WITH_NVIDIA_GPU_VERSION
-      ! call cusolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
-      print *, "cusolver_stedc doesn't exist yet. Exiting"
-      stop 1
+      call cusolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
 #endif
 #ifdef WITH_AMD_GPU_VERSION
-      call rocsolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
+    call rocsolver_stedc(datatype, n, d_dev, e_dev, q_dev, ldq, info_dev, handle)
 #endif
 
 #ifdef WITH_SYCL_GPU_VERSION
-! not yet available in mkl ?
+! not yet available in mkl
 #endif
     end subroutine
