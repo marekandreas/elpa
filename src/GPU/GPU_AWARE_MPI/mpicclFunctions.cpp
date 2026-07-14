@@ -71,6 +71,11 @@
 #include <hip/hip_runtime.h>
 #endif
 
+#ifdef WITH_SYCL_GPU_VERSION
+#include "../SYCL/syclCommon.hpp"
+using namespace sycl_be;
+extern "C" int syclStreamSynchronizeExplicitFromC(sycl_be::QueueData *my_stream);
+#endif
+
 #include "../gpu_to_cuda_and_hip_interface.h"
 #include "./mpicclFunctions_template.h"
-

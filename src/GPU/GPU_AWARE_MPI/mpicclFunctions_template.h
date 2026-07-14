@@ -305,6 +305,8 @@ int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int
 
   MPI_Comm_rank(MPI_Comm_f2c(mpicclComm), &rank);
 
+  // Treat special case when recvbuff != sendbuff:
+  // not directly supported by MPI_Bcast, so we need to copy sendbuff to recvbuff on root
   if (rank==root && recvbuff != sendbuff){
     int typesize;
     MPI_Datatype dtype = MPI_Type_f2c(mpicclDatatype);
@@ -321,10 +323,15 @@ int mpicclBroadcastFromC(const void* sendbuff, void* recvbuff, size_t count, int
 
     size_t nbytes = (size_t)typesize * count;
 
+#ifdef WITH_SYCL_GPU_VERSION
+    sycl::queue queue = getQueueOrDefault(gpuStream);
+    queue.memcpy(recvbuff, sendbuff, nbytes);
+#else
 #ifdef WITH_GPU_STREAMS
     gpuerr = gpuMemcpyAsync(recvbuff, sendbuff, nbytes, gpuMemcpyDeviceToDevice, gpuStream);
 #else
     gpuerr = gpuMemcpy     (recvbuff, sendbuff, nbytes, gpuMemcpyDeviceToDevice);
+#endif
 #endif
   }
 
