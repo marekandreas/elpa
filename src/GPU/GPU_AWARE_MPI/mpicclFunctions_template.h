@@ -10,10 +10,6 @@
 
 typedef MPI_Comm mpicclComm_t;
 
-// typedef struct {
-//     MPI_Comm comm;
-// } mpicclUniqueId;
-
 typedef struct {
     intptr_t internal[16];
 } ncclUniqueId;
@@ -22,139 +18,25 @@ typedef struct {
 extern "C" {
 
 int mpicclGroupStartFromC() {
-  // int mpicclError;
-
-  // mpicclError = ncclGroupStart();
-  // if (mpicclError != ncclSuccess) {
-  //   if (mpicclError == ncclUnhandledCudaError) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclUnhandledCudaError");
-  //   } else if (mpicclError == ncclSystemError) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclSystemError");
-  //   } else if (mpicclError == ncclInternalError) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclInternalError");
-  //   } else if (mpicclError == ncclInvalidArgument) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclInvalidArguments");
-  //   } else if (mpicclError == ncclInvalidUsage) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclInvalidUsage");
-  //   } else if (ncclNumResults) {
-  //     errormessage("Error in ncclGroupStart: %s\n", "ncclNumResults");
-  //   } else {
-  //     errormessage("Error in ncclGroupStart: %s\n", "unknown error");
-  //   }
-  //   return 0;
-  // }
   return 1;
 }
 
 int mpicclGroupEndFromC() {
-  // int mpicclError;
-
-  // mpicclError = ncclGroupEnd();
-  // if (mpicclError != ncclSuccess) {
-  //   if (mpicclError == ncclUnhandledCudaError) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclUnhandledCudaError");
-  //   } else if (mpicclError == ncclSystemError) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclSystemError");
-  //   } else if (mpicclError == ncclInternalError) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclInternalError");
-  //   } else if (mpicclError == ncclInvalidArgument) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclInvalidArguments");
-  //   } else if (mpicclError == ncclInvalidUsage) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclInvalidUsage");
-  //   } else if (ncclNumResults) {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "ncclNumResults");
-  //   } else {
-  //     errormessage("Error in ncclGroupEnd: %s\n", "unknown error");
-  //   }
-  //   return 0;
-  // }
   return 1;
 }
 
 
 int mpicclGetUniqueIdFromC(ncclUniqueId *mpicclID)
 {
-  // int mpicclError;
-
-  // mpicclError = MPI_Comm_dup(MPI_COMM_WORLD, &mpicclID->comm);
-
-  // if (mpicclError != MPI_SUCCESS) {
-  //   if (mpicclError == MPI_ERR_COMM) {
-  //     errormessage("Error in mpicclGetUniqueId: %s\n", "MPI_ERR_COMM");
-  //   } else {
-  //     errormessage("Error in mpicclGetUniqueId: %s\n", "unknown error");
-  //   }
-  //   return 0;
-  // }
-
   return 1;
 }
 
 int mpicclCommInitRankFromC(mpicclComm_t *mpicclComm, int nRanks, ncclUniqueId *mpicclID, int myRank) {
-  // int mpicclError;
-
-  // MPI_Comm parent = mpicclID->comm;
-
-  // mpicclError = MPI_Comm_dup(parent, mpicclComm);
-  // if (mpicclError != MPI_SUCCESS) {
-  //   char errstr[MPI_MAX_ERROR_STRING];
-  //   int len = 0;
-  //   MPI_Error_string(mpicclError, errstr, &len);
-  //   errstr[len] = '\0';
-  //   errormessage("Error in mpicclCommInitRank: %s\n", errstr);
-  //   return 0;
-  // }
-
-  // // PETERDEBUG111: cleanup sanity checks after testing?
-  // // Sanity checks: do communicator size and rank match
-  // int size, rank;
-  // mpicclError = MPI_Comm_size(*mpicclComm, &size);
-  // if (mpicclError != MPI_SUCCESS) {
-  //   char errstr[MPI_MAX_ERROR_STRING];
-  //   int len = 0;
-  //   MPI_Error_string(mpicclError, errstr, &len);
-  //   errormessage("Error in mpicclCommInitRank (MPI_Comm_size): %s\n", errstr);
-  //   return 0;
-  // }
-
-  // mpicclError = MPI_Comm_rank(*mpicclComm, &rank);
-  // if (mpicclError != MPI_SUCCESS) {
-  //   char errstr[MPI_MAX_ERROR_STRING];
-  //   int len = 0;
-  //   MPI_Error_string(mpicclError, errstr, &len);
-  //   errstr[len] = '\0';
-  //   errormessage("Error in mpicclCommInitRank (MPI_Comm_rank): %s\n", errstr);
-  //   MPI_Comm_free(mpicclComm);
-  //   return 0;
-  // }
-
-  // if (size != nRanks) {
-  //   errormessage("Error in mpicclCommInitRank: communicator size %d != nRanks %d\n", size, nRanks);
-  //   return 0;
-  // }
-
-  // if (rank != myRank) {
-  //   errormessage("Error in mpicclCommInitRank: communicator rank %d != myRank %d\n", rank, myRank);
-  //   return 0;
-  // }
-
   return 1;
 }
 
 
 int mpicclCommDestroyFromC(mpicclComm_t mpicclComm){
-  // int mpicclError;
-
-  // mpicclError = MPI_Comm_free(&mpicclComm);
-  // if (mpicclError != MPI_SUCCESS) {
-  //   char errstr[MPI_MAX_ERROR_STRING];
-  //   int len = 0;
-  //   MPI_Error_string(mpicclError, errstr, &len);
-
-  //   errormessage("Error in mpicclCommDestroy: %s\n", errstr);
-  //   return 0;
-  // }
-
   return 1;
 }
 
