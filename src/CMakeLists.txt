@@ -992,10 +992,6 @@ file(WRITE "${PROJECT_BINARY_DIR}/config.h"
 
 if(ELPA_BUILD_TOOLS)
   add_executable(elpa2_print_kernels elpa2/elpa2_print_kernels.F90)
-  set_target_properties(
-    elpa2_print_kernels
-    PROPERTIES OUTPUT_NAME "elpa2_print_kernels${ELPA_LIBRARY_SUFFIX}"
-  )
   target_link_libraries(elpa2_print_kernels PRIVATE ELPA::elpa)
   set_source_files_properties(
     elpa2/elpa2_print_kernels.F90

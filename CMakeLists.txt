@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.22)
 # Keep these values independent from every other build-system input. A release
 # that changes the CMake ABI or API must update this block together with the
 # corresponding CMake package metadata.
-set(ELPA_VERSION "2026.02.001")
+set(ELPA_VERSION "2026.02.002")
 set(ELPA_ABI_CURRENT 24)
 set(ELPA_ABI_REVISION 1)
 set(ELPA_ABI_AGE 5)
@@ -157,14 +157,6 @@ elpa_check_compiler_support()
 # =================================================================================================
 # Targets
 # =================================================================================================
-
-if(ELPA_USE_MPI)
-  set(ELPA_LIBRARY_SUFFIX "")
-  set(ELPA_OUTPUT_NAME elpa)
-else()
-  set(ELPA_LIBRARY_SUFFIX _onenode)
-  set(ELPA_OUTPUT_NAME elpa_onenode)
-endif()
 
 set(
   ELPA_INSTALL_INCLUDEDIR
@@ -325,9 +317,9 @@ install(
   DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
 )
 
-configure_file(cmake/elpa.pc.in "elpa${ELPA_LIBRARY_SUFFIX}.pc" @ONLY)
+configure_file(cmake/elpa.pc.in "elpa.pc" @ONLY)
 install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa${ELPA_LIBRARY_SUFFIX}.pc"
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa.pc"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
 )
 
