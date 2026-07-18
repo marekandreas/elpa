@@ -120,7 +120,7 @@ if(ELPA_USE_MPI)
   set(SCALAPACK_BLAS_INTERFACE "${ELPA_BLAS_INTERFACE}")
   set(SCALAPACK_BLAS_TARGETS ${ELPA_BLAS_TARGET})
   set(SCALAPACK_MKL_BLACS "${ELPA_MKL_BLACS}")
-  find_package(SCALAPACK REQUIRED)
+  find_package(Scalapack REQUIRED)
   set(ELPA_SCALAPACK_TARGET SCALAPACK::SCALAPACK)
 endif()
 
@@ -160,9 +160,9 @@ elpa_check_compiler_support()
 
 set(
   ELPA_INSTALL_INCLUDEDIR
-  "${CMAKE_INSTALL_INCLUDEDIR}/Elpa"
+  "${CMAKE_INSTALL_INCLUDEDIR}/elpa"
 )
-set(ELPA_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/Elpa")
+set(ELPA_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/elpa")
 
 add_subdirectory(src)
 
@@ -172,7 +172,7 @@ add_subdirectory(src)
 
 install(
   TARGETS elpa
-  EXPORT ELPATargets
+  EXPORT elpa-targets
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
@@ -288,20 +288,20 @@ endforeach()
 string(STRIP "${ELPA_PC_PRIVATE_LIBS}" ELPA_PC_PRIVATE_LIBS)
 
 configure_package_config_file(
-  cmake/ElpaConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/ElpaConfig.cmake"
+  cmake/elpa-config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
   INSTALL_DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
 )
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/ElpaConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/elpa-config-version.cmake"
   VERSION "${PROJECT_VERSION}"
   COMPATIBILITY SameMajorVersion
 )
 
 install(
   FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/ElpaConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/ElpaConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/elpa-config-version.cmake"
   DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
 )
 install(
@@ -311,8 +311,8 @@ install(
   PATTERN "Find*.cmake"
 )
 install(
-  EXPORT ELPATargets
-  FILE ElpaTargets.cmake
+  EXPORT elpa-targets
+  FILE elpa-targets.cmake
   NAMESPACE ELPA::
   DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
 )
