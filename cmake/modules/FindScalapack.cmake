@@ -83,7 +83,7 @@ if(SCALAPACK_PROVIDER STREQUAL "MKL")
   )
 
   find_package_handle_standard_args(
-    SCALAPACK
+    Scalapack
     REQUIRED_VARS SCALAPACK_LIBRARY SCALAPACK_BLACS_LIBRARY
   )
 else()
@@ -118,7 +118,7 @@ else()
   endif()
 
   find_package_handle_standard_args(
-    SCALAPACK
+    Scalapack
     REQUIRED_VARS SCALAPACK_LIBRARY
   )
 endif()
