@@ -483,7 +483,7 @@ int main(int argc, char** argv) {
   /* Setup */
   assert_elpa_ok(elpa_setup(handle));
 
-  /* Set solver and ELPA2 kernel */
+  /* Set runtime options (e.g. solver, GPU usage, ELPA2 kernel) */
 
 #ifdef TEST_SOLVER_1STAGE
   elpa_set(handle, "solver", ELPA_SOLVER_1STAGE, &error_elpa);
@@ -504,9 +504,6 @@ int main(int argc, char** argv) {
 
 #if TEST_INTEL_GPU == 1 || TEST_INTEL_GPU_OPENMP == 1  || TEST_INTEL_GPU_SYCL == 1
   elpa_set(handle, "intel-gpu", TEST_GPU, &error_elpa);
-  assert_elpa_ok(error_elpa);
-
-  elpa_set(handle, "gpu_sycl_backend", 0, &error_elpa);
   assert_elpa_ok(error_elpa);
 #endif
 

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <cub/cub.cuh>
+#include <type_traits>
 
 #include "config-f90.h"
 
@@ -55,8 +56,14 @@ nev       : N_C
 nb        : nbw (==b)
 ncols     : N_R (==n+b-1)
 */
+
+//__________________________________________________________________________
+// Kernel body: shared between the double and float __global__ wrappers.
+// When USE_MMA is defined the double path uses DMMA; the float path falls
+// back to the scalar dot-product loop via if constexpr.
+
 template <typename T, int bM, int bN, int block_y, int block_z>
-__global__ void compute_hh_trafo_gpu_new(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+__device__ void compute_hh_trafo_gpu_new_body(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nev, const int nb, const int ldq, const int ncols)
 {
   constexpr int bK = bM;
 
@@ -66,7 +73,7 @@ __global__ void compute_hh_trafo_gpu_new(T * __restrict__ q, const T * __restric
   T *q_s = &hh_s[bM];
   T *hh_tau_s = &q_s[shared_memory_bytes(bK, bN)];
 #ifdef USE_MMA
-  T *sum_s = &hh_tau_s[1]; // Shared memory buffer if we perform the inner product with DMMA.
+  T *sum_s = &hh_tau_s[1]; // Shared memory buffer for DMMA inner product (double only).
 #endif
 
   int j = ncols;
@@ -100,36 +107,45 @@ __global__ void compute_hh_trafo_gpu_new(T * __restrict__ q, const T * __restric
     }
 
 /**
-  If we use DMMA to perform the inner product, call the routine here and store results on the buffer.
-  If not, for each eigenvector, for each thread we calculate the `sum`.
+  For double with DMMA available: call the DMMA routine and store results in
+  sum_s.  For float (or when USE_MMA is not defined): each thread computes its
+  own dot-product sum in registers inside the n-loop below.
  */
 
 #ifdef USE_MMA
-    __syncthreads();
-    sum<bK, bN, block_z * block_y / 32>(hh_s, q_s, sum_s);
-    __syncthreads();
+    if constexpr (std::is_same_v<T, double>) {
+      __syncthreads();
+      sum<bK, bN, block_z * block_y / 32>(hh_s, q_s, sum_s);
+      __syncthreads();
+    }
 #endif
 
 #pragma unroll
     for (int n = 0; n < thread_n_dim; n++) {
       int n_idx = threadIdx.y + n * block_y;
 
+      // Compute the Householder inner product: sum_local = hh^T * q_col.
+      T sum_local = (T)0;
 #ifndef USE_MMA
-    T sum = 0;
 #pragma unroll 1
-    for (int k = 0; k < bK; k++) {
-      sum += hh_s[k] * q_s[shared_memory_offset<bK, bN>(k, n_idx)];
-    }
+      for (int k = 0; k < bK; k++) {
+        sum_local += hh_s[k] * q_s[shared_memory_offset<bK, bN>(k, n_idx)];
+      }
+#else
+      if constexpr (std::is_same_v<T, double>) {
+        sum_local = sum_s[n_idx]; // Use DMMA result for double.
+      } else {
+#pragma unroll 1
+        for (int k = 0; k < bK; k++) {
+          sum_local += hh_s[k] * q_s[shared_memory_offset<bK, bN>(k, n_idx)];
+        }
+      }
 #endif
 
 #pragma unroll
       for (int m = 0; m < thread_m_dim; m++) {
         int m_idx = threadIdx.z + m * block_z;
-#ifdef USE_MMA
-        reg[m * thread_n_dim + n] = q_s[shared_memory_offset<bK, bN>(m_idx, n_idx)] - *hh_tau_s * hh_s[m_idx] * sum_s[n_idx];
-#else
-        reg[m * thread_n_dim + n] = q_s[shared_memory_offset<bK, bN>(m_idx, n_idx)] - *hh_tau_s * hh_s[m_idx] * sum;
-#endif
+        reg[m * thread_n_dim + n] = q_s[shared_memory_offset<bK, bN>(m_idx, n_idx)] - *hh_tau_s * hh_s[m_idx] * sum_local;
         if (j == 1 || m_idx == bM - 1) {
           if (n_idx + bid < nev) { q[(m_idx + j - 1) * ldq + n_idx + bid] = reg[m * thread_n_dim + n]; }
         }
@@ -150,6 +166,12 @@ __global__ void compute_hh_trafo_gpu_new(T * __restrict__ q, const T * __restric
 
     j -= 1;
   }
+}
+
+template <typename T, int bM, int bN, int block_y, int block_z>
+__global__ void compute_hh_trafo_gpu_new(T * __restrict__ q, const T * __restrict__ hh, const T * __restrict__ hh_tau, const int nev, const int nb, const int ldq, const int ncols)
+{
+  compute_hh_trafo_gpu_new_body<T, bM, bN, block_y, block_z>(q, hh, hh_tau, nev, nb, ldq, ncols);
 }
 
 void set_max_shared_bytes(const void *func)
@@ -177,7 +199,7 @@ void launch_NVIDIA_sm80_kernel(F *q, const F *hh, const F *hh_tau, const int nev
   constexpr int block_z = 4;
 #endif
   constexpr int bN = 8;
-  auto kernel = compute_hh_trafo_gpu_new<double, bM, bN, block_y, block_z>;
+  auto kernel = compute_hh_trafo_gpu_new<F, bM, bN, block_y, block_z>;
   set_max_shared_bytes((const void *)kernel);
 #ifdef USE_MMA
   int shared_bytes = (bM + shared_memory_bytes(bM, bN) + bN + 1) * sizeof(F);
@@ -203,9 +225,9 @@ ncols     : N_R (==n+b-1)
 */
 extern "C" {
   void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(double *q, const double *hh, const double *hh_tau, const int nev, const int nb, const int ldq, const int ncols, cudaStream_t my_stream)
-  
+
   {
-  
+
       switch (nb) {
         case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
         case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
@@ -220,7 +242,7 @@ extern "C" {
         //case    1: launch_new_kernel<   1>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
         default: printf("Unsupported nb = %d for new kernel \n", nb);
       }
-  
+
       cudaError_t err = cudaGetLastError();
       if (err != cudaSuccess)
       {
@@ -229,15 +251,26 @@ extern "C" {
   }
 
   void launch_compute_hh_trafo_c_cuda_sm80_kernel_real_single(float *q, const float *hh, const float *hh_tau, const int nev, const int nb, const int ldq, const int ncols, cudaStream_t my_stream) {
-  double *q_casted, *hh_casted, *hh_tau_casted;
 
-  q_casted = (double*) q;
-  hh_casted = (double*) hh;
-  hh_tau_casted = (double*) hh_tau;
+      switch (nb) {
+        case 1024: launch_NVIDIA_sm80_kernel<1024>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  512: launch_NVIDIA_sm80_kernel< 512>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  256: launch_NVIDIA_sm80_kernel< 256>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case  128: launch_NVIDIA_sm80_kernel< 128>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   64: launch_NVIDIA_sm80_kernel<  64>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   32: launch_NVIDIA_sm80_kernel<  32>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case   16: launch_NVIDIA_sm80_kernel<  16>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case    8: launch_NVIDIA_sm80_kernel<   8>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        case    4: launch_NVIDIA_sm80_kernel<   4>(q, hh, hh_tau, nev, nb, ldq, ncols, my_stream); break;
+        //case    2: launch_new_kernel<   2>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        //case    1: launch_new_kernel<   1>(q, hh, hh_tau, nev, nb, ldq, ncols); break;
+        default: printf("Unsupported nb = %d for new kernel \n", nb);
+      }
 
-  launch_compute_hh_trafo_c_cuda_sm80_kernel_real_double(q_casted, hh_casted, hh_tau_casted, nev, nb, ldq, ncols, my_stream);
-
-  q = (float*) q_casted;
-
- }
+      cudaError_t err = cudaGetLastError();
+      if (err != cudaSuccess)
+      {
+          printf("\n compute_hh_trafo sm80 CUDA kernel failed: %s \n",cudaGetErrorString(err));
+      }
+  }
 }

@@ -19,12 +19,16 @@ using namespace sycl_be;
 extern "C" {
 
   int onecclGroupStartFromC() {
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
     ccl::group_start();
+#endif
     return 1;
   }
 
   int onecclGroupEndFromC() {
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250000
     ccl::group_end();
+#endif
     return 1;
   }
 
@@ -38,13 +42,6 @@ extern "C" {
    * Only call from Rank 0!
    */
   int onecclGetUniqueIdFromC(void *kvsAddress) {
-    #ifdef WITH_MPI
-      int rank = 0;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if (rank != 0) {
-        return 1;
-      }
-    #endif
     ccl::shared_ptr_class<ccl::kvs> kvs;
     ccl::kvs::address_type tmpAddr;
     kvs = ccl::create_main_kvs();
@@ -52,18 +49,21 @@ extern "C" {
     tmpAddr = kvs->get_address();
     std::memcpy(kvsAddress, tmpAddr.data(), tmpAddr.max_size());
     // So that we can retrieve the KVS later and it doesn't get deconstructed.
-    SyclState::defaultState().registerKvs(kvsAddress, kvs);
+    std::string kvsKey(static_cast<char*>(kvsAddress), tmpAddr.max_size());
+    SyclState::defaultState().registerKvs(kvsKey, kvs);
     return 1;
   }
 
 
   int onecclCommInitRankFromC(ccl::communicator **onecclComm, int nRanks, void *kvsAddress, int myRank) {
     SyclState &ss = SyclState::defaultState();
-    std::optional<cclKvsHandle> kvsOpt = ss.retrieveKvs(kvsAddress);
+    ccl::kvs::address_type tmpAddr;
+    std::string kvsKey(static_cast<char*>(kvsAddress), tmpAddr.max_size());
+    std::optional<cclKvsHandle> kvsOpt = ss.retrieveKvs(kvsKey);
     cclKvsHandle kvs;
     if (!kvsOpt.has_value()) {
       kvs = ccl::create_kvs(*static_cast<ccl::kvs::address_type *>(kvsAddress));
-      ss.registerKvs(kvsAddress, kvs);
+      ss.registerKvs(kvsKey, kvs);
     } else {
       kvs = kvsOpt.value();
     }
@@ -73,9 +73,8 @@ extern "C" {
     return 1;
   }
 
-  int onecclCommDestroyFromC(ccl::communicator *onecclComm, QueueData *qd) {
-    QueueData *qData = getQueueDataOrDefault(qd);
-    return 1;
+  int onecclCommDestroyFromC(ccl::communicator *onecclComm) {
+    return SyclState::defaultState().destroyCclCommunicator(onecclComm) ? 1 : 0;
   }
 
   int onecclStreamSynchronizeFromC(QueueData *qd) {
@@ -101,7 +100,13 @@ extern "C" {
   }
 
   int onecclRedOpAvgFromC(void) {
-    return static_cast<int>(ccl::reduction::avg);
+#if defined(__INTEL_LLVM_COMPILER) && __INTEL_LLVM_COMPILER >= 20250100
+  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::avg
+#else
+  #define ELPA_ONECCL_REDUCTION_AVG ccl::reduction::custom
+#endif
+
+    return static_cast<int>(ELPA_ONECCL_REDUCTION_AVG);
   }
 
   int onecclDataTypeOnecclIntFromC(void) {
@@ -172,7 +177,7 @@ extern "C" {
   int onecclReduceFromC(const void *sendbuff, void *recvbuff, size_t count, ccl::datatype onecclDatatype, ccl::reduction onecclOp, int root, ccl::communicator *onecclComm, QueueData *qd) {
     QueueData *qData = getQueueDataOrDefault(qd);
     if (onecclOp == ccl::reduction::custom) {
-      errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA. (Likely you wanted avg, which oneCCL doesn't have)");
+      errormessage("%s\n", "Error in onecclReduce: ccl::reduction::custom is not supported in ELPA.");
       return 0;
     }
 
@@ -196,7 +201,7 @@ extern "C" {
         deps.push_back(ccl::create_event(e));
       }
       auto attr = ccl::create_operation_attr<ccl::broadcast_attr>();
-      ccl::broadcast(recvbuff, count, onecclDatatype, root, *onecclComm, attr, deps).wait();
+      ccl::broadcast(recvbuff, count, onecclDatatype, root, *onecclComm, qData->cclStream, attr, deps).wait();
     } catch (const ccl::exception &e) {
       errormessage("Error in onecclBroadcast: %s\n", e.what());
       return 0;

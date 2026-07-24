@@ -190,7 +190,6 @@
 #endif /* WITH_MPI */
 #endif /* COMPLEXCASE */
 
-
       if (myid == 0) then
         if (hermitian) print '(a)','| Random matrix block has been symmetrized'
         if (skewsymmetric) print '(a)','| Random matrix block has been skewsymmetrized'
@@ -214,11 +213,13 @@
 #ifdef DOUBLE_PRECISION_REAL
     !c> void prepare_matrix_random_real_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          double *a, double *z, double *as, int is_hermitian, int is_skewsymmetric);
+    !c>                                          double *a, double *z, double *as, 
+    !c>                                          int is_hermitian, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_real_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                          TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                          float *a, float *z, float *as, int is_hermitian, int is_skewsymmetric);
+    !c>                                          float *a, float *z, float *as, 
+    !c>                                          int is_hermitian, int is_skewsymmetric);
 #endif
 #endif /* REALCASE */
 
@@ -226,11 +227,13 @@
 #ifdef DOUBLE_PRECISION_COMPLEX
     !c> void prepare_matrix_random_complex_double_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             double_complex *a, double_complex *z, double_complex *as, int is_hermitian, int is_skewsymmetric);
+    !c>                                             double_complex *a, double_complex *z, double_complex *as, 
+    !c>                                             int is_hermitian, int is_skewsymmetric);
 #else
     !c> void prepare_matrix_random_complex_single_f(TEST_C_INT_TYPE na, TEST_C_INT_TYPE myid, TEST_C_INT_TYPE na_rows, 
     !c>                                             TEST_C_INT_TYPE na_cols, TEST_C_INT_TYPE sc_desc[9],
-    !c>                                             float_complex *a, float_complex *z, float_complex *as, int is_hermitian, int is_skewsymmetric);
+    !c>                                             float_complex *a, float_complex *z, float_complex *as, 
+    !c>                                             int is_hermitian, int is_skewsymmetric);
 #endif
 #endif /* COMPLEXCASE */
 
@@ -249,8 +252,9 @@ subroutine prepare_matrix_random_&
       implicit none
 #include "./test_precision_kinds.F90"
 
-      TEST_INT_TYPE , value   :: myid, na, na_rows, na_cols
+      TEST_INT_TYPE, value    :: myid, na, na_rows, na_cols
       integer, value          :: is_hermitian, is_skewsymmetric
+
       TEST_INT_TYPE           :: sc_desc(1:9)
       MATH_DATATYPE(kind=rck) :: z(1:na_rows,1:na_cols), a(1:na_rows,1:na_cols),  &
                                  as(1:na_rows,1:na_cols)
@@ -418,24 +422,24 @@ subroutine prepare_matrix_random_spd_&
         
       ! set lower triangular part of the matrix to zero
       do i_loc=1,na_rows
-          ! nblk = "NB"; np_rows = "P_r"; my_prow="p_r"  (quoted-ScaLAPACK userguide notation, p.61-63)
-      	  l_1 = (i_loc-1)/nblk ! local coord of the (NBxNB) block among other blocks
-	      x_1 = mod(i_loc-1, nblk) + 1 ! local coord within the block
-	      I_glob = (l_1*np_rows + my_prow)*nblk + x_1
-          
-          do j_loc=1,na_cols
-              l_2 = (j_loc-1)/nblk 
-	          x_2 = mod(j_loc-1, nblk) + 1 
-	          J_glob = (l_2*np_cols + my_pcol)*nblk + x_2
-              
-              if (I_glob == J_glob) then 
-                  a(i_loc,j_loc) = I_glob 
-              endif
-              
-              if (I_glob > J_glob) then 
-                  a(i_loc,j_loc) = ZERO
-              endif
-          end do
+        ! nblk = "NB"; np_rows = "P_r"; my_prow="p_r"  (quoted-ScaLAPACK userguide notation, p.61-63)
+        l_1 = (i_loc-1)/nblk ! local coord of the (NBxNB) block among other blocks
+        x_1 = mod(i_loc-1, nblk) + 1 ! local coord within the block
+        I_glob = (l_1*np_rows + my_prow)*nblk + x_1
+        
+        do j_loc=1,na_cols
+          l_2 = (j_loc-1)/nblk 
+          x_2 = mod(j_loc-1, nblk) + 1 
+          J_glob = (l_2*np_cols + my_pcol)*nblk + x_2
+            
+          if (I_glob == J_glob) then 
+              a(i_loc,j_loc) = I_glob 
+          endif
+            
+          if (I_glob > J_glob) then 
+              a(i_loc,j_loc) = ZERO
+          endif
+        end do
       end do
       
       if (myid == 0) then
@@ -765,7 +769,7 @@ subroutine prepare_matrix_random_spd_&
      sds = sd
      as = a
    end subroutine
-
+  
 !__________________________________________________________________________________________________
 
    subroutine prepare_matrix_frank_&
@@ -812,7 +816,119 @@ subroutine prepare_matrix_random_spd_&
    end subroutine
 
 !__________________________________________________________________________________________________
+! Fortran-only subroutine to prepare a noisy tridiagonal matrix,
+! i.e. a matrix with random entries, but with the entries that are not on the tridiagonal damped by a factor nontridi_damping.
 
+    subroutine prepare_matrix_noisytridi_&
+    &MATH_DATATYPE&
+    &_&
+    &PRECISION&
+    & (na, myid, sc_desc, a, z, as, nblk, np_rows, np_cols, my_prow, my_pcol, nontridi_damping)
+
+      use tests_scalapack_interfaces
+
+      implicit none
+#include "./test_precision_kinds.F90"
+      TEST_INT_TYPE, intent(in)                 :: na, myid, sc_desc(:), nblk, np_rows, np_cols, my_prow, my_pcol
+      MATH_DATATYPE(kind=rck), intent(inout)    :: z(:,:), a(:,:), as(:,:)
+      MATH_DATATYPE(kind=rck), intent(in)       :: nontridi_damping
+
+#if COMPLEXCASE == 1
+      real(kind=rk), allocatable                :: xr(:,:)
+#endif
+
+      integer(kind=c_int), allocatable          :: iseed(:)
+      integer(kind=c_int)                       ::  n
+
+      TEST_INT_TYPE                             :: i, j
+      integer(kind=c_int)                       :: rowLocal, colLocal
+
+      ! for getting a hermitian test matrix A we get a random matrix Z and calculate A = Z + Z**H
+
+      ! we want different random numbers on every process
+      ! (otherwise A might get rank deficient):
+
+#if COMPLEXCASE == 1
+      allocate(xr(size(a,dim=1), size(a,dim=2)))
+#endif
+
+      call random_seed(size=n)
+      allocate(iseed(n))
+      iseed(:) = myid + 1
+      call random_seed(put=iseed)
+#if REALCASE == 1
+      call random_number(z)
+
+      a(:,:) = z(:,:)
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+      call random_number(xr)
+
+      z(:,:) = xr(:,:)
+      call RANDOM_NUMBER(xr)
+      z(:,:) = z(:,:) + (0.0_rk,1.0_rk)*xr(:,:)
+      a(:,:) = z(:,:)
+#endif /* COMPLEXCASE */
+
+      if (myid == 0) then
+        print '(a)','| Random matrix block has been set up. (only processor 0 confirms this step)'
+      endif
+
+#if REALCASE == 1
+#ifdef WITH_MPI
+      call p&
+            &BLAS_CHAR&
+            &tran(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**T
+
+#else /* WITH_MPI */
+      a = a + transpose(z)
+#endif /* WITH_MPI */
+#endif /* REALCASE */
+
+#if COMPLEXCASE == 1
+#ifdef WITH_MPI
+      call p&
+            &BLAS_CHAR&
+            &tranc(int(na,kind=BLAS_KIND), int(na,kind=BLAS_KIND), ONE, z, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc, &
+                  ONE, a, 1_BLAS_KIND, 1_BLAS_KIND, sc_desc) ! A = A + Z**H
+#else /* WITH_MPI */
+      a = a + transpose(conjg(z))
+#endif /* WITH_MPI */
+#endif /* COMPLEXCASE */
+
+      if (myid == 0) print '(a)','| Random matrix block has been symmetrized'
+
+      do i = 1, na
+        do j = 1, na
+          if (map_global_array_index_to_local_index(int(i,kind=c_int), int(j,kind=c_int), rowLocal, &
+                                                  colLocal, int(nblk,kind=c_int),                   &
+                                                  int(np_rows,kind=c_int), int(np_cols,kind=c_int),                 &
+                                                  int(my_prow,kind=c_int), int(my_pcol,kind=c_int) )) then
+            if (abs(j-i)>1) then
+              a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) = &
+              a(int(rowLocal,kind=INT_TYPE),int(colLocal,kind=INT_TYPE)) * nontridi_damping
+            endif
+          endif
+        enddo
+      enddo
+      
+      if (myid == 0) print '(a)','| Random matrix block has been damped to make it noisy tridiagonal'
+
+
+      ! save original matrix A for later accuracy checks
+
+      as = a
+
+      deallocate(iseed)
+#if COMPLEXCASE == 1
+      deallocate(xr)
+#endif
+    end subroutine
+    
+!___________________________________________________________________________________________________
+    
     subroutine prepare_matrix_unit_&
     &MATH_DATATYPE&
     &_&

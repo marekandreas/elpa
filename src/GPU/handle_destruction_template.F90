@@ -144,7 +144,7 @@
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
           do thread=0, maxThreads-1
-            success = sycl_solver_destroy(self%gpu_setup%syclsolverHandleArray(thread))
+            success = syclsolver_destroy(self%gpu_setup%syclsolverHandleArray(thread))
             
             if (.not.(success)) then
               print *,"Cannot destroy syclsolver handle"

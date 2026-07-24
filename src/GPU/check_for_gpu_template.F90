@@ -218,8 +218,10 @@
 #ifdef WITH_SYCL_SOLVER
       if (.not.(allocated(OBJECT%gpu_setup%syclsolverHandleArray))) then
         allocate(OBJECT%gpu_setup%syclsolverHandleArray(0:maxThreads-1))
+        allocate(OBJECT%gpu_setup%gpusolverHandleArray(0:maxThreads-1))
         do thread=0, maxThreads-1
           OBJECT%gpu_setup%syclsolverHandleArray(thread) = -1
+          OBJECT%gpu_setup%gpusolverHandleArray(thread) = -1
         enddo
       endif
 #endif

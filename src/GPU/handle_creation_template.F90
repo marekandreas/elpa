@@ -164,8 +164,10 @@
 #endif
 #ifdef WITH_SYCL_GPU_VERSION
 #ifdef WITH_SYCL_SOLVER
-          OBJECT%gpu_setup%syclsolverHandleArray(:) = OBJECT%gpu_setup%syclHandleArray(:)
-          OBJECT%gpu_setup%gpusolverHandleArray(:) = OBJECT%gpu_setup%syclHandleArray(:)
+          do thread=0, maxThreads-1
+            OBJECT%gpu_setup%syclsolverHandleArray(thread) = OBJECT%gpu_setup%my_stream
+            OBJECT%gpu_setup%gpusolverHandleArray(thread) = OBJECT%gpu_setup%my_stream
+          enddo
 #endif
 #endif
           call OBJECT%timer%stop("create_gpusolver_handle")

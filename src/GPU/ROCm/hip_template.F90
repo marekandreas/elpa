@@ -2067,7 +2067,10 @@
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_cptr_c(a, width_height) /= 0
+      integer(kind=c_intptr_t) :: a_intptr
+      a_intptr = 0
+      success = hip_malloc_intptr_c(a_intptr, width_height) /= 0
+      a = transfer(a_intptr, a)
 #else
       success = .true.
 #endif
@@ -2091,7 +2094,9 @@
       type(c_ptr) :: a
       logical                  :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_free_cptr_c(a) /= 0
+      integer(kind=c_intptr_t) :: a_intptr
+      a_intptr = transfer(a, a_intptr)
+      success = hip_free_intptr_c(a_intptr) /= 0
 #else
       success = .true.
 #endif
@@ -2117,7 +2122,10 @@
       integer(kind=c_intptr_t), intent(in)      :: width_height
       logical                                   :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_malloc_host_cptr_c(a, width_height) /= 0
+      integer(kind=c_intptr_t) :: a_intptr
+      a_intptr = 0
+      success = hip_malloc_host_intptr_c(a_intptr, width_height) /= 0
+      a = transfer(a_intptr, a)
 #else
       success = .true.
 #endif
@@ -2141,7 +2149,9 @@
       type(c_ptr)                   :: a
       logical                  :: success
 #ifdef WITH_AMD_GPU_VERSION
-      success = hip_free_host_cptr_c(a) /= 0
+      integer(kind=c_intptr_t) :: a_intptr
+      a_intptr = transfer(a, a_intptr)
+      success = hip_free_host_intptr_c(a_intptr) /= 0
 #else
       success = .true.
 #endif

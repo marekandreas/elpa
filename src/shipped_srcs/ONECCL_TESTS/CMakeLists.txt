@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(ccltest LANGUAGES CXX Fortran CUDA)
+project(ccltest LANGUAGES CXX Fortran)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED Fortran)
@@ -18,8 +18,6 @@ add_executable(ccltest
   GPU/mod_vendor_agnostic_ccl_layer.F90
   GPU/mod_vendor_agnostic_general_layer.F90
   GPU/mod_vendor_agnostic_solver_layer.F90
-  GPU/CUDA/cudaFunctions.cu
-  GPU/CUDA/cuUtils.cu
   GPU/CUDA/mod_cuda.F90
   GPU/CUDA/mod_cusolver.F90
   GPU/SYCL/mod_sycl.F90

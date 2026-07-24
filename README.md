@@ -2,7 +2,7 @@
 
 ## Current Release ##
 
-The current release is ELPA 2026.02.001.rc1. The current supported API version
+The current release is ELPA 2026.02.002. The current supported API version
 is 202600202. This release supports the earliest API version 20170403.
 The current version for autotuning is also 202600202 and down to version 20170403 ist supported
 for autotuning. When the autotune version is set to a value **below** 20211125 the old autotuning
@@ -83,7 +83,7 @@ Nonetheless, we are grateful if you cite the following publications:
   T.; Heinecke, A.; Bungartz, H.-J.; Lederer, H.
   "The ELPA library: scalable parallel eigenvalue solutions for electronic
   structure theory and computational science",
-  Journal of Physics Condensed Matter 26, 213201 (2014)
+  Journal of Physics Condensed Matter, 26, 213201 (2014)
   doi:10.1088/0953-8984/26/21/213201
   
   If you use the GPU version of ELPA:
@@ -133,7 +133,7 @@ Since July 2024 we provide a complete [User Guide](https://elpa.mpcdf.mpg.de/use
 
 For the older version, please have a look at the [USERS_GUIDE](./documentation/USERS_GUIDE.md) file and the [PERFORMANCE tuning](./documentation/PERFORMANCE_TUNING.md) document.
 
-We also provide [doxygen online documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2026.02.001.rc1/html/index.html), where you can find the definition of the interfaces.
+We also provide [doxygen online documentation](https://elpa.mpcdf.mpg.de/documentation/doxygen/ELPA_DOXYGEN_PAGES/ELPA-2026.02.002/html/index.html), where you can find the definition of the interfaces.
 
 ## Contributing to *ELPA*
 

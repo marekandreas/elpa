@@ -56,53 +56,47 @@
 #include <complex.h>
 #include <cuComplex.h>
 #include <stdint.h>
+#include <type_traits>
 #include "config-f90.h"
 
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
-__global__ void cuda_scale_qmat_double_complex_kernel(cuDoubleComplex *q, cuDoubleComplex *tau, const int ldq, const int l_cols) {
-    
-    double one = 1.0;
-    double zero = 0.0;
-    cuDoubleComplex c_one = make_cuDoubleComplex(one, zero);
+//________________________________________________________________
+// cuda_scale_qmat
+// q_mat(1, 1:l_cols) = q_mat(1, 1:l_cols) * (ONE - tau(2))
+// Complex arithmetic: q[index] = q[index] * (c_one - tau[1])
 
-    //printf("c: tau[1]=%.6f %.6f \n",tau[1].x,tau[1].y);
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int index = (1-1) + ldq * col;
+template <typename T>
+__device__ void cuda_scale_qmat_complex_kernel_body(T *q, T *tau, const int ldq, const int l_cols)
+{
+    int col   = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = ldq * col;  // (1-1) + ldq*col
 
-    // q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
     if (col < l_cols) {
-
-	    // (a + ib) (c + id) = (ac - bd) + i(ad + bc)
-            // a = q.x
-	    // b = q.y
-	    // c = one-tau.x
-	    // d = zero - tau.y
-	    // (q.x + i * q.y) * ((one-tau.x) + i * (zero-tau.y)) = (q.x*(one-tau.x) - q.y * (zero-tau.y)) + i * (q.x * (zero-tau.y) + q.y * (one-tau.x)
-        //// real part 
-        //q[index].x = q[index].x * (one-tau[1].x) - q[index].y * (zero - tau[1].y);
-	//// imag part
-	//q[index].y = q[index].x * (zero - tau[1].y) + q[index].y * (one - tau[1].x);
-
-        //// real part 
-        //q[index].x = q[index].x * (one-tau[1].x) + q[index].y * tau[1].y;
-	//// imag part
-	//q[index].y = -q[index].x * tau[1].y + q[index].y * (one - tau[1].x);
-
-
-        //q[index].x = q[index].x * (one - tau[1].x);
-        //q[index].y = q[index].y * (zero - tau[1].y);
-
-      q[index] = cuCmul(q[index], cuCsub(c_one, tau[1]));
+        if constexpr (std::is_same_v<T, cuDoubleComplex>) {
+            cuDoubleComplex c_one = make_cuDoubleComplex(1.0, 0.0);
+            q[index] = cuCmul(q[index], cuCsub(c_one, tau[1]));
+        } else {
+            cuFloatComplex c_one = make_cuFloatComplex(1.0f, 0.0f);
+            q[index] = cuCmulf(q[index], cuCsubf(c_one, tau[1]));
+        }
     }
+}
+
+__global__ void cuda_scale_qmat_double_complex_kernel(cuDoubleComplex *q, cuDoubleComplex *tau, const int ldq, const int l_cols) {
+    cuda_scale_qmat_complex_kernel_body(q, tau, ldq, l_cols);
+}
+
+__global__ void cuda_scale_qmat_float_complex_kernel(cuFloatComplex *q, cuFloatComplex *tau, const int ldq, const int l_cols) {
+    cuda_scale_qmat_complex_kernel_body(q, tau, ldq, l_cols);
 }
 
 extern "C" void cuda_scale_qmat_double_complex_FromC(int ldq, int l_cols, double _Complex *q_dev, double _Complex *tau_dev, cudaStream_t  my_stream){
 
-  cuDoubleComplex* q_casted = (cuDoubleComplex*) q_dev;
+  cuDoubleComplex* q_casted   = (cuDoubleComplex*) q_dev;
   cuDoubleComplex* tau_casted = (cuDoubleComplex*) tau_dev;
 
-  dim3 threadsPerBlock(1024); 
+  dim3 threadsPerBlock(1024);
   dim3 blocks((l_cols + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
 #ifdef WITH_GPU_STREAMS
@@ -116,29 +110,11 @@ extern "C" void cuda_scale_qmat_double_complex_FromC(int ldq, int l_cols, double
   }
 }
 
-__global__ void cuda_scale_qmat_float_complex_kernel(cuFloatComplex *q, cuFloatComplex *tau, const int ldq, const int l_cols) {
-    
-    float one = 1.0f;
-    float zero = 0.0f;
-    cuFloatComplex c_one = make_cuFloatComplex(one, zero);
-
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int index = (1-1) + ldq * col;
-
-    // q_mat(1,1:l_cols) = q_mat(1,1:l_cols)*(ONE-tau(2))
-    if (col < l_cols) {
-      //  q[index].x = q[index].x * (one - tau[1].x);
-      //  q[index].y = q[index].y * (zero - tau[1].y);
-      q[index] = cuCmulf(q[index], cuCsubf(c_one, tau[1]));
-    }
-
-}
-
 extern "C" void cuda_scale_qmat_float_complex_FromC(int ldq, int l_cols, float _Complex *q_dev, float _Complex *tau_dev, cudaStream_t  my_stream){
-  cuFloatComplex* q_casted = (cuFloatComplex*) q_dev;
+  cuFloatComplex* q_casted   = (cuFloatComplex*) q_dev;
   cuFloatComplex* tau_casted = (cuFloatComplex*) tau_dev;
 
-  dim3 threadsPerBlock(1024); 
+  dim3 threadsPerBlock(1024);
   dim3 blocks((l_cols + threadsPerBlock.x - 1) / threadsPerBlock.x);
 
 #ifdef WITH_GPU_STREAMS

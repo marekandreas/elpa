@@ -97,10 +97,8 @@ int getDebugEnvVar() {
 
 int getBackendEnvVar() {
   using namespace std::string_literals;
-  auto backendForceEnvVar = getEnvInt("ELPA_FORCE_gpu_sycl_backend"s);
-  auto backendDefaultEnvVar = getEnvInt("ELPA_DEFAULT_gpu_sycl_backend"s);
-  return (backendForceEnvVar.has_value())   ? backendForceEnvVar.value() :
-         (backendDefaultEnvVar.has_value()) ? backendDefaultEnvVar.value() : 0;
+  auto backendEnvVar = getEnvInt("ELPA_EXTRA_gpu_sycl_backend"s);
+  return (backendEnvVar.has_value()) ? backendEnvVar.value() : 0;
 } 
 
 //--------------------------------------------------------------------------------------------
@@ -228,23 +226,33 @@ DeviceSelection& SyclState::getDefaultDeviceHandle() {
 }
 
 #ifdef WITH_ONEAPI_ONECCL
-std::optional<cclKvsHandle> SyclState::retrieveKvs(void *kvsAddress) {
-  if (kvsMap.find(kvsAddress) != kvsMap.end()) {
-    return kvsMap[kvsAddress];
+std::optional<cclKvsHandle> SyclState::retrieveKvs(const std::string &kvsKey) {
+  if (kvsMap.find(kvsKey) != kvsMap.end()) {
+    return kvsMap[kvsKey];
   }
   return std::nullopt;
 }
 
-void SyclState::registerKvs(void *kvsAddr, cclKvsHandle kvs) {
-  kvsMap.insert({kvsAddr, kvs});
+void SyclState::registerKvs(const std::string &kvsKey, cclKvsHandle kvs) {
+  kvsMap.insert({kvsKey, kvs});
 }
 
 void SyclState::teardownCclStack() {
   for (auto &deviceData : this->deviceData) {
+    deviceData.second.cclComms.clear();
     for (auto &queueData : deviceData.second.queueHandles) {
     }
   }
   kvsMap.clear();
+}
+
+bool SyclState::destroyCclCommunicator(ccl::communicator *comm) {
+  for (auto &dd : this->deviceData) {
+    if (dd.second.destroyCclCommunicator(comm)) {
+      return true;
+    }
+  }
+  return false;
 }
 #endif
 
@@ -306,6 +314,16 @@ ccl::communicator* DeviceSelection::initCclCommunicator(int nRanks, int myRank, 
   this->cclComms.emplace_back(ccl::create_communicator(nRanks, myRank, this->cclDevice, this->cclContext, kvs));
   return &(cclComms.back());
 }
+
+bool DeviceSelection::destroyCclCommunicator(ccl::communicator *comm) {
+  for (auto it = cclComms.begin(); it != cclComms.end(); ++it) {
+    if (&(*it) == comm) {
+      cclComms.erase(it);
+      return true;
+    }
+  }
+  return false;
+}
 #endif
 
 //--------------------------------------------------------------------------------------------
@@ -313,12 +331,12 @@ ccl::communicator* DeviceSelection::initCclCommunicator(int nRanks, int myRank, 
 //--------------------------------------------------------------------------------------------
 
 QueueData::QueueData(sycl::device device, sycl::context context) 
-  : queue(context, device, sycl::property_list(sycl::property::queue::in_order())),
+  : oneMklScratchpad(nullptr),
+    queue(context, device, sycl::property_list(sycl::property::queue::in_order())),
 #ifdef WITH_ONEAPI_ONECCL
     cclStream(ccl::create_stream(queue)),
 #endif
-    oneMklScratchpadSize(0),
-    oneMklScratchpad(nullptr) {}
+    oneMklScratchpadSize(0) {}
 
  QueueData::~QueueData() {
     if (oneMklScratchpad) {

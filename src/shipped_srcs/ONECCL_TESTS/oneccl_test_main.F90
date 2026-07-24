@@ -6,7 +6,7 @@ program hh_test
   use mpi
   implicit none
   integer(kind=c_intptr_t), parameter :: num_elements = 1024
-  type(onecclUniqueId) :: ccl_unique_id
+  type(ncclUniqueId) :: ccl_unique_id
   integer(kind=c_intptr_t) :: ccl_comm, ccl_stream
   integer(kind=c_int) :: ierr, mpi_provided_thread_level
   
