@@ -152,6 +152,7 @@
                                                      np_cols, myid
       integer(kind=MPI_KIND)                      :: mpierr
       integer(kind=MPI_KIND)                      :: my_prowMPI, np_rowsMPI, my_pcolMPI, np_colsMPI
+      integer(kind=MPI_KIND)                      :: requests(2)
       integer(kind=ik)                            :: np_next, np_prev, np_rem
       integer(kind=ik)                            :: idx(na), idx1(na), idx2(na)
       integer(kind=BLAS_KIND)                     :: idxBLAS(NA)
@@ -1642,78 +1643,14 @@
                   stop 1
                 endif
 
-! PETERDEBUG111: impement in a more consistent way: e.g. use ccl_send --> MPI_Isend, ccl_group_end --> MPI_Waitall     
+! PETERDEBUG111: implement in a more symmetric way? e.g. use ccl_send --> MPI_Isend, ccl_group_end --> MPI_Waitall
 #if defined(WITH_GPU_AWARE_MPICCL)
                 successGPU = gpu_stream_synchronize(my_stream)
                 check_stream_synchronize_gpu("merge_systems", successGPU)
 
-                ! print *,"CCL MPI_Sendrecv_replace for qtmp1_dev start" ! PETERDEBUG111
-                ! call MPI_Sendrecv_replace(qtmp1_dev, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION,     &
-                !                           int(np_next,kind=MPI_KIND), 1111_MPI_KIND, int(np_prev,kind=MPI_KIND), &
-                !                           1111_MPI_KIND, int(mpi_comm_cols_self,kind=MPI_KIND), MPI_STATUS_IGNORE, mpierr)
-                ! print *,"CCL MPI_Sendrecv_replace for qtmp1_dev done" ! PETERDEBUG111
-
-                ! print *,"CCL MPI_Sendrecv for qtmp1_dev start" ! PETERDEBUG111
-                ! call MPI_Sendrecv(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION, np_next, 1111_MPI_KIND, &
-                !                   qtmp1_dev,     int(l_rows*max_local_cols,kind=MPI_KIND), MPI_REAL_PRECISION, np_prev, 1111_MPI_KIND, &
-                !                   mpi_comm_cols_self, MPI_STATUS_IGNORE, mpierr)
-                ! print *,"CCL MPI_Sendrecv for qtmp1_dev done" ! PETERDEBUG111
-
-! block
-!   integer(kind=MPI_KIND) :: count
-!   integer(kind=MPI_KIND) :: req(2)
-
-
-!                 print *,"CCL MPI_Isend/Irecv for qtmp1_dev start"
-                
-!                 count = int(l_rows*max_local_cols,kind=MPI_KIND)
-
-!                 ! 1) Post receive from np_prev into qtmp1_dev
-!                 call MPI_Irecv(qtmp1_dev, count, MPI_REAL_PRECISION, &
-!                                int(np_prev,kind=MPI_KIND), 1111_MPI_KIND, &
-!                                int(mpi_comm_cols_self,kind=MPI_KIND), req(1), mpierr)
-
-!                 ! 2) Post send from qtmp1_tmp_dev to np_next
-!                 call MPI_Isend(qtmp1_tmp_dev, count, MPI_REAL_PRECISION, &
-!                                int(np_next,kind=MPI_KIND), 1111_MPI_KIND, &
-!                                int(mpi_comm_cols_self,kind=MPI_KIND), req(2), mpierr)
-
-!                 ! 3) Wait for both to complete
-!                 call MPI_Waitall(2, req, MPI_STATUSES_IGNORE, mpierr)
-!                 print *,"CCL MPI_Isend/Irecv for qtmp1_dev done"
-! end block
-                ! successGPU = ccl_isend(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
-                !             cclDataType, np_next, ccl_comm_cols, my_stream)
-
-                ! if (.not.successGPU) then
-                !   print *,"Error in ccl_send"
-                !   stop 1
-                ! endif
-
-                ! successGPU = ccl_irecv(qtmp1_dev, int(l_rows*max_local_cols,kind=c_size_t), &
-                !                       cclDataType, np_prev, ccl_comm_cols, my_stream)
-
-
-                ! if (.not.successGPU) then
-                !   print *,"Error in ccl_recv"
-                !   stop 1
-                ! endif
-
-                ! successGPU = ccl_sendrecv(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), cclDataType, np_next, &
-                !                           qtmp1_dev    , int(l_rows*max_local_cols,kind=c_size_t), cclDataType, np_prev, &
-                !                           ccl_comm_cols, my_stream)
-
-block
-  integer(kind=MPI_KIND) :: req(2)
-  integer(kind=c_intptr_t) :: requests_host
-  integer(kind=c_intptr_t), parameter         :: size_of_mpi_request = 2*size_of_int ! PETERDEBUG111 sizeof(MPI_Request)=8, sizeof(int)=4
-
-                num = 2 * size_of_mpi_request ! sizeof(int)=4, sizeof(MPI_Request)=8 ! PETERDEBUG111
-                successGPU = gpu_malloc_host(requests_host, num)
-                check_host_alloc_gpu("merge_systems: request_host", successGPU)
-
+                requests(:) = MPI_REQUEST_NULL
                 successGPU = ccl_isend(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
-                      cclDataType, np_next, ccl_comm_cols, requests_host, my_stream)
+                      cclDataType, np_next, ccl_comm_cols, requests(1), my_stream)
 
                 if (.not.successGPU) then
                   print *,"Error in ccl_isend"
@@ -1721,7 +1658,7 @@ block
                 endif
 
                 successGPU = ccl_irecv(qtmp1_dev, int(l_rows*max_local_cols,kind=c_size_t), &
-                                      cclDataType, np_prev, ccl_comm_cols, requests_host+size_of_mpi_request, my_stream)
+                                      cclDataType, np_prev, ccl_comm_cols, requests(2), my_stream)
 
 
                 if (.not.successGPU) then
@@ -1729,12 +1666,12 @@ block
                   stop 1
                 endif
 
-                successGPU = ccl_waitall(2, requests_host, my_stream)
-
-                successGPU = gpu_free_host(requests_host)
-                check_host_dealloc_gpu("merge_systems: request_host", successGPU)
-end block
-#else
+                successGPU = ccl_waitall(2, requests, my_stream)
+                if (.not.successGPU) then
+                  print *,"Error in ccl_waitall"
+                  stop 1
+                endif
+#else /* WITH_GPU_AWARE_MPICCL */
                 successGPU = ccl_send(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
                                       cclDataType, np_next, ccl_comm_cols, my_stream)
 
@@ -1751,7 +1688,7 @@ end block
                   print *,"Error in ccl_recv"
                   stop 1
                 endif
-#endif
+#endif /* WITH_GPU_AWARE_MPICCL */
                 successGPU = ccl_group_end()
 
                 if (.not.successGPU) then

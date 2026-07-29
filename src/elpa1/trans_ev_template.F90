@@ -202,9 +202,11 @@ subroutine trans_ev_cpu_&
   SM_count = obj%gpu_setup%gpuSMcount
 #endif
 
+  useCCL = obj%gpu_setup%useCCL
+
   is_sycl_cpu = .false.
 #if defined(WITH_SYCL_GPU_VERSION)
-  if (useGPU) success = sycl_getiscpudevice(is_sycl_cpu)
+  if (useGPU .and. .not. useCCL) success = sycl_getiscpudevice(is_sycl_cpu)
 #endif
 
 #ifdef WITH_GPU_STREAMS
@@ -218,9 +220,6 @@ subroutine trans_ev_cpu_&
   endif
 
   useCCL_int = 0
-  useCCL = obj%gpu_setup%useCCL
-
-
 #if defined(USE_CCL_TRANS_EV)
   if (useGPU) then
     if (useCCL) then

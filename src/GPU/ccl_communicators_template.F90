@@ -44,8 +44,8 @@
 ! This file was written by A. Marek, MPCDF
 #endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_GPU_AWARE_MPICCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define CCL_UNIQUE_ID_SIZE 128
 #elif defined(WITH_ONEAPI_ONECCL)
 #define CCL_UNIQUE_ID_SIZE 256
