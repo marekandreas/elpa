@@ -197,7 +197,7 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_version.h"
     src/helpers/lapack_interfaces.h
     src/helpers/scalapack_interfaces.h
-  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}/elpa"
+  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}"
 )
 
 install(
@@ -205,7 +205,7 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa.mod"
     "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_api.mod"
     "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_constants.mod"
-  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}/modules"
+  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}"
 )
 
 if(BUILD_SHARED_LIBS)
