@@ -327,12 +327,6 @@ install(
 # Configuration summary
 # =================================================================================================
 
-if(BUILD_SHARED_LIBS)
-  set(_elpa_library_type shared)
-else()
-  set(_elpa_library_type static)
-endif()
-
 if(ELPA_USE_MPI)
   if(ELPA_HAVE_MPI_MODULE)
     set(_elpa_mpi_interface "mpi module")
@@ -347,7 +341,6 @@ else()
 endif()
 
 message(STATUS "ELPA ${PROJECT_VERSION}")
-message(STATUS "  Library:       ${ELPA_OUTPUT_NAME} (${_elpa_library_type}, PIC enabled)")
 message(STATUS "  MPI interface: ${_elpa_mpi_interface}")
 message(STATUS "  OpenMP:        ${ELPA_USE_OPENMP}")
 message(
