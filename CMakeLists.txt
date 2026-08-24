@@ -25,18 +25,14 @@ project(
   VERSION "${ELPA_VERSION}"
   DESCRIPTION "Eigenvalue SoLvers for Petaflop-Applications"
   HOMEPAGE_URL "https://elpa.mpcdf.mpg.de"
-  LANGUAGES C CXX Fortran
-)
+  LANGUAGES C CXX Fortran)
 
 include(CMakePackageConfigHelpers)
 include(CTest)
 include(GNUInstallDirs)
 
-list(
-  PREPEND CMAKE_MODULE_PATH
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
-)
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMakeOptions.cmake")
 include(CheckCompilerSupport)
 include(CompilerConfiguration)
@@ -45,8 +41,8 @@ include(CompilerConfiguration)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE
-               PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+                                               "RelWithDebInfo")
 endif()
 
 # =================================================================================================
@@ -73,11 +69,12 @@ set(ELPA_MKL_COMPILER_ID "${CMAKE_Fortran_COMPILER_ID}")
 find_package(Lapack REQUIRED)
 set(ELPA_BLAS_TARGET BLAS::BLAS LAPACK::LAPACK)
 
-if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$"
-   AND NOT ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-  message(FATAL_ERROR
-    "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires oneMKL BLAS/LAPACK. "
-    "Set ELPA_BLAS_VENDOR=MKL or make oneMKL discoverable for AUTO.")
+if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$" AND NOT ELPA_BLAS_VENDOR_RESOLVED
+                                                  STREQUAL "MKL")
+  message(
+    FATAL_ERROR
+      "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires oneMKL BLAS/LAPACK. "
+      "Set ELPA_BLAS_VENDOR=MKL or make oneMKL discoverable for AUTO.")
 endif()
 
 if(ELPA_ACCELERATOR STREQUAL "SYCL")
@@ -85,11 +82,12 @@ if(ELPA_ACCELERATOR STREQUAL "SYCL")
 endif()
 
 if(ELPA_USE_MPI)
-  if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL"
-     AND NOT ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-    message(FATAL_ERROR
-      "ELPA_SCALAPACK_VENDOR=MKL requires oneMKL BLAS/LAPACK. "
-      "Set ELPA_BLAS_VENDOR=MKL or make oneMKL discoverable for AUTO.")
+  if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL" AND NOT ELPA_BLAS_VENDOR_RESOLVED
+                                              STREQUAL "MKL")
+    message(
+      FATAL_ERROR
+        "ELPA_SCALAPACK_VENDOR=MKL requires oneMKL BLAS/LAPACK. "
+        "Set ELPA_BLAS_VENDOR=MKL or make oneMKL discoverable for AUTO.")
   endif()
 
   set(ELPA_SCALAPACK_VENDOR_RESOLVED "${ELPA_SCALAPACK_VENDOR}")
@@ -131,11 +129,8 @@ if(ELPA_USE_PAPI)
   if(NOT TARGET PAPI::PAPI)
     add_library(PAPI::PAPI UNKNOWN IMPORTED)
     set_target_properties(
-      PAPI::PAPI
-      PROPERTIES
-        IMPORTED_LOCATION "${PAPI_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${PAPI_INCLUDE_DIR}"
-    )
+      PAPI::PAPI PROPERTIES IMPORTED_LOCATION "${PAPI_LIBRARY}"
+                            INTERFACE_INCLUDE_DIRECTORIES "${PAPI_INCLUDE_DIR}")
   endif()
 endif()
 
@@ -154,10 +149,7 @@ elpa_check_compiler_support()
 # Targets
 # =================================================================================================
 
-set(
-  ELPA_INSTALL_INCLUDEDIR
-  "${CMAKE_INSTALL_INCLUDEDIR}/elpa"
-)
+set(ELPA_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/elpa")
 set(ELPA_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/elpa")
 
 add_subdirectory(src)
@@ -172,37 +164,35 @@ install(
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-  INCLUDES DESTINATION "${ELPA_INSTALL_INCLUDEDIR}"
-)
+  INCLUDES
+  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}")
 
 if(TARGET elpa2_print_kernels)
-  install(TARGETS elpa2_print_kernels RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
-  install(FILES man/elpa2_print_kernels.1 DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
+  install(TARGETS elpa2_print_kernels
+          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  install(FILES man/elpa2_print_kernels.1
+          DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
 endif()
 
 install(
-  FILES
-    elpa/elpa.h
-    elpa/elpa_explicit_name.h
-    elpa/elpa_generic.h
-    elpa/elpa_simd_constants.h
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_configured_options.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_constants.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_generated.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_generated_c_api.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_version.h"
-    src/helpers/lapack_interfaces.h
-    src/helpers/scalapack_interfaces.h
-  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}"
-)
+  FILES elpa/elpa.h
+        elpa/elpa_explicit_name.h
+        elpa/elpa_generic.h
+        elpa/elpa_simd_constants.h
+        "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_configured_options.h"
+        "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_constants.h"
+        "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_generated.h"
+        "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_generated_c_api.h"
+        "${CMAKE_CURRENT_BINARY_DIR}/elpa/elpa_version.h"
+        src/helpers/lapack_interfaces.h
+        src/helpers/scalapack_interfaces.h
+  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}")
 
 install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa.mod"
-    "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_api.mod"
-    "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_constants.mod"
-  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}"
-)
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa.mod"
+        "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_api.mod"
+        "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_constants.mod"
+  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}")
 
 if(BUILD_SHARED_LIBS)
   set(ELPA_BUILD_STATIC OFF)
@@ -227,37 +217,28 @@ if(NOT BUILD_SHARED_LIBS)
   if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
     list(APPEND _elpa_pc_private_libraries ${MKL_LINK_LIBRARIES})
   else()
-    list(APPEND _elpa_pc_private_libraries
-      ${BLAS_LIBRARIES}
-      ${LAPACK_LIBRARIES}
-    )
+    list(APPEND _elpa_pc_private_libraries ${BLAS_LIBRARIES}
+         ${LAPACK_LIBRARIES})
   endif()
 
   if(ELPA_USE_MPI)
     if(ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
       list(APPEND _elpa_pc_private_libraries ${MKL_SCALAPACK_LINK_LIBRARIES})
     else()
-      list(APPEND _elpa_pc_private_libraries
-        ${SCALAPACK_LIBRARIES}
-        ${MPI_C_LIBRARIES}
-        ${MPI_Fortran_LIBRARIES}
-      )
+      list(APPEND _elpa_pc_private_libraries ${SCALAPACK_LIBRARIES}
+           ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES})
     endif()
   endif()
   if(ELPA_USE_OPENMP)
-    list(APPEND _elpa_pc_private_libraries
-      ${OpenMP_C_LIBRARIES}
-      ${OpenMP_CXX_LIBRARIES}
-      ${OpenMP_Fortran_LIBRARIES}
-    )
+    list(APPEND _elpa_pc_private_libraries ${OpenMP_C_LIBRARIES}
+         ${OpenMP_CXX_LIBRARIES} ${OpenMP_Fortran_LIBRARIES})
   endif()
   if(ELPA_USE_PAPI)
     list(APPEND _elpa_pc_private_libraries "${PAPI_LIBRARY}")
   endif()
 
   list(APPEND _elpa_pc_private_libraries
-    ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
-  )
+       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
   if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$")
     list(APPEND _elpa_pc_private_libraries ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
   endif()
@@ -275,40 +256,30 @@ endforeach()
 string(STRIP "${ELPA_PC_PRIVATE_LIBS}" ELPA_PC_PRIVATE_LIBS)
 
 configure_package_config_file(
-  cmake/elpa-config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
-  INSTALL_DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
-)
+  cmake/elpa-config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
+  INSTALL_DESTINATION "${ELPA_INSTALL_CMAKEDIR}")
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/elpa-config-version.cmake"
   VERSION "${PROJECT_VERSION}"
-  COMPATIBILITY SameMajorVersion
-)
+  COMPATIBILITY SameMajorVersion)
 
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/elpa-config-version.cmake"
-  DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/elpa-config-version.cmake"
+        DESTINATION "${ELPA_INSTALL_CMAKEDIR}")
 install(
   DIRECTORY cmake/modules/
   DESTINATION "${ELPA_INSTALL_CMAKEDIR}/modules"
   FILES_MATCHING
-  PATTERN "Find*.cmake"
-)
+  PATTERN "Find*.cmake")
 install(
   EXPORT elpa-targets
   FILE elpa-targets.cmake
   NAMESPACE ELPA::
-  DESTINATION "${ELPA_INSTALL_CMAKEDIR}"
-)
+  DESTINATION "${ELPA_INSTALL_CMAKEDIR}")
 
 configure_file(cmake/elpa.pc.in "elpa.pc" @ONLY)
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa.pc"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa.pc"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 # =================================================================================================
 # Configuration summary
