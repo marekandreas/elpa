@@ -45,6 +45,11 @@ if(NOT CMAKE_BUILD_TYPE)
                                                "RelWithDebInfo")
 endif()
 
+# Testing is not yet available
+if(BUILD_TESTING)
+  message(WARNING "CTest is not yet implemented in ELPA's CMake workflow.")
+endif()
+
 # =================================================================================================
 # Dependencies
 # =================================================================================================
