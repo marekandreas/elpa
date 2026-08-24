@@ -63,48 +63,25 @@ if(ELPA_USE_MPI)
   find_package(MPI REQUIRED COMPONENTS C Fortran)
 endif()
 
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
   set(ELPA_MKL_FORTRAN_INTERFACE GNU)
 else()
   set(ELPA_MKL_FORTRAN_INTERFACE INTEL)
 endif()
+set(ELPA_MKL_COMPILER_ID "${CMAKE_Fortran_COMPILER_ID}")
 
-set(_elpa_mkl_components BLAS LAPACK)
-if(ELPA_ACCELERATOR STREQUAL "SYCL")
-  list(APPEND _elpa_mkl_components SYCL)
-endif()
-
-if(ELPA_BLAS_VENDOR STREQUAL "MKL")
-  find_package(MKL REQUIRED COMPONENTS ${_elpa_mkl_components})
-  set(ELPA_BLAS_VENDOR_RESOLVED MKL)
-  set(ELPA_BLAS_TARGET MKL::MKL)
-elseif(ELPA_BLAS_VENDOR STREQUAL "OPENBLAS")
-  set(BLA_VENDOR OpenBLAS)
-  find_package(BLAS REQUIRED)
-  find_package(LAPACK REQUIRED)
-  set(ELPA_BLAS_VENDOR_RESOLVED OPENBLAS)
-  set(ELPA_BLAS_TARGET BLAS::BLAS LAPACK::LAPACK)
-else()
-  # AUTO first tries the native oneMKL package. This gives oneMKL BLAS,
-  # ScaLAPACK, and BLACS a single coherent link closure without guessing a
-  # provider from the library names returned by FindBLAS.
-  find_package(MKL QUIET COMPONENTS ${_elpa_mkl_components})
-  if(MKL_FOUND)
-    set(ELPA_BLAS_VENDOR_RESOLVED MKL)
-    set(ELPA_BLAS_TARGET MKL::MKL)
-  else()
-    find_package(BLAS REQUIRED)
-    find_package(LAPACK REQUIRED)
-    set(ELPA_BLAS_VENDOR_RESOLVED GENERIC)
-    set(ELPA_BLAS_TARGET BLAS::BLAS LAPACK::LAPACK)
-  endif()
-endif()
+find_package(Lapack REQUIRED)
+set(ELPA_BLAS_TARGET BLAS::BLAS LAPACK::LAPACK)
 
 if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$"
    AND NOT ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
   message(FATAL_ERROR
     "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires oneMKL BLAS/LAPACK. "
     "Set ELPA_BLAS_VENDOR=MKL or make oneMKL discoverable for AUTO.")
+endif()
+
+if(ELPA_ACCELERATOR STREQUAL "SYCL")
+  find_package(MKL REQUIRED COMPONENTS SYCL)
 endif()
 
 if(ELPA_USE_MPI)
@@ -118,18 +95,29 @@ if(ELPA_USE_MPI)
   set(ELPA_SCALAPACK_VENDOR_RESOLVED "${ELPA_SCALAPACK_VENDOR}")
   if(ELPA_SCALAPACK_VENDOR STREQUAL "AUTO")
     if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-      set(ELPA_SCALAPACK_VENDOR_RESOLVED MKL)
+      find_package(MKL QUIET COMPONENTS SCALAPACK)
+      if(MKL_SCALAPACK_FOUND)
+        set(ELPA_SCALAPACK_VENDOR_RESOLVED MKL)
+      else()
+        set(ELPA_SCALAPACK_VENDOR_RESOLVED GENERIC)
+      endif()
     else()
       set(ELPA_SCALAPACK_VENDOR_RESOLVED GENERIC)
     endif()
   endif()
 
-  set(SCALAPACK_PROVIDER "${ELPA_SCALAPACK_VENDOR_RESOLVED}")
-  set(SCALAPACK_BLAS_INTERFACE "${ELPA_BLAS_INTERFACE}")
-  set(SCALAPACK_BLAS_TARGETS ${ELPA_BLAS_TARGET})
-  set(SCALAPACK_MKL_BLACS "${ELPA_MKL_BLACS}")
-  find_package(Scalapack REQUIRED)
-  set(ELPA_SCALAPACK_TARGET SCALAPACK::SCALAPACK)
+  if(ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
+    # Keep the full oneMKL cluster closure in FindMKL.  FindScalapack is only
+    # responsible for standalone ScaLAPACK implementations.
+    if(NOT TARGET MKL::ScaLAPACK)
+      find_package(MKL REQUIRED COMPONENTS SCALAPACK)
+    endif()
+    set(ELPA_SCALAPACK_TARGET MKL::ScaLAPACK)
+  else()
+    set(SCALAPACK_BLAS_TARGETS ${ELPA_BLAS_TARGET})
+    find_package(Scalapack REQUIRED)
+    set(ELPA_SCALAPACK_TARGET SCALAPACK::SCALAPACK)
+  endif()
 endif()
 
 if(ELPA_USE_OPENMP OR ELPA_ACCELERATOR STREQUAL "OPENMP")
@@ -224,19 +212,11 @@ endif()
 
 # A static export must recreate imported dependency targets in a consuming
 # project. Store the resolved provider rather than the original AUTO request.
-set(ELPA_BUILD_USES_MKL OFF)
-if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-  set(ELPA_BUILD_USES_MKL ON)
-endif()
-
-set(ELPA_BUILD_BLA_VENDOR "")
-if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "OPENBLAS")
-  set(ELPA_BUILD_BLA_VENDOR OpenBLAS)
-endif()
+set(ELPA_BUILD_BLAS_VENDOR "${ELPA_BLAS_VENDOR_RESOLVED}")
 
 set(ELPA_BUILD_MKL_BLACS "${ELPA_MKL_BLACS}")
 if(ELPA_USE_MPI AND ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
-  set(ELPA_BUILD_MKL_BLACS "${SCALAPACK_MKL_BLACS_ABI}")
+  set(ELPA_BUILD_MKL_BLACS "${MKL_BLACS_ABI}")
 endif()
 
 # pkg-config cannot represent CMake imported targets. For static CPU builds,
@@ -245,26 +225,24 @@ endif()
 set(_elpa_pc_private_libraries)
 if(NOT BUILD_SHARED_LIBS)
   if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-    list(APPEND _elpa_pc_private_libraries
-      "${MKL_INTERFACE_LIBRARY}"
-      "${MKL_THREAD_LIBRARY}"
-      "${MKL_CORE_LIBRARY}"
-      "${CMAKE_THREAD_LIBS_INIT}"
-      "${CMAKE_DL_LIBS}"
-      m
-    )
+    list(APPEND _elpa_pc_private_libraries ${MKL_LINK_LIBRARIES})
   else()
-    list(APPEND _elpa_pc_private_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+    list(APPEND _elpa_pc_private_libraries
+      ${BLAS_LIBRARIES}
+      ${LAPACK_LIBRARIES}
+    )
   endif()
 
   if(ELPA_USE_MPI)
-    list(APPEND _elpa_pc_private_libraries
-      ${MPI_C_LIBRARIES}
-      ${MPI_Fortran_LIBRARIES}
-      ${SCALAPACK_LIBRARY}
-      ${SCALAPACK_BLACS_LIBRARY}
-      ${PC_SCALAPACK_LINK_LIBRARIES}
-    )
+    if(ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
+      list(APPEND _elpa_pc_private_libraries ${MKL_SCALAPACK_LINK_LIBRARIES})
+    else()
+      list(APPEND _elpa_pc_private_libraries
+        ${SCALAPACK_LIBRARIES}
+        ${MPI_C_LIBRARIES}
+        ${MPI_Fortran_LIBRARIES}
+      )
+    endif()
   endif()
   if(ELPA_USE_OPENMP)
     list(APPEND _elpa_pc_private_libraries
@@ -277,12 +255,13 @@ if(NOT BUILD_SHARED_LIBS)
     list(APPEND _elpa_pc_private_libraries "${PAPI_LIBRARY}")
   endif()
 
-  list(APPEND _elpa_pc_private_libraries ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+  list(APPEND _elpa_pc_private_libraries
+    ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+  )
   if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$")
     list(APPEND _elpa_pc_private_libraries ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
   endif()
   list(REMOVE_ITEM _elpa_pc_private_libraries "")
-  list(REMOVE_DUPLICATES _elpa_pc_private_libraries)
 endif()
 
 set(ELPA_PC_PRIVATE_LIBS)
