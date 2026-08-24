@@ -1,144 +1,119 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
+#[=======================================================================[.rst:
+FindScalapack
+-------------
+
+Find a standalone ScaLAPACK installation and provide
+``SCALAPACK::SCALAPACK``.  oneMKL ScaLAPACK is deliberately outside this
+module and is provided by the ``SCALAPACK`` component of :module:`FindMKL`.
+
+The module first honors ``ELPA_SCALAPACK_LIBRARIES``, then tries pkg-config,
+and finally searches common MPI-specific library names.  The imported target
+also carries the selected BLAS/LAPACK and MPI targets so static link closures
+remain complete.
+
+Result variables are ``Scalapack_FOUND``, ``SCALAPACK_FOUND``,
+``SCALAPACK_LIBRARIES``, and the compatibility variable
+``SCALAPACK_LIBRARY``.
+
+#]=======================================================================]
+
 include(FindPackageHandleStandardArgs)
 
-if(NOT DEFINED SCALAPACK_PROVIDER)
-  set(SCALAPACK_PROVIDER GENERIC)
+if(NOT TARGET MPI::MPI_Fortran)
+  find_package(MPI QUIET COMPONENTS Fortran)
 endif()
-string(TOUPPER "${SCALAPACK_PROVIDER}" SCALAPACK_PROVIDER)
 
-if(SCALAPACK_PROVIDER STREQUAL "MKL")
-  if(SCALAPACK_BLAS_INTERFACE STREQUAL "ILP64")
-    set(_scalapack_mkl_integer_suffix ilp64)
-  else()
-    set(_scalapack_mkl_integer_suffix lp64)
+if(NOT DEFINED SCALAPACK_BLAS_TARGETS)
+  find_package(Lapack QUIET)
+  if(TARGET BLAS::BLAS AND TARGET LAPACK::LAPACK)
+    set(SCALAPACK_BLAS_TARGETS BLAS::BLAS LAPACK::LAPACK)
   endif()
+endif()
 
-  set(_scalapack_mkl_root_hints "${MKL_ROOT}" "$ENV{MKLROOT}")
-  foreach(_scalapack_blas_library IN LISTS BLAS_LIBRARIES LAPACK_LIBRARIES)
-    if(IS_ABSOLUTE "${_scalapack_blas_library}")
-      get_filename_component(_scalapack_mkl_library_dir "${_scalapack_blas_library}" DIRECTORY)
-      list(APPEND _scalapack_mkl_root_hints "${_scalapack_mkl_library_dir}")
-    endif()
-  endforeach()
-  list(REMOVE_ITEM _scalapack_mkl_root_hints "")
-  list(REMOVE_DUPLICATES _scalapack_mkl_root_hints)
+set(_elpa_scalapack_link_item)
+set(_elpa_scalapack_libraries)
+set(_elpa_scalapack_include_dirs)
 
-  find_library(
-    SCALAPACK_LIBRARY
-    NAMES "mkl_scalapack_${_scalapack_mkl_integer_suffix}"
-    HINTS ${_scalapack_mkl_root_hints}
-    PATH_SUFFIXES lib lib/intel64 mkl/lib mkl/lib/intel64
-  )
-
-  if(NOT DEFINED SCALAPACK_MKL_BLACS)
-    set(SCALAPACK_MKL_BLACS AUTO)
-  endif()
-  string(TOUPPER "${SCALAPACK_MKL_BLACS}" _scalapack_mkl_blacs)
-
-  if(_scalapack_mkl_blacs STREQUAL "AUTO")
-    string(
-      JOIN ";"
-      _scalapack_mpi_identity
-      "${MPI_C_LIBRARY_VERSION_STRING}"
-      "${MPI_Fortran_LIBRARY_VERSION_STRING}"
-      "${MPI_C_LIBRARIES}"
-      "${MPI_Fortran_LIBRARIES}"
-      "${MPI_C_COMPILER}"
-      "${MPI_Fortran_COMPILER}"
-      "${MPIEXEC_EXECUTABLE}"
-    )
-    string(TOLOWER "${_scalapack_mpi_identity}" _scalapack_mpi_identity)
-
-    if(_scalapack_mpi_identity MATCHES "open[ _-]?mpi|(^|[/;])ompi")
-      set(SCALAPACK_MKL_BLACS_ABI OPENMPI)
-    elseif(_scalapack_mpi_identity MATCHES "intel[ _-]?mpi|(^|[/;])impi")
-      set(SCALAPACK_MKL_BLACS_ABI INTELMPI)
-    elseif(_scalapack_mpi_identity MATCHES "mpich|hydra")
-      set(SCALAPACK_MKL_BLACS_ABI MPICH)
-    else()
-      message(
-        FATAL_ERROR
-          "Could not determine the oneMKL BLACS ABI from the detected MPI. "
-          "Set ELPA_MKL_BLACS to OPENMPI, INTELMPI, or MPICH."
-      )
-    endif()
-  else()
-    set(SCALAPACK_MKL_BLACS_ABI "${_scalapack_mkl_blacs}")
-  endif()
-
-  if(SCALAPACK_MKL_BLACS_ABI STREQUAL "OPENMPI")
-    set(_scalapack_mkl_blacs_abi openmpi)
-  else()
-    # Intel MPI and MPICH share oneMKL's intelmpi BLACS ABI on Linux.
-    set(_scalapack_mkl_blacs_abi intelmpi)
-  endif()
-
-  find_library(
-    SCALAPACK_BLACS_LIBRARY
-    NAMES
-      "mkl_blacs_${_scalapack_mkl_blacs_abi}_${_scalapack_mkl_integer_suffix}"
-    HINTS ${_scalapack_mkl_root_hints}
-    PATH_SUFFIXES lib lib/intel64 mkl/lib mkl/lib/intel64
-  )
-
-  find_package_handle_standard_args(
-    Scalapack
-    REQUIRED_VARS SCALAPACK_LIBRARY SCALAPACK_BLACS_LIBRARY
-  )
+if(ELPA_SCALAPACK_LIBRARIES)
+  set(_elpa_scalapack_libraries ${ELPA_SCALAPACK_LIBRARIES})
+  set(_elpa_scalapack_link_item ${ELPA_SCALAPACK_LIBRARIES})
 else()
   find_package(PkgConfig QUIET)
   if(PkgConfig_FOUND)
-    pkg_check_modules(PC_SCALAPACK QUIET IMPORTED_TARGET GLOBAL scalapack)
+    pkg_check_modules(PC_ELPA_SCALAPACK QUIET IMPORTED_TARGET GLOBAL scalapack)
   endif()
 
-  if(TARGET PkgConfig::PC_SCALAPACK)
-    set(SCALAPACK_LIBRARY PkgConfig::PC_SCALAPACK)
+  if(TARGET PkgConfig::PC_ELPA_SCALAPACK)
+    set(_elpa_scalapack_libraries ${PC_ELPA_SCALAPACK_LINK_LIBRARIES})
+    set(_elpa_scalapack_link_item PkgConfig::PC_ELPA_SCALAPACK)
+    set(_elpa_scalapack_include_dirs ${PC_ELPA_SCALAPACK_INCLUDE_DIRS})
   else()
-    set(_scalapack_names scalapack)
+    set(_elpa_scalapack_names)
     string(
-      JOIN ";"
-      _scalapack_mpi_identity
+      JOIN
+      ";"
+      _elpa_scalapack_mpi_identity
       "${MPI_C_LIBRARY_VERSION_STRING}"
       "${MPI_Fortran_LIBRARY_VERSION_STRING}"
       "${MPI_C_LIBRARIES}"
       "${MPI_Fortran_LIBRARIES}"
       "${MPI_C_COMPILER}"
-      "${MPI_Fortran_COMPILER}"
-    )
-    string(TOLOWER "${_scalapack_mpi_identity}" _scalapack_mpi_identity)
+      "${MPI_Fortran_COMPILER}")
+    string(TOLOWER "${_elpa_scalapack_mpi_identity}"
+                   _elpa_scalapack_mpi_identity)
 
-    if(_scalapack_mpi_identity MATCHES "open[ _-]?mpi|(^|[/;])ompi")
-      list(PREPEND _scalapack_names scalapack-openmpi)
-    elseif(_scalapack_mpi_identity MATCHES "mpich|hydra")
-      list(PREPEND _scalapack_names scalapack-mpich)
+    if(_elpa_scalapack_mpi_identity MATCHES "open[ _-]?mpi|(^|[/;])ompi")
+      list(APPEND _elpa_scalapack_names scalapack-openmpi)
+    elseif(_elpa_scalapack_mpi_identity MATCHES "mpich|hydra")
+      list(APPEND _elpa_scalapack_names scalapack-mpich)
     endif()
+    list(APPEND _elpa_scalapack_names scalapack)
 
-    find_library(SCALAPACK_LIBRARY NAMES ${_scalapack_names})
+    find_library(
+      _elpa_scalapack_library
+      NAMES ${_elpa_scalapack_names}
+      HINTS "${Scalapack_ROOT}" "${SCALAPACK_ROOT}" "$ENV{Scalapack_ROOT}"
+            "$ENV{SCALAPACK_ROOT}"
+      PATH_SUFFIXES lib lib64 NO_CACHE)
+    if(_elpa_scalapack_library)
+      set(_elpa_scalapack_libraries "${_elpa_scalapack_library}")
+      set(_elpa_scalapack_link_item "${_elpa_scalapack_library}")
+    endif()
   endif()
-
-  find_package_handle_standard_args(
-    Scalapack
-    REQUIRED_VARS SCALAPACK_LIBRARY
-  )
 endif()
 
-if(SCALAPACK_FOUND AND NOT TARGET SCALAPACK::SCALAPACK)
+set(SCALAPACK_LIBRARIES ${_elpa_scalapack_libraries})
+if(SCALAPACK_LIBRARIES)
+  list(GET SCALAPACK_LIBRARIES 0 SCALAPACK_LIBRARY)
+else()
+  set(SCALAPACK_LIBRARY "")
+endif()
+set(SCALAPACK_INCLUDE_DIRS ${_elpa_scalapack_include_dirs})
+if(TARGET MPI::MPI_Fortran)
+  set(_elpa_scalapack_mpi_found TRUE)
+else()
+  set(_elpa_scalapack_mpi_found FALSE)
+endif()
+
+find_package_handle_standard_args(
+  Scalapack REQUIRED_VARS SCALAPACK_LIBRARIES SCALAPACK_BLAS_TARGETS
+                          _elpa_scalapack_mpi_found)
+set(SCALAPACK_FOUND ${Scalapack_FOUND})
+
+if(Scalapack_FOUND AND NOT TARGET SCALAPACK::SCALAPACK)
   add_library(SCALAPACK::SCALAPACK INTERFACE IMPORTED)
-
-  if(SCALAPACK_PROVIDER STREQUAL "MKL")
-    target_link_libraries(
-      SCALAPACK::SCALAPACK
-      INTERFACE
-        "${SCALAPACK_LIBRARY}"
-        "${SCALAPACK_BLACS_LIBRARY}"
-        ${SCALAPACK_BLAS_TARGETS}
-        MPI::MPI_C
-        MPI::MPI_Fortran
-    )
-  else()
-    target_link_libraries(SCALAPACK::SCALAPACK INTERFACE "${SCALAPACK_LIBRARY}")
+  set_property(
+    TARGET SCALAPACK::SCALAPACK
+    PROPERTY
+      INTERFACE_LINK_LIBRARIES
+      "${_elpa_scalapack_link_item};${SCALAPACK_BLAS_TARGETS};MPI::MPI_Fortran")
+  if(SCALAPACK_INCLUDE_DIRS)
+    set_property(
+      TARGET SCALAPACK::SCALAPACK PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                                           "${SCALAPACK_INCLUDE_DIRS}")
   endif()
 endif()
 
-mark_as_advanced(SCALAPACK_LIBRARY SCALAPACK_BLACS_LIBRARY)
+mark_as_advanced(SCALAPACK_LIBRARY SCALAPACK_LIBRARIES SCALAPACK_INCLUDE_DIRS)

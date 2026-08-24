@@ -135,14 +135,19 @@ option(ELPA_ENABLE_CUDA_AWARE_MPI "Enable CUDA-aware MPI" OFF)
 
 # Select the BLAS/LAPACK provider.
 #
-#   AUTO      Use CMake's normal BLAS/LAPACK discovery.
+#   AUTO      Prefer oneMKL, then OpenBLAS, then a generic BLAS/LAPACK.
 #   MKL       Require Intel oneMKL.
 #   OPENBLAS  Require OpenBLAS.
+#   GENERIC   Use CMake's generic BLAS/LAPACK discovery.
+#   CUSTOM    Use ELPA_BLAS_LIBRARIES and ELPA_LAPACK_LIBRARIES.
 set(ELPA_BLAS_VENDOR "AUTO" CACHE STRING "BLAS and LAPACK provider")
 set_property(
   CACHE ELPA_BLAS_VENDOR
-  PROPERTY STRINGS AUTO MKL OPENBLAS
+  PROPERTY STRINGS AUTO MKL OPENBLAS GENERIC CUSTOM
 )
+
+set(ELPA_BLAS_LIBRARIES "" CACHE STRING "Custom BLAS link libraries")
+set(ELPA_LAPACK_LIBRARIES "" CACHE STRING "Custom LAPACK link libraries")
 
 # Select the BLAS/LAPACK integer interface. ILP64 also enables ELPA's 64-bit
 # integer math paths.
@@ -152,12 +157,21 @@ set_property(
   PROPERTY STRINGS LP64 ILP64
 )
 
-# Select the oneMKL threading layer. This setting is used when oneMKL is
-# selected explicitly or resolved by ELPA_BLAS_VENDOR=AUTO.
+# Select the oneMKL threading layer. THREADED and OPENMP choose the GNU or
+# Intel OpenMP implementation from the active Fortran compiler. GNU, INTEL,
+# and TBB request an implementation explicitly.
 set(ELPA_MKL_THREADING "SEQUENTIAL" CACHE STRING "oneMKL threading layer")
 set_property(
   CACHE ELPA_MKL_THREADING
-  PROPERTY STRINGS SEQUENTIAL THREADED
+  PROPERTY STRINGS SEQUENTIAL THREADED OPENMP GNU INTEL TBB
+)
+
+# Select shared or static oneMKL libraries without changing CMake's global
+# library suffix search order.
+set(ELPA_MKL_LINK "DYNAMIC" CACHE STRING "oneMKL link mode")
+set_property(
+  CACHE ELPA_MKL_LINK
+  PROPERTY STRINGS DYNAMIC STATIC
 )
 
 # Select the ScaLAPACK provider used by MPI builds.
@@ -166,11 +180,14 @@ set_property(
 #            standalone ScaLAPACK implementation.
 #   MKL      Require oneMKL ScaLAPACK and BLACS.
 #   GENERIC  Require a standalone ScaLAPACK implementation.
+#   CUSTOM   Use ELPA_SCALAPACK_LIBRARIES as a standalone implementation.
 set(ELPA_SCALAPACK_VENDOR "AUTO" CACHE STRING "ScaLAPACK provider")
 set_property(
   CACHE ELPA_SCALAPACK_VENDOR
-  PROPERTY STRINGS AUTO MKL GENERIC
+  PROPERTY STRINGS AUTO MKL GENERIC CUSTOM
 )
+
+set(ELPA_SCALAPACK_LIBRARIES "" CACHE STRING "Custom ScaLAPACK link libraries")
 
 # Select the oneMKL BLACS ABI. AUTO derives the ABI from the detected MPI
 # implementation. This setting is used only with oneMKL ScaLAPACK.
@@ -201,10 +218,13 @@ endfunction()
 
 _elpa_validate_choice(ELPA_CPU_KERNELS AUTO GENERIC)
 _elpa_validate_choice(ELPA_ACCELERATOR NONE CUDA HIP SYCL OPENMP)
-_elpa_validate_choice(ELPA_BLAS_VENDOR AUTO MKL OPENBLAS)
+_elpa_validate_choice(ELPA_BLAS_VENDOR AUTO MKL OPENBLAS GENERIC CUSTOM)
 _elpa_validate_choice(ELPA_BLAS_INTERFACE LP64 ILP64)
-_elpa_validate_choice(ELPA_MKL_THREADING SEQUENTIAL THREADED)
-_elpa_validate_choice(ELPA_SCALAPACK_VENDOR AUTO MKL GENERIC)
+_elpa_validate_choice(
+  ELPA_MKL_THREADING SEQUENTIAL THREADED OPENMP GNU INTEL TBB
+)
+_elpa_validate_choice(ELPA_MKL_LINK DYNAMIC STATIC)
+_elpa_validate_choice(ELPA_SCALAPACK_VENDOR AUTO MKL GENERIC CUSTOM)
 _elpa_validate_choice(ELPA_MKL_BLACS AUTO OPENMPI INTELMPI MPICH)
 
 if(ELPA_USE_64BIT_MPI_INTEGERS AND NOT ELPA_USE_MPI)
@@ -215,15 +235,32 @@ if(ELPA_USE_PAPI AND NOT ELPA_ENABLE_TIMINGS)
   message(FATAL_ERROR "ELPA_USE_PAPI requires ELPA_ENABLE_TIMINGS=ON")
 endif()
 
-if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL" AND ELPA_BLAS_VENDOR STREQUAL "OPENBLAS")
+if(ELPA_BLAS_VENDOR STREQUAL "CUSTOM" AND NOT ELPA_BLAS_LIBRARIES)
+  message(FATAL_ERROR "ELPA_BLAS_VENDOR=CUSTOM requires ELPA_BLAS_LIBRARIES")
+endif()
+
+if(ELPA_BLAS_VENDOR STREQUAL "CUSTOM" AND NOT ELPA_LAPACK_LIBRARIES)
+  message(FATAL_ERROR "ELPA_BLAS_VENDOR=CUSTOM requires ELPA_LAPACK_LIBRARIES")
+endif()
+
+if(ELPA_SCALAPACK_VENDOR STREQUAL "CUSTOM" AND NOT ELPA_SCALAPACK_LIBRARIES)
   message(FATAL_ERROR
-    "ELPA_SCALAPACK_VENDOR=MKL is incompatible with ELPA_BLAS_VENDOR=OPENBLAS"
+    "ELPA_SCALAPACK_VENDOR=CUSTOM requires ELPA_SCALAPACK_LIBRARIES"
   )
 endif()
 
-if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$" AND ELPA_BLAS_VENDOR STREQUAL "OPENBLAS")
+if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL"
+   AND NOT ELPA_BLAS_VENDOR MATCHES "^(AUTO|MKL)$")
   message(FATAL_ERROR
-    "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} is incompatible with ELPA_BLAS_VENDOR=OPENBLAS"
+    "ELPA_SCALAPACK_VENDOR=MKL requires ELPA_BLAS_VENDOR=AUTO or MKL"
+  )
+endif()
+
+if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$"
+   AND NOT ELPA_BLAS_VENDOR MATCHES "^(AUTO|MKL)$")
+  message(FATAL_ERROR
+    "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires "
+    "ELPA_BLAS_VENDOR=AUTO or MKL"
   )
 endif()
 
