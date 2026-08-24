@@ -28,7 +28,6 @@ project(
   LANGUAGES C CXX Fortran)
 
 include(CMakePackageConfigHelpers)
-include(CTest)
 include(GNUInstallDirs)
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
@@ -36,6 +35,7 @@ list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMakeOptions.cmake")
 include(CheckCompilerSupport)
 include(CompilerConfiguration)
+include(CTest)
 
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
