@@ -429,7 +429,7 @@ function(_elpa_check_accelerator_support)
       CACHE INTERNAL "Link options required by the selected accelerator backend"
       FORCE
     )
-  elseif(ELPA_ACCELERATOR STREQUAL "OPENMP")
+  elseif(ELPA_ACCELERATOR STREQUAL "IOMP_OFFLOAD")
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_FLAGS "-fiopenmp -fopenmp-targets=spir64")
     set(CMAKE_REQUIRED_LIBRARIES MKL::MKL)
@@ -447,7 +447,7 @@ function(_elpa_check_accelerator_support)
     if(NOT ELPA_CXX_HAS_OPENMP_OFFLOAD)
       message(
         FATAL_ERROR
-          "ELPA_ACCELERATOR=OPENMP requires Intel OpenMP target offloading "
+          "ELPA_ACCELERATOR=IOMP_OFFLOAD requires Intel OpenMP target offloading "
           "and oneMKL offload headers."
       )
     endif()
