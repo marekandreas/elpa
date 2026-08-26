@@ -18,12 +18,9 @@ option(ELPA_BUILD_TOOLS "Build ELPA command-line utilities" ON)
 # Parallel programming models
 # =================================================================================================
 
+option(ELPA_USE_OPENMP "Enable OpenMP threading" ON)
 option(ELPA_USE_MPI "Enable MPI support" ON)
 option(ELPA_USE_64BIT_MPI_INTEGERS "Use 64-bit MPI integer arguments" OFF)
-
-# Enable host-side OpenMP threading. Accelerator offloading is selected
-# independently through ELPA_ACCELERATOR.
-option(ELPA_USE_OPENMP "Enable OpenMP threading" ON)
 
 # =================================================================================================
 # Numerical interfaces and optional functionality
@@ -106,15 +103,15 @@ option(
 
 # Select exactly one accelerator backend for this build tree.
 #
-#   NONE    Build CPU implementations only.
-#   CUDA    Build the NVIDIA CUDA backend.
-#   HIP     Build the AMD ROCm/HIP backend.
-#   SYCL    Build the Intel SYCL backend with a SYCL-capable C++ compiler.
-#   OPENMP  Build the Intel OpenMP target-offload backend.
+#   NONE          Build CPU implementations only.
+#   CUDA          Build the NVIDIA CUDA backend.
+#   HIP           Build the AMD ROCm/HIP backend.
+#   SYCL          Build the Intel SYCL backend with a SYCL-capable C++ compiler.
+#   IOMP_OFFLOAD  Build the Intel OpenMP target-offload backend.
 set(ELPA_ACCELERATOR "NONE" CACHE STRING "Accelerator backend")
 set_property(
   CACHE ELPA_ACCELERATOR
-  PROPERTY STRINGS NONE CUDA HIP SYCL OPENMP
+  PROPERTY STRINGS NONE CUDA HIP SYCL IOMP_OFFLOAD
 )
 
 # Enable asynchronous streams or queues for accelerator operations. This
@@ -217,7 +214,7 @@ function(_elpa_validate_choice variable)
 endfunction()
 
 _elpa_validate_choice(ELPA_CPU_KERNELS AUTO GENERIC)
-_elpa_validate_choice(ELPA_ACCELERATOR NONE CUDA HIP SYCL OPENMP)
+_elpa_validate_choice(ELPA_ACCELERATOR NONE CUDA HIP SYCL IOMP_OFFLOAD)
 _elpa_validate_choice(ELPA_BLAS_VENDOR AUTO MKL OPENBLAS GENERIC CUSTOM)
 _elpa_validate_choice(ELPA_BLAS_INTERFACE LP64 ILP64)
 _elpa_validate_choice(
@@ -256,7 +253,7 @@ if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL"
   )
 endif()
 
-if(ELPA_ACCELERATOR MATCHES "^(SYCL|OPENMP)$"
+if(ELPA_ACCELERATOR MATCHES "^(SYCL|IOMP_OFFLOAD)$"
    AND NOT ELPA_BLAS_VENDOR MATCHES "^(AUTO|MKL)$")
   message(FATAL_ERROR
     "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires "
