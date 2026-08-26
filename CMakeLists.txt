@@ -156,6 +156,9 @@ elpa_check_compiler_support()
 
 set(ELPA_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/elpa")
 set(ELPA_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/elpa")
+set(ELPA_INSTALL_FMODDIR
+    "${ELPA_INSTALL_INCLUDEDIR}"
+    CACHE PATH "ELPA Fortran modules installation directory")
 
 add_subdirectory(src)
 
@@ -197,7 +200,7 @@ install(
   FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa.mod"
         "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_api.mod"
         "${CMAKE_CURRENT_BINARY_DIR}/modules/elpa_constants.mod"
-  DESTINATION "${ELPA_INSTALL_INCLUDEDIR}")
+  DESTINATION "${ELPA_INSTALL_FMODDIR}")
 
 if(BUILD_SHARED_LIBS)
   set(ELPA_BUILD_STATIC OFF)
