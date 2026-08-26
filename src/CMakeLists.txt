@@ -473,7 +473,7 @@ target_include_directories(
          $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
          $<BUILD_INTERFACE:${_elpa_module_dir}>
          $<INSTALL_INTERFACE:${ELPA_INSTALL_INCLUDEDIR}>
-         $<INSTALL_INTERFACE:${ELPA_INSTALL_INCLUDEDIR}/modules>
+         $<INSTALL_INTERFACE:${ELPA_INSTALL_FMODDIR}>
   PRIVATE "${PROJECT_SOURCE_DIR}/src" "${PROJECT_BINARY_DIR}/src")
 
 target_link_libraries(elpa PRIVATE ${ELPA_BLAS_TARGET})
