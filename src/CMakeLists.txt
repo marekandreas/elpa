@@ -845,6 +845,9 @@ if(ELPA_ACCELERATOR STREQUAL "CUDA")
             solve_tridi/GPU/CUDA/cuda_transform_columns.cu
             multiply_a_b/GPU/CUDA/elpa_hermitian_multiply_cuda.cu
             multiply_a_b/GPU/CUDA/elpa_pxgemm_multiply_cuda.cu)
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    target_compile_options(elpa PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
+  endif()
   if(CMAKE_CUDA_ARCHITECTURES MATCHES "(^|;)80(-real|-virtual)?($|;)")
     target_sources(elpa
                    PRIVATE elpa2/GPU/CUDA/ev_tridi_band_nvidia_gpu_real_sm80.cu)
