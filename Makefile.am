@@ -1082,6 +1082,17 @@ EXTRA_DIST = \
   nvcc_wrap \
   hipcc_wrap \
   remove_xcompiler \
+  cmake/modules/FindMKL.cmake \
+  cmake/modules/FindBlas.cmake \
+  cmake/modules/FindLapack.cmake \
+  cmake/modules/FindScalapack.cmake \
+  cmake/CheckCompilerSupport.cmake \
+  cmake/elpa-config.cmake.in \
+  cmake/elpa.pc.in \
+  cmake/CompilerConfiguration.cmake \
+  CMakeLists.txt \
+  CMakeOptions.cmake \
+  src/CMakeLists.txt \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_for_gpu_template.F90 \
