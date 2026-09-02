@@ -806,9 +806,11 @@
                            l_rqs, mpi_comm_cols_self, p_col, l_col, l_col_out)
         endif
 
-        write(error_unit,*) "Returing early from merge_systems (na1==1 .or. na1==2)"
-        ! na=1 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_blocktridi 3 3 1"
-        ! na=2 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_toeplitz 4 4 2"
+        if (wantDebug) then
+          write(error_unit,*) "Returing early from merge_systems (na1==1 .or. na1==2)"
+          ! na=1 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_blocktridi 3 3 1"
+          ! na=2 can be tested with "mpirun -n 4 ./validate_real_double_solve_tridiagonal_1stage_gpu_toeplitz 4 4 2"
+        endif
       else if (na1>2) then
 
         ! Solve secular equation
