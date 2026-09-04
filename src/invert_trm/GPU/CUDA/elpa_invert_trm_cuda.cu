@@ -59,6 +59,8 @@
 #include <type_traits>
 #include "config-f90.h"
 
+#define MAX_THREADS_PER_BLOCK 1024
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 // Set a device element to zero; for complex types both components are zeroed.
@@ -77,26 +79,27 @@ __device__ inline void set_to_zero(T &v)
 // cuda_copy_a_tmat2
 
 template <typename T>
-__device__ void cuda_copy_a_tmat2_kernel_body(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1)
+__device__ void cuda_copy_a_tmat2_kernel_body(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb)
 {
-  int nb_index    = threadIdx.x + 1; // range 1..nb
   int l_col_index = blockIdx.x  + 1; // range 1..l_colx-l_cols-1
 
-  tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index-1) * nblk] =
-    a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index-1) * matrixRows];
+  for (int nb_index = threadIdx.x + 1; nb_index <= nb; nb_index += blockDim.x) {
+    tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index-1) * nblk] =
+      a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index-1) * matrixRows];
+  }
 }
 
-__global__ void cuda_copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1)
-{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1); }
+__global__ void cuda_copy_double_a_tmat2_kernel(double *a_dev, double *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb)
+{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb); }
 
-__global__ void cuda_copy_float_a_tmat2_kernel(float *a_dev, float *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1)
-{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1); }
+__global__ void cuda_copy_float_a_tmat2_kernel(float *a_dev, float *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb)
+{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb); }
 
-__global__ void cuda_copy_double_complex_a_tmat2_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1)
-{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1); }
+__global__ void cuda_copy_double_complex_a_tmat2_kernel(cuDoubleComplex *a_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb)
+{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb); }
 
-__global__ void cuda_copy_float_complex_a_tmat2_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1)
-{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1); }
+__global__ void cuda_copy_float_complex_a_tmat2_kernel(cuFloatComplex *a_dev, cuFloatComplex *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb)
+{ cuda_copy_a_tmat2_kernel_body(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb); }
 
 extern "C" void cuda_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev, int *nblk_in, int *matrixRows_in, int *l_cols_in, int *l_colx_in, int *l_row1_in, int *nb_in, cudaStream_t  my_stream){
   int nblk = *nblk_in;
@@ -107,12 +110,12 @@ extern "C" void cuda_copy_double_a_tmat2_FromC(double *a_dev, double *tmat2_dev,
   int nb     = *nb_in;
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb);
 #else
-  cuda_copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -129,12 +132,12 @@ extern "C" void cuda_copy_float_a_tmat2_FromC(float *a_dev, float *tmat2_dev, in
   int nb     = *nb_in;
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb);
 #else
-  cuda_copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_dev, tmat2_dev, nblk, matrixRows, l_colx, l_row1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -154,12 +157,12 @@ extern "C" void cuda_copy_double_complex_a_tmat2_FromC(double _Complex *a_dev, d
   cuDoubleComplex* tmat2_casted = (cuDoubleComplex*) tmat2_dev;
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1, nb);
 #else
-  cuda_copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_double_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -179,12 +182,12 @@ extern "C" void cuda_copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, flo
   cuFloatComplex* tmat2_casted = (cuFloatComplex*) tmat2_dev;
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1, nb);
 #else
-  cuda_copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1);
+  cuda_copy_float_complex_a_tmat2_kernel<<<blocks,threadsPerBlock>>>(a_casted, tmat2_casted, nblk, matrixRows, l_colx, l_row1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -196,26 +199,27 @@ extern "C" void cuda_copy_float_complex_a_tmat2_FromC(float _Complex *a_dev, flo
 // cuda_copy_tmp2_tmat2
 
 template <typename T>
-__device__ void cuda_copy_tmp2_tmat2_kernel_body(T *tmp2_dev, T *tmat2_dev, const int nblk, const int l_col1)
+__device__ void cuda_copy_tmp2_tmat2_kernel_body(T *tmp2_dev, T *tmat2_dev, const int nblk, const int l_col1, const int nb)
 {
-  int nb_index    = threadIdx.x + 1; // range 1..nb
   int l_col_index = blockIdx.x  + 1; // range 1..nb
 
-  tmat2_dev[nb_index-1 + (l_col1-1 + l_col_index-1) * nblk] =
-    tmp2_dev[nb_index-1 + (1-1 + l_col_index-1) * nblk];
+  for (int nb_index = threadIdx.x + 1; nb_index <= nb; nb_index += blockDim.x) {
+    tmat2_dev[nb_index-1 + (l_col1-1 + l_col_index-1) * nblk] =
+      tmp2_dev[nb_index-1 + (1-1 + l_col_index-1) * nblk];
+  }
 }
 
-__global__ void cuda_copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tmat2_dev, const int nblk, const int l_col1)
-{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1); }
+__global__ void cuda_copy_double_tmp2_tmat2_kernel(double *tmp2_dev, double *tmat2_dev, const int nblk, const int l_col1, const int nb)
+{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1, nb); }
 
-__global__ void cuda_copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_dev, const int nblk, const int l_col1)
-{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1); }
+__global__ void cuda_copy_float_tmp2_tmat2_kernel(float *tmp2_dev, float *tmat2_dev, const int nblk, const int l_col1, const int nb)
+{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1, nb); }
 
-__global__ void cuda_copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int l_col1)
-{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1); }
+__global__ void cuda_copy_double_complex_tmp2_tmat2_kernel(cuDoubleComplex *tmp2_dev, cuDoubleComplex *tmat2_dev, const int nblk, const int l_col1, const int nb)
+{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1, nb); }
 
-__global__ void cuda_copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_dev, cuFloatComplex *tmat2_dev, const int nblk, const int l_col1)
-{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1); }
+__global__ void cuda_copy_float_complex_tmp2_tmat2_kernel(cuFloatComplex *tmp2_dev, cuFloatComplex *tmat2_dev, const int nblk, const int l_col1, const int nb)
+{ cuda_copy_tmp2_tmat2_kernel_body(tmp2_dev, tmat2_dev, nblk, l_col1, nb); }
 
 extern "C" void cuda_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat2_dev, int *nblk_in, int *l_col1_in, int *nb_in, cudaStream_t my_stream){
   int nblk   = *nblk_in;
@@ -223,12 +227,12 @@ extern "C" void cuda_copy_double_tmp2_tmat2_FromC(double *tmp2_dev, double *tmat
   int nb     = *nb_in;
 
   dim3 blocks = dim3(nb,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_dev, tmat2_dev, nblk, l_col1, nb);
 #else
-  cuda_copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_double_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -242,12 +246,12 @@ extern "C" void cuda_copy_float_tmp2_tmat2_FromC(float *tmp2_dev, float *tmat2_d
   int nb     = *nb_in;
 
   dim3 blocks = dim3(nb,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_dev, tmat2_dev, nblk, l_col1, nb);
 #else
-  cuda_copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1);
+  cuda_copy_float_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_dev, tmat2_dev, nblk, l_col1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -264,12 +268,12 @@ extern "C" void cuda_copy_double_complex_tmp2_tmat2_FromC(double _Complex *tmp2_
   cuDoubleComplex* tmat2_casted = (cuDoubleComplex*) tmat2_dev;
 
   dim3 blocks = dim3(nb,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_casted, tmat2_casted, nblk, l_col1, nb);
 #else
-  cuda_copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_double_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -286,12 +290,12 @@ extern "C" void cuda_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_de
   cuFloatComplex* tmat2_casted = (cuFloatComplex*) tmat2_dev;
 
   dim3 blocks = dim3(nb,1,1);
-  dim3 threadsPerBlock = dim3(nb,1,1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
 
 #ifdef WITH_GPU_STREAMS
-  cuda_copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock,0,my_stream>>>(tmp2_casted, tmat2_casted, nblk, l_col1, nb);
 #else
-  cuda_copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1);
+  cuda_copy_float_complex_tmp2_tmat2_kernel<<<blocks,threadsPerBlock>>>(tmp2_casted, tmat2_casted, nblk, l_col1, nb);
 #endif
   cudaError_t cuerr = cudaGetLastError();
   if (cuerr != cudaSuccess){
@@ -307,12 +311,13 @@ extern "C" void cuda_copy_float_complex_tmp2_tmat2_FromC(float _Complex *tmp2_de
 template <typename T>
 __device__ void cuda_copy_a_tmat1_kernel_body(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1)
 {
-  int nb_index     = threadIdx.x + 1; // range 1..nb
   int l_row1_index = blockIdx.x  + 1; // range 1..l_row1-1
 
-  tmat1_dev[l_row1_index-1 + (nb_index-1) * l_rows] =
-    a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows];
-  set_to_zero(a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows]);
+  for (int nb_index = threadIdx.x + 1; nb_index <= nb; nb_index += blockDim.x) {
+    tmat1_dev[l_row1_index-1 + (nb_index-1) * l_rows] =
+      a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows];
+    set_to_zero(a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows]);
+  }
 }
 
 __global__ void cuda_copy_double_a_tmat1_kernel(double *a_dev, double *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1)
@@ -334,7 +339,7 @@ extern "C" void cuda_copy_double_a_tmat1_FromC(double *a_dev, double *tmat1_dev,
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -355,7 +360,7 @@ extern "C" void cuda_copy_float_a_tmat1_FromC(float *a_dev, float *tmat1_dev, in
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -379,7 +384,7 @@ extern "C" void cuda_copy_double_complex_a_tmat1_FromC(double _Complex *a_dev, d
   cuDoubleComplex* a_casted    = (cuDoubleComplex*) a_dev;
   cuDoubleComplex* tmat1_casted = (cuDoubleComplex*) tmat1_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -403,7 +408,7 @@ extern "C" void cuda_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, flo
   cuFloatComplex* a_casted    = (cuFloatComplex*) a_dev;
   cuFloatComplex* tmat1_casted = (cuFloatComplex*) tmat1_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(l_row1-1,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -424,12 +429,13 @@ extern "C" void cuda_copy_float_complex_a_tmat1_FromC(float _Complex *a_dev, flo
 template <typename T>
 __device__ void cuda_copy_tmp1_tmp2_kernel_body(T *tmp1_dev, T *tmp2_dev, const int nblk, const int nb)
 {
-  int i_index = threadIdx.x + 1; // range 1..nb
   int j_index = blockIdx.x  + 1; // range 1..nb (should be 1..i)
 
-  if (j_index < i_index + 1) {
-    tmp2_dev[1-1 + j_index-1 + (i_index-1) * nblk] =
-      tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1];
+  for (int i_index = threadIdx.x + 1; i_index <= nb; i_index += blockDim.x) {
+    if (j_index < i_index + 1) {
+      tmp2_dev[1-1 + j_index-1 + (i_index-1) * nblk] =
+        tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1];
+    }
   }
 }
 
@@ -449,7 +455,7 @@ extern "C" void cuda_copy_double_tmp1_tmp2_FromC(double *tmp1_dev, double *tmp2_
   int nblk = *nblk_in;
   int nb = *nb_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -467,7 +473,7 @@ extern "C" void cuda_copy_float_tmp1_tmp2_FromC(float *tmp1_dev, float *tmp2_dev
   int nblk = *nblk_in;
   int nb = *nb_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -488,7 +494,7 @@ extern "C" void cuda_copy_double_complex_tmp1_tmp2_FromC(double _Complex *tmp1_d
   cuDoubleComplex* tmp1_casted = (cuDoubleComplex*) tmp1_dev;
   cuDoubleComplex* tmp2_casted = (cuDoubleComplex*) tmp2_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -509,7 +515,7 @@ extern "C" void cuda_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev
   cuFloatComplex* tmp1_casted = (cuFloatComplex*) tmp1_dev;
   cuFloatComplex* tmp2_casted = (cuFloatComplex*) tmp2_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -530,12 +536,13 @@ extern "C" void cuda_copy_float_complex_tmp1_tmp2_FromC(float _Complex *tmp1_dev
 template <typename T>
 __device__ void cuda_copy_a_tmp1_kernel_body(T *a_dev, T *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb)
 {
-  int i_index = threadIdx.x + 1; // range 1..nb
   int j_index = blockIdx.x  + 1; // range 1..nb (should be 1..i)
 
-  if (j_index < i_index + 1) {
-    tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1] =
-      a_dev[l_row1-1 + j_index-1 + (l_col1-1 + i_index-1) * matrixRows];
+  for (int i_index = threadIdx.x + 1; i_index <= nb; i_index += blockDim.x) {
+    if (j_index < i_index + 1) {
+      tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1] =
+        a_dev[l_row1-1 + j_index-1 + (l_col1-1 + i_index-1) * matrixRows];
+    }
   }
 }
 
@@ -557,7 +564,7 @@ extern "C" void cuda_copy_double_a_tmp1_FromC(double *a_dev, double *tmp1_dev, i
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -577,7 +584,7 @@ extern "C" void cuda_copy_float_a_tmp1_FromC(float *a_dev, float *tmp1_dev, int 
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -600,7 +607,7 @@ extern "C" void cuda_copy_double_complex_a_tmp1_FromC(double _Complex *a_dev, do
   cuDoubleComplex* a_casted    = (cuDoubleComplex*) a_dev;
   cuDoubleComplex* tmp1_casted = (cuDoubleComplex*) tmp1_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS
@@ -623,7 +630,7 @@ extern "C" void cuda_copy_float_complex_a_tmp1_FromC(float _Complex *a_dev, floa
   cuFloatComplex* a_casted    = (cuFloatComplex*) a_dev;
   cuFloatComplex* tmp1_casted = (cuFloatComplex*) tmp1_dev;
 
-  dim3 threadsPerBlock = dim3(nb, 1, 1);
+  dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
   dim3 blocks = dim3(nb,1,1);
 
 #ifdef WITH_GPU_STREAMS

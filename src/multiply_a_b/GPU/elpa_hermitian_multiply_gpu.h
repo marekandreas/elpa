@@ -52,11 +52,12 @@ template <typename T>
 __global__ void gpu_copy_tmp2_c_kernel(T *tmp2_dev, T *c_dev, 
                                        const int nr_done, const int nstor, const int lcs, const int lce, const int ldc, const int ldcCols){
 
-  int idex = threadIdx.x + 1; // range 1..nstor
   int jdex = blockIdx.x  + 1; // range 1..lce-lse+1
 
-  //base 1 index
-  c_dev[nr_done+(idex-1) + ldc*(lcs-1+jdex-1)] = tmp2_dev[0+(idex-1)+nstor*(jdex-1)];
+  for (int idex = threadIdx.x + 1; idex <= nstor; idex += blockDim.x) {
+    //base 1 index
+    c_dev[nr_done+(idex-1) + ldc*(lcs-1+jdex-1)] = tmp2_dev[0+(idex-1)+nstor*(jdex-1)];
+  }
 
 }
 
@@ -65,7 +66,7 @@ void gpu_copy_tmp2_c (T *tmp2_dev, T *c_dev,
                       int nr_done, int nstor, int lcs, int lce, int ldc, int ldcCols, int debug, gpuStream_t my_stream) {
 
   dim3 blocks = dim3(lce-lcs+1,1,1);
-  dim3 threadsPerBlock = dim3(nr_done+nstor-(nr_done+1)+1,1,1);
+  dim3 threadsPerBlock = dim3(min(nstor, MAX_THREADS_PER_BLOCK),1,1);
 
 #ifdef WITH_GPU_STREAMS
   gpu_copy_tmp2_c_kernel<<<blocks,threadsPerBlock, 0, my_stream>>>(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols);

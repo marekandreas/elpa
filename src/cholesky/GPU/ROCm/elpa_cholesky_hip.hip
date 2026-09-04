@@ -119,11 +119,12 @@ extern "C" void hip_accumulate_device_info_FromC(int *info_abs_dev, int *info_ne
 //________________________________________________________________
 
 template <typename T>
-__global__ void hip_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1){
+__global__ void hip_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk){
 
-  int ii_index    = threadIdx.x +1; // range 1..nblk
   int jj_index = blockIdx.x + 1; // range 1..l_cols-l_colx+1
-  tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = elpaDeviceComplexConjugate(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
+  for (int ii_index = threadIdx.x + 1; ii_index <= nblk; ii_index += blockDim.x) {
+    tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = elpaDeviceComplexConjugate(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
+  }
 }
 
 template <typename T>
@@ -135,19 +136,19 @@ void hip_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRow
   int l_row1 = *l_row1_in;
 
   dim3 blocks = dim3(l_cols-l_colx+1,1,1);
-  dim3 threadsPerBlock = dim3(nblk,1,1);
+  dim3 threadsPerBlock = dim3(min(nblk, MAX_THREADS_PER_BLOCK),1,1);
 
 #ifdef WITH_GPU_STREAMS
   hipLaunchKernelGGL(hip_copy_a_tmatc_kernel, blocks, threadsPerBlock, 0, my_stream, 
-                     a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1);
+                     a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #else
   hipLaunchKernelGGL(hip_copy_a_tmatc_kernel, blocks, threadsPerBlock, 0, 0, 
-                     a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1);
+                     a_dev, tmatc_dev, l_cols, matrixRows, l_colx, l_row1, nblk);
 #endif
   hipError_t hiperr = hipGetLastError();
   if (hiperr != hipSuccess){
     printf("Error in executing copy_double_complex_a_tmatc_kernel: %s\n", hipGetErrorString(hiperr));
-    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, nblk);
+    printf("blocks=%d, threadsPerBlock=%d \n", l_cols-l_colx+1, min(nblk, MAX_THREADS_PER_BLOCK));
   }
 }
 
