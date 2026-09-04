@@ -315,7 +315,7 @@ if WITH_SYCL_GPU_VERSION
   src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp \
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
-  src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp \
+  src/multiply_a_b/GPU/SYCL/elpa_hermitian_multiply_sycl.cpp \
   src/multiply_a_b/GPU/SYCL/elpa_pxgemm_multiply_sycl.cpp \
   src/solve_tridi/GPU/SYCL/sycl_distribute_global_column.cpp \
   src/solve_tridi/GPU/SYCL/sycl_merge_systems.cpp \
