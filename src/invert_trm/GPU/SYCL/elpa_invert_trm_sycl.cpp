@@ -173,13 +173,14 @@ extern "C" void sycl_copy_float_complex_tmp2_tmat2_FromC(std::complex<float> *tm
 //________________________________________________________________
 
 template <typename T>
-void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, sycl::nd_item<1> it){
+void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, sycl::nd_item<2> it){
 
-  int l_row1_index = it.get_group(0) + 1; // we need l_row1-1 blocks
+  int row = it.get_group(1) * it.get_local_range(1) + it.get_local_id(1);
+  int col = it.get_group(0);
 
-  for (int nb_index = it.get_local_id(0) + 1; nb_index <= nb; nb_index += it.get_local_range(0)) {
-    tmat1_dev[l_row1_index-1 + (nb_index-1)*l_rows] = a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1 ) * matrixRows];
-    a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = 0;
+  if (row < l_row1 - 1) {
+    tmat1_dev[row + col*l_rows] = a_dev[row + (l_col1-1 + col) * matrixRows];
+    a_dev[row + (l_col1-1 + col)*matrixRows] = 0;
   }
 
 }
@@ -193,15 +194,16 @@ void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrix
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
 
-  int threadsPerBlock = sycl::min(nb, MAX_THREADS_PER_BLOCK);
-  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*(l_row1 - 1));
-  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
+  int threadsPerBlock = sycl::min(l_row1 - 1, MAX_THREADS_PER_BLOCK);
+  int blocksPerColumn = (l_row1 - 2)/threadsPerBlock + 1;
+  sycl::range<2> global_range = sycl::range<2>(nb, threadsPerBlock*blocksPerColumn);
+  sycl::range<2> local_range  = sycl::range<2>(1, threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
-      sycl::nd_range<1>(global_range, local_range),
-      [=](sycl::nd_item<1> it) {
+      sycl::nd_range<2>(global_range, local_range),
+      [=](sycl::nd_item<2> it) {
         sycl_copy_a_tmat1_kernel(a_dev, tmat1_dev, l_rows, matrixRows,
                                  l_col1, nb, l_row1, it);
       });
@@ -231,12 +233,10 @@ extern "C" void sycl_copy_float_complex_a_tmat1_FromC(std::complex<float> *a_dev
 template <typename T>
 void sycl_copy_tmp1_tmp2_kernel(T *tmp1_dev, T *tmp2_dev, const int nblk, const int nb, sycl::nd_item<1> it){
 
-  int j_index = it.get_group(0) + 1;    // range 1..nb (should be 1..i)
+  int i_index = it.get_group(0) + 1; // range 1..nb
 
-  for (int i_index = it.get_local_id(0) + 1; i_index <= nb; i_index += it.get_local_range(0)) {
-    if (j_index < i_index+1) {
-      tmp2_dev[1-1 + j_index-1 + (i_index-1)*nblk] = tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1];
-    }
+  for (int j_index = it.get_local_id(0) + 1; j_index <= i_index; j_index += it.get_local_range(0)) {
+    tmp2_dev[1-1 + j_index-1 + (i_index-1)*nblk] = tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1];
   }
 }
 
@@ -282,12 +282,10 @@ extern "C" void sycl_copy_float_complex_tmp1_tmp2_FromC(std::complex<float> *tmp
 template <typename T>
 void sycl_copy_a_tmp1_kernel(T *a_dev, T *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb, sycl::nd_item<1> it){
 
-  int j_index = it.get_group(0) + 1;    // range 1..nb (should be 1..i)
+  int i_index = it.get_group(0) + 1; // range 1..nb
 
-  for (int i_index = it.get_local_id(0) + 1; i_index <= nb; i_index += it.get_local_range(0)) {
-    if (j_index < i_index+1) {
-      tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1] = a_dev[l_row1-1+j_index-1 + (l_col1-1+i_index-1)*matrixRows];
-    }
+  for (int j_index = it.get_local_id(0) + 1; j_index <= i_index; j_index += it.get_local_range(0)) {
+    tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1] = a_dev[l_row1-1+j_index-1 + (l_col1-1+i_index-1)*matrixRows];
   }
 }
 

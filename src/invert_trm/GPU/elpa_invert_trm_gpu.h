@@ -258,60 +258,27 @@ extern "C" void CONCATENATE(ELPA_GPU, _copy_float_complex_tmp2_tmat2_FromC)(floa
 template <typename T>
 __global__ void gpu_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1)
 {
-  int l_row1_index = blockIdx.x  + 1; // range 1..l_row1-1
+  int row = blockIdx.x * blockDim.x + threadIdx.x;
+  int col = blockIdx.y;
 
-  for (int nb_index = threadIdx.x + 1; nb_index <= nb; nb_index += blockDim.x) {
-    tmat1_dev[l_row1_index-1 + (nb_index-1) * l_rows] =
-      a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows];
-    set_to_zero(a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1) * matrixRows]);
+  if (row < l_row1 - 1) {
+    tmat1_dev[row + col * l_rows] =
+      a_dev[row + (l_col1-1 + col) * matrixRows];
+    set_to_zero(a_dev[row + (l_col1-1 + col) * matrixRows]);
   }
 }
-
-#ifdef WITH_AMD_GPU_VERSION
-template <typename T>
-__global__ void gpu_copy_a_tmat1_block_kernel(T * __restrict__ a_dev, T * __restrict__ tmat1_dev,
-                                               const int l_rows, const int matrixRows, const int l_col1)
-{
-  int x = blockIdx.x * BLK_X_DIM + threadIdx.x;
-  int y = blockIdx.y * BLK_X_DIM + threadIdx.y;
-
-  for (int j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
-    tmat1_dev[(y + j) * l_rows + x] = a_dev[(l_col1 - 1 + y + j) * matrixRows + x];
-  }
-
-  __syncthreads();
-
-  for (int j = 0; j < BLK_X_DIM; j += BLK_Y_DIM) {
-    set_to_zero(a_dev[(l_col1 - 1 + y + j) * matrixRows + x]);
-  }
-}
-#endif
 
 template <typename T>
 void gpu_copy_a_tmat1(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows,
                       const int nb, const int l_row1, const int l_col1, gpuStream_t my_stream)
 {
-#ifdef WITH_AMD_GPU_VERSION
-  if ((l_row1-1) % BLK_X_DIM == 0 && nb % BLK_X_DIM == 0) {
-    dim3 threadsPerBlock = dim3(BLK_X_DIM, BLK_Y_DIM);
-    dim3 blocks = dim3((l_row1-1) / BLK_X_DIM, nb / BLK_X_DIM);
+  dim3 threadsPerBlock = dim3(min(l_row1-1, MAX_THREADS_PER_BLOCK), 1, 1);
+  dim3 blocks = dim3((l_row1-2)/threadsPerBlock.x+1,nb,1);
 #ifdef WITH_GPU_STREAMS
-    gpu_copy_a_tmat1_block_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1);
+  gpu_copy_a_tmat1_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #else
-    gpu_copy_a_tmat1_block_kernel<T><<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1);
+  gpu_copy_a_tmat1_kernel<T><<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
 #endif
-  }
-  else
-#endif
-  {
-    dim3 threadsPerBlock = dim3(min(nb, MAX_THREADS_PER_BLOCK), 1, 1);
-    dim3 blocks = dim3(l_row1-1,1,1);
-#ifdef WITH_GPU_STREAMS
-    gpu_copy_a_tmat1_kernel<T><<<blocks,threadsPerBlock,0,my_stream>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
-#else
-    gpu_copy_a_tmat1_kernel<T><<<blocks,threadsPerBlock>>>(a_dev, tmat1_dev, l_rows, matrixRows, l_col1, nb, l_row1);
-#endif
-  }
 
   gpuError_t cuerr = gpuGetLastError();
   if (cuerr != gpuSuccess){
@@ -342,13 +309,11 @@ extern "C" void CONCATENATE(ELPA_GPU, _copy_float_complex_a_tmat1_FromC)(float _
 template <typename T>
 __device__ void gpu_copy_tmp1_tmp2_kernel_body(T *tmp1_dev, T *tmp2_dev, const int nblk, const int nb)
 {
-  int j_index = blockIdx.x  + 1; // range 1..nb (should be 1..i)
+  int i_index = blockIdx.x + 1; // range 1..nb
 
-  for (int i_index = threadIdx.x + 1; i_index <= nb; i_index += blockDim.x) {
-    if (j_index < i_index + 1) {
-      tmp2_dev[1-1 + j_index-1 + (i_index-1) * nblk] =
-        tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1];
-    }
+  for (int j_index = threadIdx.x + 1; j_index <= i_index; j_index += blockDim.x) {
+    tmp2_dev[1-1 + j_index-1 + (i_index-1) * nblk] =
+      tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1];
   }
 }
 
@@ -449,13 +414,11 @@ extern "C" void CONCATENATE(ELPA_GPU, _copy_float_complex_tmp1_tmp2_FromC)(float
 template <typename T>
 __device__ void gpu_copy_a_tmp1_kernel_body(T *a_dev, T *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb)
 {
-  int j_index = blockIdx.x  + 1; // range 1..nb (should be 1..i)
+  int i_index = blockIdx.x + 1; // range 1..nb
 
-  for (int i_index = threadIdx.x + 1; i_index <= nb; i_index += blockDim.x) {
-    if (j_index < i_index + 1) {
-      tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1] =
-        a_dev[l_row1-1 + j_index-1 + (l_col1-1 + i_index-1) * matrixRows];
-    }
+  for (int j_index = threadIdx.x + 1; j_index <= i_index; j_index += blockDim.x) {
+    tmp1_dev[(i_index*(i_index+1) - 2*i_index) / 2 + 1 - 1 + j_index - 1] =
+      a_dev[l_row1-1 + j_index-1 + (l_col1-1 + i_index-1) * matrixRows];
   }
 }
 
