@@ -66,7 +66,6 @@ int mpicclRedOpMaxFromC(void) {
 
 int mpicclRedOpAvgFromC(void) {
   int val = MPI_Op_c2f(MPI_OP_NULL); // no AVG in MPI
-  errormessage("Error in mpicclRedOpAvgFromC: %s\n", "MPI does not have an AVG operation");
   return val;
 }
 
