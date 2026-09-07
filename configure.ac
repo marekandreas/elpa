@@ -3487,23 +3487,19 @@ AC_ARG_ENABLE([gpu-ccl],
                                [if test x"$enableval" = x"nccl"; then
                                   use_nvidia_nccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"rccl"; then
+                                elif test x"$enableval" = x"rccl"; then
                                   use_amd_rccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"oneccl"; then
+                                elif test x"$enableval" = x"oneccl"; then
                                   use_oneccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"yes"; then
-                                  AC_MSG_ERROR([Wrong value! Must be either "nccl", "rccl", or "oneccl"])
-                                fi
-                                if test x"$enableval" = x"no"; then
-                                  use_cuda_nccl=no
+                                elif test x"$enableval" = x"no"; then
+                                  use_nvidia_nccl=no
                                   use_amd_rccl=no
                                   use_oneccl=no
                                   use_gpu_ccl=no
+                                else
+                                  AC_MSG_ERROR([Wrong value for --enable-gpu-ccl! Must be either "nccl", "rccl", or "oneccl"])
                                 fi
                                 ],
               [use_gpu_ccl=no])
@@ -3524,8 +3520,8 @@ AC_ARG_ENABLE([gpu-aware-mpi],
               [use_gpu_aware_mpi=no])
 AC_MSG_RESULT([${use_gpu_aware_mpi}])
 
-if test x"$enable_gpu_aware_mpi" = x"yes"; then
-  if test x"${use_cuda_aware_mpi}" = x"yes" ; then
+if test x"$use_gpu_aware_mpi" = x"yes"; then
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
     AC_MSG_ERROR([The combination --enable-gpu-aware-mpi and --enable-cuda-aware-mpi is not supported])
   fi
   if test x"$use_nvidia_nccl" = x"yes"; then

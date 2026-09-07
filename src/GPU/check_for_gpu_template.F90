@@ -295,7 +295,7 @@
       gpuAvailable = .true.
 
 
-      ! Check if there is one MPI task per GPU and enable CCL
+      ! Check if there is one MPI task per GPU and enable the GPU communication backend
 #ifdef WITH_MPI
       call mpi_comm_split_type(int(mpi_comm_all,kind=MPI_KIND), MPI_COMM_TYPE_SHARED, keyMPI, MPI_INFO_NULL, & !mpi_infoMPI, &
                                 mpi_comm_all_per_nodeMPI, mpierr)
@@ -311,11 +311,19 @@
       OBJECT%gpu_setup%useCCL=.false.  
 #if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       if (OBJECT%gpu_setup%gpusPerNode/OBJECT%mpi_setup%nRanks_comm_parent_per_node==1 .or. allow_many_mpi_per_gpu_ccl) then
+#if defined(WITH_GPU_AWARE_MPICCL)
+        call OBJECT%get("use_gpu_aware_mpi", useCCLcomm, error)
+        if (error .ne. ELPA_OK) then
+          write(error_unit,*) "Problem getting 'use_gpu_aware_mpi' option. Aborting..."
+          stop 1
+        endif
+#else
         call OBJECT%get("use_ccl", useCCLcomm, error)
         if (error .ne. ELPA_OK) then
           write(error_unit,*) "Problem getting 'use_ccl' option. Aborting..."
           stop 1
         endif
+#endif
         if (useCCLcomm .eq. 1) then
           OBJECT%gpu_setup%useCCL=.true.
         else
@@ -327,7 +335,11 @@
       if (myid == 0 .and. wantDebugMessage) then
         write(error_unit,*) "GPUs per node", OBJECT%gpu_setup%gpusPerNode, &
                             "Ranks per node", OBJECT%mpi_setup%nRanks_comm_parent_per_node
+#if defined(WITH_GPU_AWARE_MPICCL)
+        write(error_unit,*) "Using GPU-aware MPI:", OBJECT%gpu_setup%useCCL
+#else
         write(error_unit,*) "Using ccl:", OBJECT%gpu_setup%useCCL
+#endif
       endif
       
       if (OBJECT%gpu_setup%useCCL) then
