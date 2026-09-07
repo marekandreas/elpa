@@ -997,6 +997,19 @@
     end function
 
 
+    function ccl_request_size() result(request_size)
+      use, intrinsic :: iso_c_binding
+      implicit none
+      integer(kind=c_size_t) :: request_size
+
+#ifdef WITH_GPU_AWARE_MPICCL
+      request_size = mpiccl_request_size()
+#else
+      request_size = 0_c_size_t
+#endif
+    end function
+
+
     function ccl_isend_intptr(sendbuff, nrElements, cclDatatype, peer, cclComm, request, gpuStream) result(success)
       use, intrinsic :: iso_c_binding
       implicit none

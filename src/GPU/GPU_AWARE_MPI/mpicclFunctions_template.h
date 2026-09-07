@@ -31,6 +31,10 @@ int mpicclGetUniqueIdFromC(ncclUniqueId *mpicclID)
   return 1;
 }
 
+size_t mpicclRequestSizeFromC(void) {
+  return sizeof(MPI_Request);
+}
+
 int mpicclCommInitRankFromC(mpicclComm_t *mpicclComm, int nRanks, ncclUniqueId *mpicclID, int myRank) {
   return 1;
 }
@@ -275,9 +279,8 @@ int mpicclRecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer, 
 #endif
 
   int tag_dummy = 0;
-  MPI_Status* status;
 
-  mpicclError = MPI_Recv(recvbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), status);
+  mpicclError = MPI_Recv(recvbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), MPI_STATUS_IGNORE);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
@@ -301,12 +304,10 @@ int mpicclSendrecvFromC(const void* sendbuff, size_t sendcount, int sendMpicclDa
 #endif
 
   int tag_dummy = 0;
-  MPI_Status* status;
 
-  mpicclError = MPI_Sendrecv(sendbuff, sendcount, MPI_Type_f2c(sendMpicclDatatype), dest  , tag_dummy, 
+  mpicclError = MPI_Sendrecv(sendbuff, sendcount, MPI_Type_f2c(sendMpicclDatatype), dest  , tag_dummy,
                              recvbuff, recvcount, MPI_Type_f2c(recvMpicclDatatype), source, tag_dummy,
-                             MPI_COMM_WORLD, status);
-                             //MPI_Comm_f2c(mpicclComm), status); // PETERDEBUG111
+                             MPI_Comm_f2c(mpicclComm), MPI_STATUS_IGNORE);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
@@ -352,7 +353,6 @@ int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer,
 #endif
 
   int tag_dummy = 0;
-  MPI_Status* status;
 
   mpicclError = MPI_Irecv(recvbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), (MPI_Request*)request);
   if (mpicclError != MPI_SUCCESS) {

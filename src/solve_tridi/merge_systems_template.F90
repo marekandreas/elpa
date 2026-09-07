@@ -1706,9 +1706,10 @@
 block
   integer(kind=MPI_KIND) :: req(2)
   integer(kind=c_intptr_t) :: requests_host
-  integer(kind=c_intptr_t), parameter         :: size_of_mpi_request = 2*size_of_int ! PETERDEBUG111 sizeof(MPI_Request)=8, sizeof(int)=4
+  integer(kind=c_intptr_t) :: size_of_mpi_request
 
-                num = 2 * size_of_mpi_request ! sizeof(int)=4, sizeof(MPI_Request)=8 ! PETERDEBUG111
+                size_of_mpi_request = int(ccl_request_size(), kind=c_intptr_t)
+                num = 2 * size_of_mpi_request
                 successGPU = gpu_malloc_host(requests_host, num)
                 check_host_alloc_gpu("merge_systems: request_host", successGPU)
 
@@ -1730,6 +1731,10 @@ block
                 endif
 
                 successGPU = ccl_waitall(2, requests_host, my_stream)
+                if (.not.successGPU) then
+                  print *,"Error in ccl_waitall"
+                  stop 1
+                endif
 
                 successGPU = gpu_free_host(requests_host)
                 check_host_dealloc_gpu("merge_systems: request_host", successGPU)

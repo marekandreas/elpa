@@ -206,6 +206,15 @@ interface
 end interface
 
 interface
+  function mpiccl_request_size_c() result(request_size) &
+            bind(C, name="mpicclRequestSizeFromC")
+    use, intrinsic :: iso_c_binding
+    implicit none
+    integer(kind=c_size_t) :: request_size
+  end function
+end interface
+
+interface
   function mpiccl_comm_init_rank_c(mpicclComm, nRanks, mpicclId, myRank) result(istat) &
             bind(C, name="mpicclCommInitRankFromC")
     use, intrinsic :: iso_c_binding
@@ -683,6 +692,17 @@ contains
     success = mpiccl_get_unique_id_c(mpicclId) /= 0
 #else 
     success = .true.
+#endif
+  end function
+
+  function mpiccl_request_size() result(request_size)
+    use, intrinsic :: iso_c_binding
+    implicit none
+    integer(kind=c_size_t) :: request_size
+#ifdef WITH_GPU_AWARE_MPICCL
+    request_size = mpiccl_request_size_c()
+#else
+    request_size = 0_c_size_t
 #endif
   end function
 
