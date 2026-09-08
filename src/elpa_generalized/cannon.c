@@ -100,8 +100,8 @@
 #include <cublas_v2.h>
 #endif
 
-int gpuMemcpyHostToDevice;
-int gpuMemcpyDeviceToHost;
+static int gpuMemcpyHostToDevice;
+static int gpuMemcpyDeviceToHost;
 #include "./gpu_vendor_agnostic_layer.h"
 
 #define gpuErrCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
