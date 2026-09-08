@@ -31,10 +31,6 @@ int mpicclGetUniqueIdFromC(ncclUniqueId *mpicclID)
   return 1;
 }
 
-size_t mpicclRequestSizeFromC(void) {
-  return sizeof(MPI_Request);
-}
-
 int mpicclCommInitRankFromC(mpicclComm_t *mpicclComm, int nRanks, ncclUniqueId *mpicclID, int myRank) {
   return 1;
 }
@@ -291,8 +287,9 @@ int mpicclSendrecvFromC(const void* sendbuff, size_t sendcount, int sendMpicclDa
   return 1;
 }
 
-int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, intptr_t request, gpuStream_t gpuStream) {
+int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, MPI_Fint *request, gpuStream_t gpuStream) {
   int mpicclError;
+  MPI_Request c_request;
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
@@ -300,7 +297,7 @@ int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int
 
   int tag_dummy = 0;
 
-  mpicclError = MPI_Isend(sendbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), (MPI_Request*)request);
+  mpicclError = MPI_Isend(sendbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), &c_request);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
@@ -308,20 +305,21 @@ int mpicclIsendFromC(const void* sendbuff, size_t count, int mpicclDatatype, int
     errormessage("Error in mpicclIsend: %s\n", errstr);
     return 0;
   }
+  *request = MPI_Request_c2f(c_request);
 
   return 1;
 }
 
-int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, intptr_t request, gpuStream_t gpuStream) {
+int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer, intptr_t mpicclComm, MPI_Fint *request, gpuStream_t gpuStream) {
   int mpicclError;
+  MPI_Request c_request;
 
 #ifdef WITH_GPU_STREAMS
   gpuStreamSynchronize(gpuStream);
 #endif
 
   int tag_dummy = 0;
-
-  mpicclError = MPI_Irecv(recvbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), (MPI_Request*)request);
+  mpicclError = MPI_Irecv(recvbuff, count, MPI_Type_f2c(mpicclDatatype), peer, tag_dummy, MPI_Comm_f2c(mpicclComm), &c_request);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
@@ -329,21 +327,43 @@ int mpicclIrecvFromC(void* recvbuff, size_t count, int mpicclDatatype, int peer,
     errormessage("Error in mpicclIrecv: %s\n", errstr);
     return 0;
   }
+  *request = MPI_Request_c2f(c_request);
 
   return 1;
 }
 
-int mpicclWaitallFromC(int count, intptr_t request_handles, gpuStream_t gpuStream) {
+int mpicclWaitallFromC(int count, MPI_Fint *request_handles, gpuStream_t gpuStream) {
   int mpicclError;
-  
-  mpicclError = MPI_Waitall(count, (MPI_Request*)request_handles, MPI_STATUSES_IGNORE);
+  MPI_Request *c_requests;
+
+  if (count==0) {
+    return 1; // success, nothing to wait for
+  }
+  else if (count < 0) {
+    errormessage("Error in mpicclWaitall: %s\n", "negative request count");
+    return 0;
+  }
+
+  c_requests = (MPI_Request*)malloc(count*sizeof(MPI_Request));
+
+  for (int i = 0; i < count; i++) {
+    c_requests[i] = MPI_Request_f2c(request_handles[i]);
+  }
+
+  mpicclError = MPI_Waitall(count, c_requests, MPI_STATUSES_IGNORE);
   if (mpicclError != MPI_SUCCESS) {
     char errstr[MPI_MAX_ERROR_STRING];
     int len = 0;
     MPI_Error_string(mpicclError, errstr, &len);
     errormessage("Error in mpicclWaitall: %s\n", errstr);
+    free(c_requests);
     return 0;
   }
+
+  for (int i = 0; i < count; i++) {
+    request_handles[i] = MPI_Request_c2f(c_requests[i]);
+  }
+  free(c_requests);
 
   return 1;
 }

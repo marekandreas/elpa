@@ -997,21 +997,9 @@
     end function
 
 
-    function ccl_request_size() result(request_size)
-      use, intrinsic :: iso_c_binding
-      implicit none
-      integer(kind=c_size_t) :: request_size
-
-#ifdef WITH_GPU_AWARE_MPICCL
-      request_size = mpiccl_request_size()
-#else
-      request_size = 0_c_size_t
-#endif
-    end function
-
-
     function ccl_isend_intptr(sendbuff, nrElements, cclDatatype, peer, cclComm, request, gpuStream) result(success)
       use, intrinsic :: iso_c_binding
+      use precision, only : MPI_KIND
       implicit none
 
       integer(kind=c_intptr_t)       :: sendbuff
@@ -1019,7 +1007,7 @@
       integer(kind=c_int)            :: cclDatatype
       integer(kind=c_int)            :: peer
       integer(kind=c_intptr_t)       :: cclComm
-      integer(kind=c_intptr_t)       :: request
+      integer(kind=MPI_KIND), intent(out) :: request
       integer(kind=c_intptr_t)       :: gpuStream
       logical                        :: success
 
@@ -1051,6 +1039,7 @@
 
     function ccl_irecv_intptr(recvbuff, nrElements, cclDatatype, peer, cclComm, request, gpuStream) result(success)
       use, intrinsic :: iso_c_binding
+      use precision, only : MPI_KIND
       implicit none
 
       integer(kind=c_intptr_t)      :: recvbuff
@@ -1058,7 +1047,7 @@
       integer(kind=c_int)           :: cclDatatype
       integer(kind=c_int)           :: peer
       integer(kind=c_intptr_t)      :: cclComm
-      integer(kind=c_intptr_t)      :: request
+      integer(kind=MPI_KIND), intent(out) :: request
       integer(kind=c_intptr_t)      :: gpuStream
       logical                       :: success
 
@@ -1090,10 +1079,11 @@
 
     function ccl_waitall(count, requests, gpuStream) result(success)
       use, intrinsic :: iso_c_binding
+      use precision, only : MPI_KIND
       implicit none
 
-      integer(kind=c_int)           :: count
-      integer(kind=c_intptr_t)      :: requests
+      integer(kind=c_int), intent(in)       :: count
+      integer(kind=MPI_KIND), intent(inout) :: requests(count)
       integer(kind=c_intptr_t)      :: gpuStream
       logical                       :: success
 

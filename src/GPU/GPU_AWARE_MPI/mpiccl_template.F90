@@ -206,15 +206,6 @@ interface
 end interface
 
 interface
-  function mpiccl_request_size_c() result(request_size) &
-            bind(C, name="mpicclRequestSizeFromC")
-    use, intrinsic :: iso_c_binding
-    implicit none
-    integer(kind=c_size_t) :: request_size
-  end function
-end interface
-
-interface
   function mpiccl_comm_init_rank_c(mpicclComm, nRanks, mpicclId, myRank) result(istat) &
             bind(C, name="mpicclCommInitRankFromC")
     use, intrinsic :: iso_c_binding
@@ -473,13 +464,14 @@ interface
   function mpiccl_isend_intptr_c(sendbuff, nrElements, mpicclDatatype, peer, mpicclComm, request, gpuStream) result(istat) &
             bind(C, name="mpicclIsendFromC")
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
     integer(kind=c_intptr_t), value              :: sendbuff
     integer(kind=c_size_t), intent(in), value    :: nrElements
     integer(kind=c_int), intent(in), value       :: mpicclDatatype
     integer(kind=c_int), intent(in), value       :: peer
     integer(kind=c_intptr_t), value              :: mpicclComm
-    integer(kind=c_intptr_t), value              :: request
+    integer(kind=MPI_KIND), intent(out)          :: request
     integer(kind=c_intptr_t), value              :: gpuStream
     integer(kind=c_int)                          :: istat
   end function
@@ -494,13 +486,14 @@ interface
   function mpiccl_irecv_intptr_c(recvbuff, nrElements, mpicclDatatype, peer, mpicclComm, request, gpuStream) result(istat) &
             bind(C, name="mpicclIrecvFromC")
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
     integer(kind=c_intptr_t), value              :: recvbuff
     integer(kind=c_size_t), intent(in), value    :: nrElements
     integer(kind=c_int), intent(in), value       :: mpicclDatatype
     integer(kind=c_int), intent(in), value       :: peer
     integer(kind=c_intptr_t), value              :: mpicclComm
-    integer(kind=c_intptr_t), value              :: request
+    integer(kind=MPI_KIND), intent(out)           :: request
     integer(kind=c_intptr_t), value              :: gpuStream
     integer(kind=c_int)                          :: istat
   end function
@@ -511,9 +504,10 @@ interface
   function mpiccl_waitall_c(count, requests, gpuStream) result(istat) &
             bind(C, name="mpicclWaitallFromC")
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
     integer(kind=c_int), intent(in), value       :: count
-    integer(kind=c_intptr_t), value              :: requests
+    integer(kind=MPI_KIND), intent(inout)        :: requests(*)
     integer(kind=c_intptr_t), value              :: gpuStream
     integer(kind=c_int)                          :: istat
   end function
@@ -695,18 +689,6 @@ contains
 #endif
   end function
 
-  function mpiccl_request_size() result(request_size)
-    use, intrinsic :: iso_c_binding
-    implicit none
-    integer(kind=c_size_t) :: request_size
-#ifdef WITH_GPU_AWARE_MPICCL
-    request_size = mpiccl_request_size_c()
-#else
-    request_size = 0_c_size_t
-#endif
-  end function
-
-  
   function mpiccl_comm_init_rank(mpicclComm, nRanks, mpicclId, myRank) result(success)
     use, intrinsic :: iso_c_binding
     implicit none
@@ -965,6 +947,7 @@ contains
 
   function mpiccl_isend_intptr(sendbuff, nrElements, mpicclDatatype, peer, mpicclComm, request, gpuStream) result(success)
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
 
     integer(kind=c_intptr_t)                  :: sendbuff
@@ -972,7 +955,7 @@ contains
     integer(kind=c_int)                       :: mpicclDatatype
     integer(kind=c_int)                       :: peer
     integer(kind=c_intptr_t)                  :: mpicclComm
-    integer(kind=c_intptr_t)                  :: request
+    integer(kind=MPI_KIND), intent(out)       :: request
     integer(kind=c_intptr_t)                  :: gpuStream
     logical                                   :: success
 #ifdef WITH_GPU_AWARE_MPICCL
@@ -984,6 +967,7 @@ contains
 
   function mpiccl_irecv_intptr(recvbuff, nrElements, mpicclDatatype, peer, mpicclComm, request, gpuStream) result(success)
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
 
     integer(kind=c_intptr_t)                  :: recvbuff
@@ -991,7 +975,7 @@ contains
     integer(kind=c_int)                       :: mpicclDatatype
     integer(kind=c_int)                       :: peer
     integer(kind=c_intptr_t)                  :: mpicclComm
-    integer(kind=c_intptr_t)                  :: request
+    integer(kind=MPI_KIND), intent(out)       :: request
     integer(kind=c_intptr_t)                  :: gpuStream
     logical                                   :: success
 #ifdef WITH_GPU_AWARE_MPICCL
@@ -1003,9 +987,10 @@ contains
 
   function mpiccl_waitall(count, requests, gpuStream) result(success)
     use, intrinsic :: iso_c_binding
+    use precision, only : MPI_KIND
     implicit none
-    integer(kind=c_int)                       :: count
-    integer(kind=c_intptr_t)                  :: requests
+    integer(kind=c_int), intent(in)           :: count
+    integer(kind=MPI_KIND), intent(inout)     :: requests(count)
     integer(kind=c_intptr_t)                  :: gpuStream
     logical                                   :: success
 #ifdef WITH_GPU_AWARE_MPICCL
