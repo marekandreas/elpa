@@ -62,15 +62,18 @@
 
 using namespace sycl_be;
 
+#define MAX_THREADS_PER_BLOCK 512
+
 #define errormessage(x, ...) do { fprintf(stderr, "%s:%d " x, __FILE__, __LINE__, __VA_ARGS__ ); } while (0)
 
 template <typename T>
-void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, sycl::nd_item<1> it){
+void sycl_copy_a_tmat2_kernel(T *a_dev, T *tmat2_dev, const int nblk, const int matrixRows, const int l_colx, const int l_row1, const int nb, sycl::nd_item<1> it){
 
-  int nb_index = it.get_local_id(0) + 1; // range 1..nb
   int l_col_index = it.get_group(0) + 1; // range 1..l_colx-l_cols-1
 
-  tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index -1) * nblk] = a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index -1)  * matrixRows];
+  for (int nb_index = it.get_local_id(0) + 1; nb_index <= nb; nb_index += it.get_local_range(0)) {
+    tmat2_dev[nb_index-1 + (l_colx-1 + l_col_index -1) * nblk] = a_dev[l_row1-1 + nb_index-1 + (l_colx-1 + l_col_index -1)  * matrixRows];
+  }
 
 }
 
@@ -84,8 +87,9 @@ void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRo
   int l_row1 = *l_row1_in;
   int nb     = *nb_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*(l_cols - l_colx + 1));
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int threadsPerBlock = sycl::min(nb, MAX_THREADS_PER_BLOCK);
+  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*(l_cols - l_colx + 1));
+  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
@@ -93,7 +97,7 @@ void sycl_copy_a_tmat2_FromC(T *a_dev, T *tmat2_dev, int *nblk_in, int *matrixRo
       sycl::nd_range<1>(global_range, local_range),
       [=](sycl::nd_item<1> it) {
         sycl_copy_a_tmat2_kernel(a_dev, tmat2_dev, nblk, matrixRows,
-                                        l_colx, l_row1, it);
+                                        l_colx, l_row1, nb, it);
       });
   queue.wait_and_throw();
 
@@ -118,12 +122,13 @@ extern "C" void sycl_copy_float_complex_a_tmat2_FromC(std::complex<float> *a_dev
 //________________________________________________________________
 
 template <typename T>
-void sycl_copy_tmp2_tmat2_kernel(T *tmp2_dev, T *tmat2_dev, const int nblk, const int l_col1, sycl::nd_item<1> it){
+void sycl_copy_tmp2_tmat2_kernel(T *tmp2_dev, T *tmat2_dev, const int nblk, const int l_col1, const int nb, sycl::nd_item<1> it){
 
-  int nb_index = it.get_local_id(0) + 1; // range 1..nb
   int l_col_index = it.get_group(0) + 1; // range 1..nb
 
-  tmat2_dev[nb_index-1 + (l_col1-1 + l_col_index -1)*nblk] = tmp2_dev[nb_index-1 + (1 -1 + l_col_index-1)  * nblk];
+  for (int nb_index = it.get_local_id(0) + 1; nb_index <= nb; nb_index += it.get_local_range(0)) {
+    tmat2_dev[nb_index-1 + (l_col1-1 + l_col_index -1)*nblk] = tmp2_dev[nb_index-1 + (1 -1 + l_col_index-1)  * nblk];
+  }
 
 }
 
@@ -134,15 +139,16 @@ void sycl_copy_tmp2_tmat2_FromC(T *tmp2_dev, T *tmat2_dev, int *nblk_in, int *l_
   int l_col1 = *l_col1_in;
   int nb     = *nb_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*nb);
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int threadsPerBlock = sycl::min(nb, MAX_THREADS_PER_BLOCK);
+  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*nb);
+  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
       sycl::nd_range<1>(global_range, local_range),
       [=](sycl::nd_item<1> it) {
-        sycl_copy_tmp2_tmat2_kernel(tmp2_dev, tmat2_dev, nblk, l_col1, it);
+        sycl_copy_tmp2_tmat2_kernel(tmp2_dev, tmat2_dev, nblk, l_col1, nb, it);
       });
   queue.wait_and_throw();
 
@@ -167,13 +173,15 @@ extern "C" void sycl_copy_float_complex_tmp2_tmat2_FromC(std::complex<float> *tm
 //________________________________________________________________
 
 template <typename T>
-void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, sycl::nd_item<1> it){
+void sycl_copy_a_tmat1_kernel(T *a_dev, T *tmat1_dev, const int l_rows, const int matrixRows, const int l_col1, const int nb, const int l_row1, sycl::nd_item<2> it){
 
-  int nb_index = it.get_local_id(0) + 1;  // range 1..nb
-  int l_row1_index = it.get_group(0) + 1; // we need l_row1-1 blocks
+  int row = it.get_group(1) * it.get_local_range(1) + it.get_local_id(1);
+  int col = it.get_group(0);
 
-  tmat1_dev[l_row1_index-1 + (nb_index-1)*l_rows] = a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1 ) * matrixRows];
-  a_dev[l_row1_index-1 + (l_col1-1 + nb_index-1)*matrixRows] = 0;
+  if (row < l_row1 - 1) {
+    tmat1_dev[row + col*l_rows] = a_dev[row + (l_col1-1 + col) * matrixRows];
+    a_dev[row + (l_col1-1 + col)*matrixRows] = 0;
+  }
 
 }
 
@@ -186,14 +194,16 @@ void sycl_copy_a_tmat1_FromC(T *a_dev, T *tmat1_dev, int *l_rows_in, int *matrix
   int l_row1 = *l_row1_in;
   int l_col1 = *l_col1_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*(l_row1 - 1));
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int threadsPerBlock = sycl::min(l_row1 - 1, MAX_THREADS_PER_BLOCK);
+  int blocksPerColumn = (l_row1 - 2)/threadsPerBlock + 1;
+  sycl::range<2> global_range = sycl::range<2>(nb, threadsPerBlock*blocksPerColumn);
+  sycl::range<2> local_range  = sycl::range<2>(1, threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
   queue.parallel_for(
-      sycl::nd_range<1>(global_range, local_range),
-      [=](sycl::nd_item<1> it) {
+      sycl::nd_range<2>(global_range, local_range),
+      [=](sycl::nd_item<2> it) {
         sycl_copy_a_tmat1_kernel(a_dev, tmat1_dev, l_rows, matrixRows,
                                  l_col1, nb, l_row1, it);
       });
@@ -223,10 +233,9 @@ extern "C" void sycl_copy_float_complex_a_tmat1_FromC(std::complex<float> *a_dev
 template <typename T>
 void sycl_copy_tmp1_tmp2_kernel(T *tmp1_dev, T *tmp2_dev, const int nblk, const int nb, sycl::nd_item<1> it){
 
-  int i_index = it.get_local_id(0) + 1; // range 1..nb
-  int j_index = it.get_group(0) + 1;    // range 1..nb (should be 1..i)
+  int i_index = it.get_group(0) + 1; // range 1..nb
 
-  if (j_index < i_index+1) {
+  for (int j_index = it.get_local_id(0) + 1; j_index <= i_index; j_index += it.get_local_range(0)) {
     tmp2_dev[1-1 + j_index-1 + (i_index-1)*nblk] = tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1];
   }
 }
@@ -237,8 +246,9 @@ void sycl_copy_tmp1_tmp2_FromC(T *tmp1_dev, T *tmp2_dev, int *nblk_in, int *nb_i
   int nblk = *nblk_in;
   int nb = *nb_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*nb);
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int threadsPerBlock = sycl::min(nb, MAX_THREADS_PER_BLOCK);
+  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*nb);
+  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
@@ -272,10 +282,9 @@ extern "C" void sycl_copy_float_complex_tmp1_tmp2_FromC(std::complex<float> *tmp
 template <typename T>
 void sycl_copy_a_tmp1_kernel(T *a_dev, T *tmp1_dev, const int l_row1, const int l_col1, const int matrixRows, const int nb, sycl::nd_item<1> it){
 
-  int i_index = it.get_local_id(0) + 1; // range 1..nb
-  int j_index = it.get_group(0) + 1;    // range 1..nb (should be 1..i)
+  int i_index = it.get_group(0) + 1; // range 1..nb
 
-  if (j_index < i_index+1) {
+  for (int j_index = it.get_local_id(0) + 1; j_index <= i_index; j_index += it.get_local_range(0)) {
     tmp1_dev[(i_index*(i_index+1)-2*i_index)/2 +1 -1 + j_index-1] = a_dev[l_row1-1+j_index-1 + (l_col1-1+i_index-1)*matrixRows];
   }
 }
@@ -287,8 +296,9 @@ void sycl_copy_a_tmp1_FromC(T *a_dev, T *tmp1_dev, int *l_row1_in, int *l_col1_i
   int matrixRows = *matrixRows_in;
   int nb = *nb_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nb*nb);
-  sycl::range<1> local_range  = sycl::range<1>(nb);
+  int threadsPerBlock = sycl::min(nb, MAX_THREADS_PER_BLOCK);
+  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*nb);
+  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 

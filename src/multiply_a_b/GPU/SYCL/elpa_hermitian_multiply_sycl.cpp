@@ -67,11 +67,12 @@ template <typename T>
 void gpu_copy_tmp2_c_kernel(T *tmp2_dev, T *c_dev,
                             const int nr_done, const int nstor, const int lcs, const int lce, const int ldc, const int ldcCols,
                             const sycl::nd_item<1> &it){
-  int idex = it.get_local_id(0) + 1; // range 1..nstor
   int jdex = it.get_group(0)    + 1; // range 1..lce-lse+1
 
-  //base 1 index
-  c_dev[nr_done+(idex-1) + ldc*(lcs-1+jdex-1)] = tmp2_dev[0+(idex-1)+nstor*(jdex-1)];
+  for (int idex = it.get_local_id(0) + 1; idex <= nstor; idex += it.get_local_range(0)) {
+    //base 1 index
+    c_dev[nr_done+(idex-1) + ldc*(lcs-1+jdex-1)] = tmp2_dev[0+(idex-1)+nstor*(jdex-1)];
+  }
 }
 
 template <typename T>
@@ -80,7 +81,7 @@ void gpu_copy_tmp2_c (T *tmp2_dev, T *c_dev,
 
   sycl::queue q = getQueueOrDefault(my_stream);
   sycl::range<1> blocks(lce-lcs+1);
-  sycl::range<1> threadsPerBlock(nr_done+nstor-(nr_done+1)+1);
+  sycl::range<1> threadsPerBlock(sycl::min(nstor, MAX_THREADS_PER_BLOCK));
 
   q.parallel_for(sycl::nd_range<1>(blocks * threadsPerBlock, threadsPerBlock), [=](sycl::nd_item<1> it) {
       gpu_copy_tmp2_c_kernel(tmp2_dev, c_dev, nr_done, nstor, lcs, lce, ldc, ldcCols, it);
