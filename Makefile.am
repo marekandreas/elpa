@@ -318,7 +318,7 @@ if WITH_SYCL_GPU_VERSION
   src/elpa2/GPU/SYCL/ev_tridi_band_sycl_gpu_real.cpp \
   src/invert_trm/GPU/SYCL/elpa_invert_trm_sycl.cpp \
   src/cholesky/GPU/SYCL/elpa_cholesky_sycl.cpp \
-  src/multiply_a_b/GPU/SYCL/elpa_multiply_a_b_sycl.cpp \
+  src/multiply_a_b/GPU/SYCL/elpa_hermitian_multiply_sycl.cpp \
   src/multiply_a_b/GPU/SYCL/elpa_pxgemm_multiply_sycl.cpp \
   src/solve_tridi/GPU/SYCL/sycl_distribute_global_column.cpp \
   src/solve_tridi/GPU/SYCL/sycl_merge_systems.cpp \
@@ -1161,6 +1161,7 @@ EXTRA_DIST = \
   src/elpa1/trans_ev_template.F90 \
   src/elpa1/tridiag_template.F90 \
   src/cholesky/elpa_cholesky_template.F90 \
+  src/cholesky/GPU/elpa_cholesky_gpu.h \
   src/multiply_a_b/elpa_hermitian_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_multiply_template.F90 \
   src/multiply_a_b/elpa_pxgemm_transpose_template.F90 \
@@ -1168,6 +1169,7 @@ EXTRA_DIST = \
   src/multiply_a_b/GPU/elpa_hermitian_multiply_gpu.h \
   src/multiply_a_b/GPU/elpa_pxgemm_multiply_gpu.h \
   src/invert_trm/invert_trm_template.F90 \
+  src/invert_trm/GPU/elpa_invert_trm_gpu.h \
   src/elpa1/elpa_reduce_add_vectors_template.F90 \
   src/elpa1/elpa_solve_tridi_impl_public.F90 \
   src/elpa1/elpa_transpose_vectors_template.F90 \

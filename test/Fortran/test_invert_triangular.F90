@@ -484,6 +484,9 @@ program test
 #endif /* TEST_EXPLICIT_NAME */
 
   call e%timer_stop("e%triangular")
+  if (myid == 0) then
+    call e%print_times("e%triangular")
+  endif
 
   !call print_matrix(myid, na_rows, a, "a_inverted")
 

@@ -92,14 +92,15 @@ extern "C" void sycl_accumulate_device_info_FromC(int *info_abs_dev, int *info_n
 template <typename T>
 void sycl_copy_a_tmatc_kernel(T *a_dev, T *tmatc_dev, const int l_cols, const int matrixRows, const int l_colx, const int l_row1, const int nblk, const sycl::nd_item<1> &it){
 
-  int ii_index = it.get_local_id(0) + 1; // range 1..nblk
   int jj_index = it.get_group(0) + 1;    // range 1..l_cols-l_colx+1
 
-  if constexpr (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
-    tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = std::conj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
-  }
-  else {
-    tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] =           a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
+  for (int ii_index = it.get_local_id(0) + 1; ii_index <= nblk; ii_index += it.get_local_range(0)) {
+    if constexpr (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
+      tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] = std::conj(a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows]);
+    }
+    else {
+      tmatc_dev[l_colx-1+jj_index-1+(ii_index-1)*l_cols] =           a_dev[l_row1-1+ii_index-1 + (l_colx-1+jj_index-1)*matrixRows];
+    }
   }
 }
 
@@ -112,8 +113,9 @@ void sycl_copy_a_tmatc_FromC(T *a_dev, T *tmatc_dev, int *nblk_in, int *matrixRo
   int l_colx = *l_colx_in;
   int l_row1 = *l_row1_in;
 
-  sycl::range<1> global_range = sycl::range<1>(nblk*(l_cols - l_colx + 1));
-  sycl::range<1> local_range  = sycl::range<1>(nblk);
+  int threadsPerBlock = sycl::min(nblk, MAX_THREADS_PER_BLOCK);
+  sycl::range<1> global_range = sycl::range<1>(threadsPerBlock*(l_cols - l_colx + 1));
+  sycl::range<1> local_range  = sycl::range<1>(threadsPerBlock);
 
   auto queue = getQueueOrDefault(my_stream);
 
