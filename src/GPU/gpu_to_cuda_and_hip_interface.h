@@ -80,6 +80,9 @@
 #define gpuFloatComplex  cuFloatComplex
 #define make_gpuDoubleComplex make_cuDoubleComplex
 #define make_gpuFloatComplex make_cuFloatComplex
+#define gpuMemcpy cudaMemcpy
+#define gpuMemcpyAsync cudaMemcpyAsync
+#define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuPointerAttributes cudaPointerAttributes
 #define gpuPointerGetAttributes cudaPointerGetAttributes
 #define gpuMemoryTypeHost cudaMemoryTypeHost
@@ -103,6 +106,9 @@
 #define gpuFloatComplex  hipFloatComplex
 #define make_gpuDoubleComplex make_hipDoubleComplex
 #define make_gpuFloatComplex make_hipFloatComplex
+#define gpuMemcpy hipMemcpy
+#define gpuMemcpyAsync hipMemcpyAsync
+#define gpuMemcpyDeviceToDevice hipMemcpyDeviceToDevice
 #define gpuPointerAttributes hipPointerAttribute_t
 #define gpuPointerGetAttributes hipPointerGetAttributes
 #define gpuMemoryTypeHost hipMemoryTypeHost
@@ -116,11 +122,12 @@
 
 #ifdef WITH_SYCL_GPU_VERSION
 #define gpuDeviceSynchronize syclDeviceSynchronize
+#define gpuStreamSynchronize syclStreamSynchronizeExplicitFromC
 #define gpuStream_t QueueData*
 #define gpuGetLastError XXXERRORXXX
-#define gpuGetErrorString XXXERRORXXX
-#define gpuError_t XXXERRORXXX
-#define gpuSuccess XXXERRORXXX
+#define gpuGetErrorString(err) (std::string("Error code: ") + std::to_string(err)).c_str()
+#define gpuError_t int
+#define gpuSuccess 1
 #define gpuDoubleComplex std::complex<double>
 #define gpuFloatComplex std::complex<float>
 #define make_gpuDoubleComplex std::complex<double>

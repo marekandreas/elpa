@@ -70,7 +70,7 @@
 #include "../general/precision_macros.h"
 
 #undef USE_CCL_INVERT
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define USE_CCL_INVERT
 #endif
 
@@ -82,7 +82,7 @@
   use elpa_gpu
   use mod_check_for_gpu
   use elpa_blas_interfaces
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(USE_CCL_INVERT)
   use elpa_ccl_gpu
 #endif
 #ifdef WITH_GPU_STREAMS
@@ -90,7 +90,7 @@
 #endif
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
-#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+#elif defined(WITH_AMD_GPU_VERSION)  && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
 #endif
   use invert_trm_gpu

@@ -59,7 +59,9 @@ module elpa_ccl_gpu
 #ifdef WITH_ONEAPI_ONECCL
   use oneccl_functions
 #endif
-
+#ifdef WITH_GPU_AWARE_MPICCL
+  use mpiccl_functions
+#endif
 
   public
 #include "./vendor_agnostic_ccl_layer_template.F90"

@@ -64,7 +64,7 @@ module mod_check_for_gpu
       use elpa_mpi
       use elpa_omp
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       use elpa_ccl_gpu
 #endif
       use elpa_abstract_impl
@@ -84,7 +84,7 @@ module mod_check_for_gpu
       integer(kind=c_intptr_t)                   :: handle_tmp
       character(len=8)                           :: fmt
       character(len=12)                          :: gpu_string
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       TYPE(ncclUniqueId)                         :: ncclId
       integer(kind=c_int)                        :: nprocs
       integer(kind=c_intptr_t)                   :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
@@ -97,7 +97,8 @@ module mod_check_for_gpu
       integer(kind=MPI_KIND)                     :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
       integer(kind=ik)                           :: key
 #endif
-      integer(kind=ik)                    :: useCCLCOMM 
+      integer(kind=ik)                           :: useCCLcomm
+      logical                                    :: allow_many_mpi_per_gpu_ccl
 
 #define OBJECT obj
 #define ADDITIONAL_OBJECT_CODE

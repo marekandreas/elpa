@@ -44,8 +44,8 @@
 ! This file was written by A. Marek, MPCDF
 #endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define CCL_UNIQUE_ID_SIZE 128
 #elif defined(WITH_ONEAPI_ONECCL)
 #define CCL_UNIQUE_ID_SIZE 256
@@ -75,12 +75,14 @@
               stop 1
             endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) /* || defined(WITH_GPU_AWARE_MPICCL) */
             success = ccl_comm_init_rank(ccl_comm_all, nprocs, ncclId, myid)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator ccl_comm_all id!"
               stop 1
             endif
+#elif defined(WITH_GPU_AWARE_MPICCL)
+            ccl_comm_all = mpi_comm_all
 #endif
 #ifndef WITH_ONEAPI_ONECCL
             success = ccl_group_end()
@@ -123,12 +125,14 @@
               stop 1
             endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) /* || defined(WITH_GPU_AWARE_MPICCL) */
             success = ccl_comm_init_rank(ccl_comm_rows, nprows, ncclId, myid_rows)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_rows id!"
               stop 1
             endif
+#elif defined(WITH_GPU_AWARE_MPICCL)
+            ccl_comm_rows = mpi_comm_rows
 #endif
 
 #ifndef WITH_ONEAPI_ONECCL
@@ -150,7 +154,7 @@
             endif
             call mpi_comm_rank(mpi_comm_cols, myid_cols, mpierr)
             if (myid_cols .eq. 0) then
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
               success = ccl_get_unique_id(ncclId)
               if (.not.success) then
                 write(error_unit,*) "Error in setting up unique nccl id for cols!"
@@ -173,12 +177,14 @@
               stop 1
             endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) /* || defined(WITH_GPU_AWARE_MPICCL) */
             success = ccl_comm_init_rank(ccl_comm_cols, npcols, ncclId, myid_cols)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_cols id!"
               stop 1
             endif
+#elif defined(WITH_GPU_AWARE_MPICCL)
+            ccl_comm_cols = mpi_comm_cols
 #endif
 #ifndef WITH_ONEAPI_ONECCL
             success = ccl_group_end()
@@ -193,7 +199,7 @@
             ! mpi_comm_self
             call mpi_comm_rank(mpi_comm_self, myid_self, mpierr)
             if (myid_self .eq. 0) then
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
               success = ccl_get_unique_id(ncclId)
               if (.not.success) then
                 write(error_unit,*) "Error in setting up unique nccl id for self!"
@@ -216,12 +222,14 @@
               stop 1
             endif
 
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) /* || defined(WITH_GPU_AWARE_MPICCL) */
             success = ccl_comm_init_rank(ccl_comm_self, npself, ncclId, myid_self)
             if (.not.success) then
               write(error_unit,*) "Error in setting up communicator nccl_comm_self id!"
               stop 1
             endif
+#elif defined(WITH_GPU_AWARE_MPICCL)
+            ccl_comm_self = mpi_comm_self
 #endif
 #ifndef WITH_ONEAPI_ONECCL
             success = ccl_group_end()
@@ -232,4 +240,4 @@
             endif
             OBJECT%gpu_setup%ccl_comm_self = ccl_comm_self
 
-#endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) */
+#endif /* defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL) */

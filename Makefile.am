@@ -88,6 +88,7 @@ libelpa@SUFFIX@_private_la_SOURCES = \
   src/GPU/SYCL/mod_syclsolver.F90 \
   src/GPU/SYCL/mod_oneccl.F90 \
   src/GPU/SYCL/syclFunctions_template.hpp \
+  src/GPU/GPU_AWARE_MPI/mod_mpiccl.F90 \
   src/elpa2/mod_elpa2_utils.F90 \
   src/elpa2/GPU/interface_c_gpu_kernel.F90 \
   src/elpa2/GPU/CUDA/interface_c_cuda_kernel.F90 \
@@ -183,6 +184,8 @@ EXTRA_libelpa@SUFFIX@_private_la_DEPENDENCIES = \
   src/GPU/SYCL/syclFunctions_template.hpp \
   src/GPU/SYCL/oneccl_template.F90 \
   src/GPU/SYCL/onecclFunctions_template.h \
+  src/GPU/GPU_AWARE_MPI/mpiccl_template.F90 \
+  src/GPU/GPU_AWARE_MPI/mpicclFunctions_template.h \
   src/elpa1/elpa1_compute_template.F90 \
   src/elpa2/elpa2_compute_real_template.F90 \
   src/elpa2/elpa2_compute_complex_template.F90 \
@@ -328,6 +331,9 @@ if WITH_ONEAPI_ONECCL
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/SYCL/onecclFunctions.cpp
 endif
 
+if WITH_GPU_AWARE_MPICCL
+  libelpa@SUFFIX@_private_la_SOURCES += src/GPU/GPU_AWARE_MPI/mpicclFunctions.cpp
+endif
 
 if WITH_OPENMP_OFFLOAD_GPU_VERSION
   libelpa@SUFFIX@_private_la_SOURCES += src/GPU/OpenMP/elpa_index_openmp_offload_gpu.cpp src/GPU/OpenMP/openmpOffloadFunctions.cpp
@@ -1117,6 +1123,8 @@ EXTRA_DIST = \
   src/GPU/SYCL/syclCommon.hpp \
   src/GPU/SYCL/oneccl_template.F90 \
   src/GPU/SYCL/onecclFunctions_template.h \
+  src/GPU/GPU_AWARE_MPI/mpiccl_template.F90 \
+  src/GPU/GPU_AWARE_MPI/mpicclFunctions_template.h \
   src/elpa_api_math_template.F90 \
   src/elpa_impl_math_template.F90 \
   src/elpa_impl_math_solvers_template.F90 \

@@ -53,7 +53,7 @@
 #include "../../general/nvtx_labels.h"
 
 #undef USE_CCL_TRANSPOSE
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define USE_CCL_TRANSPOSE
 #endif
 
@@ -94,10 +94,10 @@ subroutine elpa_gpu_ccl_transpose_vectors_&
   use tridiag_gpu
 #if defined(WITH_NVIDIA_GPU_VERSION) && defined(WITH_NVTX)
   use cuda_functions ! for NVTX labels
-#elif defined(WITH_AMD_GPU_VERSION) && defined(WITH_ROCTX)
+#elif defined(WITH_AMD_GPU_VERSION)  && defined(WITH_ROCTX)
   use hip_functions  ! for ROCTX labels
 #endif
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(USE_CCL_TRANSPOSE)
   use elpa_ccl_gpu
 #endif
   implicit none

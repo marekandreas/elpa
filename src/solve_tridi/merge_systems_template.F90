@@ -152,6 +152,7 @@
                                                      np_cols, myid
       integer(kind=MPI_KIND)                      :: mpierr
       integer(kind=MPI_KIND)                      :: my_prowMPI, np_rowsMPI, my_pcolMPI, np_colsMPI
+      integer(kind=MPI_KIND)                      :: requests(2)
       integer(kind=ik)                            :: np_next, np_prev, np_rem
       integer(kind=ik)                            :: idx(na), idx1(na), idx2(na)
       integer(kind=BLAS_KIND)                     :: idxBLAS(NA)
@@ -674,6 +675,8 @@
 #endif
               check_memcpy_gpu("transform_columns: q_dev", successGPU)
 
+              print *, "before transform_columns_gpu, myid=", obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111
+
               call transform_columns_gpu_&
                                          &PRECISION &
                                         (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
@@ -795,6 +798,8 @@
         enddo
 
         if (useGPU) then
+          print *, "before resort_ev_gpu, myid=", obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111
+
           call resort_ev_gpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
@@ -1037,12 +1042,6 @@
 
         d(1:na1) = dbase(1:na1) - ddiff(1:na1)
 
-!         sum_debug = sum(d(1:na))
-! #ifdef WITH_MPI
-!         call MPI_Allreduce(MPI_IN_PLACE, sum_debug, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, MPI_COMM_WORLD, mpierr)
-! #endif
-!         if (myid==0) print *, "[after global_gather] sum d=", sum_debug
-
         ! Calculate scale factors for eigenvectors
         if (useGPU) then
           num = na * size_of_datatype
@@ -1177,12 +1176,6 @@
 
         ! Add the deflated eigenvalues
         d(na1+1:na) = d2(1:na2)
-
-!         sum_debug = sum(d(1:na))
-! #ifdef WITH_MPI
-!         call MPI_Allreduce(MPI_IN_PLACE, sum_debug, 1_MPI_KIND, MPI_MATH_DATATYPE_PRECISION, MPI_SUM, MPI_COMM_WORLD, mpierr)
-! #endif
-!         if (myid==0) print *, "[after Add the deflated eigenvalues] sum d=", sum_debug
 
         call obj%timer%start("lapack_lamrg")
         NVTX_RANGE_PUSH("lapack_lamrg_3")
@@ -1652,6 +1645,35 @@
                   stop 1
                 endif
 
+! PETERDEBUG111: implement in a more symmetric way? e.g. use ccl_send --> MPI_Isend, ccl_group_end --> MPI_Waitall
+#if defined(WITH_GPU_AWARE_MPICCL)
+                successGPU = gpu_stream_synchronize(my_stream)
+                check_stream_synchronize_gpu("merge_systems", successGPU)
+
+                requests(:) = MPI_REQUEST_NULL
+                successGPU = ccl_isend(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
+                      cclDataType, np_next, ccl_comm_cols, requests(1), my_stream)
+
+                if (.not.successGPU) then
+                  print *,"Error in ccl_isend"
+                  stop 1
+                endif
+
+                successGPU = ccl_irecv(qtmp1_dev, int(l_rows*max_local_cols,kind=c_size_t), &
+                                      cclDataType, np_prev, ccl_comm_cols, requests(2), my_stream)
+
+
+                if (.not.successGPU) then
+                  print *,"Error in ccl_irecv"
+                  stop 1
+                endif
+
+                successGPU = ccl_waitall(2, requests, my_stream)
+                if (.not.successGPU) then
+                  print *,"Error in ccl_waitall"
+                  stop 1
+                endif
+#else /* WITH_GPU_AWARE_MPICCL */
                 successGPU = ccl_send(qtmp1_tmp_dev, int(l_rows*max_local_cols,kind=c_size_t), &
                                       cclDataType, np_next, ccl_comm_cols, my_stream)
 
@@ -1668,7 +1690,7 @@
                   print *,"Error in ccl_recv"
                   stop 1
                 endif
-
+#endif /* WITH_GPU_AWARE_MPICCL */
                 successGPU = ccl_group_end()
 
                 if (.not.successGPU) then
@@ -1676,7 +1698,7 @@
                   stop 1
                 endif
                 successGPU = gpu_stream_synchronize(my_stream)
-                check_stream_synchronize_gpu("trans_ev", successGPU)
+                check_stream_synchronize_gpu("merge_systems", successGPU)
                 call obj%timer%stop("ccl_send_recv")
               else ! useCCL
 #ifdef WITH_MPI

@@ -3473,7 +3473,7 @@ fi
 
 #############################################################
 #
-# CCL (nvidia NCCL, AMD RCCL, oneCCL)
+# CCL (nvidia NCCL, AMD RCCL, oneCCL, GPU-aware MPI as CCL backend)
 #
 ############################################################
 use_gpu_ccl=no
@@ -3487,27 +3487,53 @@ AC_ARG_ENABLE([gpu-ccl],
                                [if test x"$enableval" = x"nccl"; then
                                   use_nvidia_nccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"rccl"; then
+                                elif test x"$enableval" = x"rccl"; then
                                   use_amd_rccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"oneccl"; then
+                                elif test x"$enableval" = x"oneccl"; then
                                   use_oneccl=yes
                                   use_gpu_ccl=yes
-                                fi
-                                if test x"$enableval" = x"yes"; then
-                                  AC_MSG_ERROR([Wrong value! Must be either "nccl", "rccl" or "oneccl" ])
-                                fi
-                                if test x"$enableval" = x"no"; then
-                                  use_cuda_nccl=no
+                                elif test x"$enableval" = x"no"; then
+                                  use_nvidia_nccl=no
                                   use_amd_rccl=no
                                   use_oneccl=no
                                   use_gpu_ccl=no
+                                else
+                                  AC_MSG_ERROR([Wrong value for --enable-gpu-ccl! Must be either "nccl", "rccl", or "oneccl"])
                                 fi
                                 ],
               [use_gpu_ccl=no])
 AC_MSG_RESULT([${use_gpu_ccl}])
+
+
+AC_MSG_CHECKING(whether GPU-aware MPI should be used)
+AC_ARG_ENABLE([gpu-aware-mpi],
+              [AS_HELP_STRING([--enable-gpu-aware-mpi],
+                              [do use GPU-aware MPI (default: no)])],
+                              [if test x"$enableval" = x"yes"; then
+                                 use_gpu_aware_mpi=yes
+                               elif test x"$enableval" = x"no"; then
+                                 use_gpu_aware_mpi=no
+                               else
+                                 AC_MSG_ERROR([Wrong value for --enable-gpu-aware-mpi! Must be either "yes" or "no"])
+                               fi],
+              [use_gpu_aware_mpi=no])
+AC_MSG_RESULT([${use_gpu_aware_mpi}])
+
+if test x"$use_gpu_aware_mpi" = x"yes"; then
+  if test x"${enable_cuda_aware_mpi}" = x"yes" ; then
+    AC_MSG_ERROR([The combination --enable-gpu-aware-mpi and --enable-cuda-aware-mpi is not supported])
+  fi
+  if test x"$use_nvidia_nccl" = x"yes"; then
+    AC_MSG_ERROR([The combination --enable-gpu-aware-mpi and --enable-gpu-ccl=nccl is not supported])
+  fi
+  if test x"$use_amd_rccl" = x"yes"; then
+    AC_MSG_ERROR([The combination --enable-gpu-aware-mpi and --enable-gpu-ccl=rccl is not supported])
+  fi
+  if test x"$use_oneccl" = x"yes"; then
+    AC_MSG_ERROR([The combination --enable-gpu-aware-mpi and --enable-gpu-ccl=oneccl is not supported])
+  fi
+fi
 
 if test x"$use_nvidia_nccl" = x"yes"; then
   if test x"$use_cuda_streams" = x"no"; then
@@ -3641,6 +3667,17 @@ if test x"$use_oneccl" = x"yes"; then
 
 fi
 AM_CONDITIONAL([WITH_ONEAPI_ONECCL],[test x"$use_oneccl" = x"yes"])
+
+
+if test x"$use_gpu_aware_mpi" = x"yes"; then
+  AC_DEFINE([WITH_GPU_AWARE_MPICCL],[1],[enable usage of GPU aware MPI as CCL backend])
+
+  if test x"$with_mpi" = x"no"; then
+    AC_MSG_ERROR([Since --enable-gpu-aware-mpi is set you must also specify --with-mpi=yes"])
+  fi
+fi
+AM_CONDITIONAL([WITH_GPU_AWARE_MPICCL],[test x"$use_gpu_aware_mpi" = x"yes"])
+
 #############################################################################################
 #
 # [Nvidia|AMD] preprocess .cu and .hip sources

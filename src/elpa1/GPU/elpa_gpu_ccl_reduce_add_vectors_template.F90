@@ -48,7 +48,7 @@
 #include "../../general/error_checking.inc"
 
 #undef USE_CCL_REDUCE_ADD
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define USE_CCL_REDUCE_ADD
 #endif
 
@@ -86,7 +86,7 @@ subroutine elpa_gpu_ccl_reduce_add_vectors_&
   use elpa_mpi
   use elpa_gpu
   use tridiag_gpu
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(USE_CCL_REDUCE_ADD)
   use elpa_ccl_gpu
 #endif
   implicit none

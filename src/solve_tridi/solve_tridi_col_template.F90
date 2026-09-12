@@ -56,7 +56,7 @@
 #include "../general/error_checking.inc"
 
 #undef USE_CCL_SOLVE_TRIDI
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
 #define USE_CCL_SOLVE_TRIDI                   
 #endif
 

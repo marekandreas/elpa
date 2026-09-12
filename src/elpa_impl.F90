@@ -690,7 +690,7 @@ module elpa_impl
 #if defined(WITH_SYCL_GPU_VERSION)
       use sycl_functions
 #endif
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       use elpa_ccl_gpu
 #endif
 
@@ -713,7 +713,7 @@ module elpa_impl
       integer(kind=c_intptr_t)            :: handle_tmp
       character(len=8)                    :: fmt
       character(len=12)                   :: gpu_string
-#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL)
+#if defined(WITH_NVIDIA_NCCL) || defined(WITH_AMD_RCCL) || defined(WITH_ONEAPI_ONECCL) || defined(WITH_GPU_AWARE_MPICCL)
       TYPE(ncclUniqueId)                  :: ncclId
       integer(kind=c_int)                 :: nprocs
       integer(kind=c_intptr_t)            :: ccl_comm_all, ccl_comm_rows, ccl_comm_cols, ccl_comm_self
@@ -729,7 +729,9 @@ module elpa_impl
       integer(kind=MPI_KIND)              :: mpi_infoMPI, keyMPI, np_total_per_nodeMPI
       integer(kind=ik)                    :: key
 #endif
-      integer(kind=ik)                    :: useCCLCOMM
+      integer(kind=ik)                    :: useCCLcomm
+      logical                             :: allow_many_mpi_per_gpu_ccl
+
       error = ELPA_ERROR_SETUP
       self%gpu_setup%useCCL = .false.
       gpu = 0
