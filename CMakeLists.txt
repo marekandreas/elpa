@@ -21,7 +21,7 @@ set(ELPA_LIBRARY_VERSION
     "${ELPA_SOVERSION}.${ELPA_ABI_AGE}.${ELPA_ABI_REVISION}")
 
 project(
-  ELPA
+  elpa
   VERSION "${ELPA_VERSION}"
   DESCRIPTION "Eigenvalue SoLvers for Petaflop-Applications"
   HOMEPAGE_URL "https://elpa.mpcdf.mpg.de"
@@ -304,37 +304,6 @@ configure_file(cmake/elpa.pc.in "elpa.pc" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/elpa.pc"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
-# =================================================================================================
-# Configuration summary
-# =================================================================================================
-
-if(ELPA_USE_MPI)
-  if(ELPA_HAVE_MPI_MODULE)
-    set(_elpa_mpi_interface "mpi module")
-  else()
-    set(_elpa_mpi_interface mpif.h)
-  endif()
-  if(ELPA_MPI_ARGUMENT_MISMATCH_FLAG)
-    string(APPEND _elpa_mpi_interface " (${ELPA_MPI_ARGUMENT_MISMATCH_FLAG})")
-  endif()
-else()
-  set(_elpa_mpi_interface disabled)
-endif()
-
-message(STATUS "ELPA ${PROJECT_VERSION}")
-message(STATUS "  MPI interface: ${_elpa_mpi_interface}")
-message(STATUS "  OpenMP:        ${ELPA_USE_OPENMP}")
-message(
-  STATUS
-    "  BLAS:          ${ELPA_BLAS_VENDOR} -> ${ELPA_BLAS_VENDOR_RESOLVED} ${ELPA_BLAS_INTERFACE}"
-)
-if(ELPA_USE_MPI)
-  message(
-    STATUS
-      "  ScaLAPACK:     ${ELPA_SCALAPACK_VENDOR} -> ${ELPA_SCALAPACK_VENDOR_RESOLVED}"
-  )
-else()
-  message(STATUS "  ScaLAPACK:     disabled")
-endif()
-message(STATUS "  CPU kernels:   ${ELPA_CPU_KERNELS}")
-message(STATUS "  Accelerator:   ${ELPA_ACCELERATOR}")
+# Install documentation
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/documentation/"
+        DESTINATION "${CMAKE_INSTALL_DOCDIR}")
