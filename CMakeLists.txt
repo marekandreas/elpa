@@ -217,52 +217,6 @@ if(ELPA_USE_MPI AND ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
   set(ELPA_BUILD_MKL_BLACS "${MKL_BLACS_ABI}")
 endif()
 
-# pkg-config cannot represent CMake imported targets. For static CPU builds,
-# record the concrete dependency libraries so `pkg-config --static` remains
-# useful to non-CMake consumers.
-set(_elpa_pc_private_libraries)
-if(NOT BUILD_SHARED_LIBS)
-  if(ELPA_BLAS_VENDOR_RESOLVED STREQUAL "MKL")
-    list(APPEND _elpa_pc_private_libraries ${MKL_LINK_LIBRARIES})
-  else()
-    list(APPEND _elpa_pc_private_libraries ${BLAS_LIBRARIES}
-         ${LAPACK_LIBRARIES})
-  endif()
-
-  if(ELPA_USE_MPI)
-    if(ELPA_SCALAPACK_VENDOR_RESOLVED STREQUAL "MKL")
-      list(APPEND _elpa_pc_private_libraries ${MKL_SCALAPACK_LINK_LIBRARIES})
-    else()
-      list(APPEND _elpa_pc_private_libraries ${SCALAPACK_LIBRARIES}
-           ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES})
-    endif()
-  endif()
-  if(ELPA_USE_OPENMP)
-    list(APPEND _elpa_pc_private_libraries ${OpenMP_C_LIBRARIES}
-         ${OpenMP_CXX_LIBRARIES} ${OpenMP_Fortran_LIBRARIES})
-  endif()
-  if(ELPA_USE_PAPI)
-    list(APPEND _elpa_pc_private_libraries "${PAPI_LIBRARY}")
-  endif()
-
-  list(APPEND _elpa_pc_private_libraries
-       ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-  if(ELPA_ACCELERATOR MATCHES "^(SYCL|IOMP_OFFLOAD)$")
-    list(APPEND _elpa_pc_private_libraries ${CMAKE_CXX_IMPLICIT_LINK_LIBRARIES})
-  endif()
-  list(REMOVE_ITEM _elpa_pc_private_libraries "")
-endif()
-
-set(ELPA_PC_PRIVATE_LIBS)
-foreach(_elpa_library IN LISTS _elpa_pc_private_libraries)
-  if(_elpa_library MATCHES "^-" OR IS_ABSOLUTE "${_elpa_library}")
-    string(APPEND ELPA_PC_PRIVATE_LIBS " ${_elpa_library}")
-  elseif(NOT _elpa_library MATCHES "::")
-    string(APPEND ELPA_PC_PRIVATE_LIBS " -l${_elpa_library}")
-  endif()
-endforeach()
-string(STRIP "${ELPA_PC_PRIVATE_LIBS}" ELPA_PC_PRIVATE_LIBS)
-
 configure_package_config_file(
   cmake/elpa-config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/elpa-config.cmake"
   INSTALL_DESTINATION "${ELPA_INSTALL_CMAKEDIR}")
