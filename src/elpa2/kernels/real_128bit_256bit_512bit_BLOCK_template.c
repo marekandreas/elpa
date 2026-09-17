@@ -170,7 +170,7 @@
 #define MONE -1.0f
 #endif
 
-#define __forceinline __attribute__((always_inline)) static
+#define __forceinline __attribute__((always_inline)) static inline
 
 #if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE
 #define ADDITIONAL_ARGUMENT
