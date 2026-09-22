@@ -1301,6 +1301,7 @@ m4_foreach_w([elpa_m4_kind],[real complex],[
 ])
 
 
+enableval="no"
 
 #compatibiility flag
 AC_MSG_CHECKING(whether obsolete --enable-generic has been provided)
@@ -2549,7 +2550,7 @@ if test x"${use_gpu}" = x"yes" ; then
   use_complex_nvidia_gpu=yes
   # not supported with old flag
   if test x"${nvidia_a100_support}" = x"yes" ; then
-	  AC_MSG_ERROR([You did still use the deprecated option --enable-gpu! This does not work with --with-NVIDIA-GPU-compute-capability=sm_80. Please specify --enable-nvidia-gpu])
+	  AC_MSG_ERROR([You did still use the deprecated option --enable-gpu! This does not work with --with-NVIDIA-GPU-compute-capability>=sm_80. Please specify --enable-nvidia-gpu])
   fi
 fi
 
@@ -2588,7 +2589,7 @@ if test x"${need_nvidia_gpu}" = x"yes"; then
       use_real_nvidia_sm80_gpu=yes
       use_complex_nvidia_sm80_gpu=yes
     else
-      AC_MSG_NOTICE([You specified --with-NVIDIA-GPU-compute-capability=sm_80, but you did not --enable-nvidia-sm80-gpu. I will thus use the standard Nvidia GPU kernels (which is of course ok, just a info...)])
+      AC_MSG_NOTICE([You specified --with-NVIDIA-GPU-compute-capability>=sm_80, but you did not --enable-nvidia-sm80-gpu. I will thus use the standard Nvidia GPU kernels (which is of course ok, just an info...)])
       use_real_nvidia_sm80_gpu=no
       use_complex_nvidia_sm80_gpu=no
     fi
@@ -2615,7 +2616,7 @@ fi
 
 if test x"${need_nvidia_sm80_gpu}" = x"yes"; then
   if test x"${nvidia_a100_support}" = x"no" ; then
-    AC_MSG_ERROR([You specified --enable-nvidia-sm80-gpu, but not --with-NVIDIA-GPU-compute-capability=sm_80 (or higher)Aborting...])
+    AC_MSG_ERROR([You specified --enable-nvidia-sm80-gpu, but not --with-NVIDIA-GPU-compute-capability>=sm_80. Aborting...])
   fi
 fi
 
