@@ -2006,7 +2006,7 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_MPI */
     endif ! sweep==0 .and. current_n_end < current_n .and. l_nev > 0
 
-    if (current_local_n > 1) then
+    if (current_local_n >= 1) then
       if (useGPU .and. allComputeOnGPU) then
         if (my_pcol == mod(sweep,np_cols)) then
           if (wantDebug) call obj%timer%start("cuda_memcpy")

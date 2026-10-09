@@ -297,7 +297,8 @@ subroutine tridiag_band_&
     local_size = limits(my_prow+1) - limits(my_prow)
     ! add to number of householder vectors
     ! please note: for nx==1 the one and only HH Vector is 0 and is neither calculated nor send below!
-    if (mod(n-1,np_cols) == my_pcol .and. local_size>0 .and. nx>1) then
+    ! (the serial flush path does store it, so count it here)
+    if (mod(n-1,np_cols) == my_pcol .and. local_size>0) then
       num_hh_vecs = num_hh_vecs + local_size
       num_chunks  = num_chunks+1
     endif
@@ -308,6 +309,8 @@ subroutine tridiag_band_&
 
   allocate(hh_trans(nb,num_hh_vecs), stat=istat, errmsg=errorMessage)
   check_allocate("tridiag_band: hh_trans", istat, errorMessage)
+  ! not every counted slot is delivered in the parallel path; undelivered ones must read as zero
+  hh_trans = 0.0_rck
 
   ! Allocate and init MPI requests
 
