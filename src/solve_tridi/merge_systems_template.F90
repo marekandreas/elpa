@@ -675,8 +675,6 @@
 #endif
               check_memcpy_gpu("transform_columns: q_dev", successGPU)
 
-              print *, "before transform_columns_gpu, myid=", obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111
-
               call transform_columns_gpu_&
                                          &PRECISION &
                                         (obj, idx(i), idx1(na1), na, tmp, l_rqs, l_rqe, &
@@ -798,8 +796,6 @@
         enddo
 
         if (useGPU) then
-          print *, "before resort_ev_gpu, myid=", obj%mpi_setup%myRank_comm_parent ! PETERDEBUG111
-
           call resort_ev_gpu_&
                          &PRECISION&
                          &(obj, idxq1, na, na, p_col_out, q_dev, matrixRows, matrixCols, l_rows, l_rqe, &
@@ -1645,7 +1641,7 @@
                   stop 1
                 endif
 
-! PETERDEBUG111: implement in a more symmetric way? e.g. use ccl_send --> MPI_Isend, ccl_group_end --> MPI_Waitall
+! implement in a more symmetric way?
 #if defined(WITH_GPU_AWARE_MPICCL)
                 successGPU = gpu_stream_synchronize(my_stream)
                 check_stream_synchronize_gpu("merge_systems", successGPU)
