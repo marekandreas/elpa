@@ -1165,8 +1165,8 @@
 
     subroutine elpa_solve_tridiagonal_&
                     &ELPA_IMPL_SUFFIX&
-                    &_c(handle, d_p, e_p, q_p, error) &
 #ifdef REALCASE
+                    &_c(handle, d_p, e_p, q_p, error) &
 #ifdef DOUBLE_PRECISION_REAL
                     bind(C, name="elpa_solve_tridiagonal_d")
 #endif
@@ -1175,11 +1175,12 @@
 #endif
 #endif
 #ifdef COMPLEXCASE
+                    &_c(handle, d_p, e_p, q_p, error)
 #ifdef DOUBLE_PRECISION_COMPLEX
-                    & !bind(C, name="elpa_solve_tridiagonal_dc")
+                    ! & no bind(C, name="elpa_solve_tridiagonal_dc")
 #endif
 #ifdef SINGLE_PRECISION_COMPLEX
-                    & !bind(C, name="elpa_solve_tridiagonal_fc")
+                    ! & no bind(C, name="elpa_solve_tridiagonal_fc")
 #endif
 #endif
 
