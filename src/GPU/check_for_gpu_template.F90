@@ -303,6 +303,8 @@
       call mpi_comm_size(mpi_comm_all_per_nodeMPI, np_total_per_nodeMPI, mpierr)
       OBJECT%mpi_setup%nRanks_comm_parent_per_node = int(np_total_per_nodeMPI, kind=ik)
 
+      call mpi_comm_free(mpi_comm_all_per_nodeMPI, mpierr)
+
       allow_many_mpi_per_gpu_ccl = .false.
 #if defined(WITH_GPU_AWARE_MPICCL)
       allow_many_mpi_per_gpu_ccl = .true.
