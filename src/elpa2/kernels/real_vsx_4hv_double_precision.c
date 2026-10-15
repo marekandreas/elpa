@@ -77,7 +77,7 @@
 #define _SSE_STORE vec_st
 #endif
 
-#define __forceinline __attribute__((always_inline)) static
+#define __forceinline __attribute__((always_inline)) static inline
 
 //Forward declaration
 #ifdef DOUBLE_PRECISION_REAL

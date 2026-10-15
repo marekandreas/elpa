@@ -170,7 +170,7 @@
 #define MONE -1.0f
 #endif
 
-#define __forceinline __attribute__((always_inline)) static
+#define __forceinline __attribute__((always_inline)) static inline
 
 #if VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE
 #define ADDITIONAL_ARGUMENT
@@ -1813,6 +1813,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
   // Production level kernel calls with padding
 #ifdef BLOCK2
 
+#undef ROW_LENGTH
 #if  VEC_SET == SSE_128 || VEC_SET == SPARC64_SSE || VEC_SET == VSX_SSE  || VEC_SET == NEON_ARCH64_128 || VEC_SET == SVE_128
 #ifdef DOUBLE_PRECISION_REAL
 #define STEP_SIZE 12
@@ -2148,6 +2149,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
 
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
+#undef ROW_LENGTH
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
@@ -2255,6 +2257,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
       }
 #if VEC_SET == AVX_512 || VEC_SET == SVE_512
 
+#undef ROW_LENGTH
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 16
@@ -2271,6 +2274,7 @@ void CONCAT_7ARGS(PREFIX,_hh_trafo_real_,SIMD_SET,_,BLOCK,hv_,WORD_LENGTH) (DATA
         worked_on += ROW_LENGTH;
       }
 
+#undef ROW_LENGTH
 #if  VEC_SET == AVX_512 || VEC_SET == SVE_512
 #ifdef DOUBLE_PRECISION_REAL
 #define ROW_LENGTH 8
