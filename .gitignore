@@ -4,7 +4,7 @@
 *.dirstamp
 *.libs
 *.fortran_dependencies
-modules/
+/modules/
 Makefile.in
 aclocal.m4
 ar-lib
@@ -36,5 +36,6 @@ m4/lt~obsolete.m4
 */m4/lt~obsolete.m4
 test_programs.am
 build*
+/install/
 py-compile
 *.code-workspace
