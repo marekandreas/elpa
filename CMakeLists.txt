@@ -44,6 +44,14 @@ option(BUILD_SHARED_LIBS "Build ELPA as a shared library" ON)
 option(BUILD_TESTING "Build ELPA tests" OFF)
 option(ELPA_BUILD_TOOLS "Build ELPA command-line utilities" ON)
 
+# Testing
+set(ELPA_TEST_MPI_PROCS
+    2
+    CACHE STRING "MPI processes per test")
+set(ELPA_TEST_OMP_THREADS
+    1
+    CACHE STRING "OpenMP threads per test process")
+
 # Parallelism
 option(ELPA_USE_OPENMP "Enable OpenMP threading" ON)
 option(ELPA_USE_MPI "Enable MPI support" ON)
@@ -225,11 +233,6 @@ if(NOT CMAKE_BUILD_TYPE)
                                                "RelWithDebInfo")
 endif()
 
-# Testing is not yet available
-if(BUILD_TESTING)
-  message(WARNING "CTest is not yet implemented in ELPA's CMake workflow.")
-endif()
-
 # ==============================================================================
 # Dependencies
 # ==============================================================================
@@ -341,6 +344,9 @@ set(ELPA_INSTALL_FMODDIR
     CACHE PATH "ELPA Fortran modules installation directory")
 
 add_subdirectory(src)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 # ==============================================================================
 # Installation and package export
