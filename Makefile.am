@@ -1097,7 +1097,6 @@ EXTRA_DIST = \
   cmake/elpa.pc.in \
   cmake/CompilerConfiguration.cmake \
   CMakeLists.txt \
-  CMakeOptions.cmake \
   src/CMakeLists.txt \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
