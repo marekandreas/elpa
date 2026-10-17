@@ -225,11 +225,6 @@ if(NOT CMAKE_BUILD_TYPE)
                                                "RelWithDebInfo")
 endif()
 
-# Testing is not yet available
-if(BUILD_TESTING)
-  message(WARNING "CTest is not yet implemented in ELPA's CMake workflow.")
-endif()
-
 # ==============================================================================
 # Dependencies
 # ==============================================================================
@@ -341,6 +336,9 @@ set(ELPA_INSTALL_FMODDIR
     CACHE PATH "ELPA Fortran modules installation directory")
 
 add_subdirectory(src)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 # ==============================================================================
 # Installation and package export

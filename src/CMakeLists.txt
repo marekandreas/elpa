@@ -44,9 +44,13 @@ function(_elpa_extract_marked_lines output)
       DIRECTORY
       APPEND
       PROPERTY CMAKE_CONFIGURE_DEPENDS "${_elpa_source}")
-    file(STRINGS "${_elpa_source}" _elpa_lines)
-    foreach(_elpa_line IN LISTS _elpa_lines)
-      foreach(_elpa_marker IN LISTS _elpa_markers)
+  endforeach()
+
+  # Preserve Automake's marker-pass order for conditional API declarations.
+  foreach(_elpa_marker IN LISTS _elpa_markers)
+    foreach(_elpa_source IN LISTS _elpa_sources)
+      file(STRINGS "${_elpa_source}" _elpa_lines)
+      foreach(_elpa_line IN LISTS _elpa_lines)
         if(_elpa_line MATCHES "^[ \t]*${_elpa_marker}")
           string(REGEX REPLACE "^[ \t]*${_elpa_marker}" "" _elpa_interface
                                "${_elpa_line}")
