@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 
 cmake_minimum_required(VERSION 3.22)
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
 
 # CMake build metadata.
 #
