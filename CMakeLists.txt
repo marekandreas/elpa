@@ -56,59 +56,97 @@ option(ELPA_ENABLE_TIMINGS "Enable detailed timing support" ON)
 option(ELPA_ENABLE_AFFINITY "Enable affinity diagnostics" ON)
 option(ELPA_USE_ASSUMED_SIZE "Use assumed-size Fortran arrays" ON)
 option(ELPA_USE_FORTRAN_2008 "Enable Fortran 2008 code paths" ON)
-option(ELPA_OPTIONAL_C_ERROR_ARGUMENT "Make the C API error argument optional" OFF)
+option(ELPA_OPTIONAL_C_ERROR_ARGUMENT "Make the C API error argument optional"
+       OFF)
 option(ELPA_STORE_BUILD_CONFIG "Embed the build configuration in ELPA" OFF)
 option(ELPA_USE_PAPI "Enable PAPI performance counters" OFF)
 
 # CPU kernels
-set(ELPA_CPU_KERNELS "AUTO" CACHE STRING "CPU kernel selection")
+set(ELPA_CPU_KERNELS
+    "AUTO"
+    CACHE STRING "CPU kernel selection")
 set_property(CACHE ELPA_CPU_KERNELS PROPERTY STRINGS AUTO GENERIC)
 option(ELPA_ENABLE_HETEROGENEOUS_CLUSTER
        "Enable heterogeneous-cluster CPU dispatch" OFF)
 
 # Accelerator backend
-set(ELPA_ACCELERATOR "NONE" CACHE STRING "Accelerator backend")
-set_property(CACHE ELPA_ACCELERATOR PROPERTY STRINGS
-             NONE CUDA HIP SYCL IOMP_OFFLOAD)
+set(ELPA_ACCELERATOR
+    "NONE"
+    CACHE STRING "Accelerator backend")
+set_property(CACHE ELPA_ACCELERATOR PROPERTY STRINGS NONE CUDA HIP SYCL
+                                             IOMP_OFFLOAD)
 option(ELPA_ENABLE_GPU_STREAMS "Enable accelerator streams or queues" ON)
 option(ELPA_ENABLE_CUDA_AWARE_MPI "Enable CUDA-aware MPI" OFF)
 
 # Numerical libraries
-set(ELPA_BLAS_VENDOR "AUTO" CACHE STRING "BLAS and LAPACK provider")
-set_property(CACHE ELPA_BLAS_VENDOR PROPERTY STRINGS AUTO MKL OPENBLAS GENERIC CUSTOM)
+set(ELPA_BLAS_VENDOR
+    "AUTO"
+    CACHE STRING "BLAS and LAPACK provider")
+set_property(CACHE ELPA_BLAS_VENDOR PROPERTY STRINGS AUTO MKL OPENBLAS GENERIC
+                                             CUSTOM)
 
-set(ELPA_BLAS_LIBRARIES "" CACHE STRING "Custom BLAS link libraries")
-set(ELPA_LAPACK_LIBRARIES "" CACHE STRING "Custom LAPACK link libraries")
+set(ELPA_BLAS_LIBRARIES
+    ""
+    CACHE STRING "Custom BLAS link libraries")
+set(ELPA_LAPACK_LIBRARIES
+    ""
+    CACHE STRING "Custom LAPACK link libraries")
 
-set(ELPA_BLAS_INTERFACE "LP64" CACHE STRING "BLAS and LAPACK integer interface")
+set(ELPA_BLAS_INTERFACE
+    "LP64"
+    CACHE STRING "BLAS and LAPACK integer interface")
 set_property(CACHE ELPA_BLAS_INTERFACE PROPERTY STRINGS LP64 ILP64)
 
-set(ELPA_MKL_THREADING "SEQUENTIAL" CACHE STRING "oneMKL threading layer")
-set_property(CACHE ELPA_MKL_THREADING PROPERTY STRINGS
-             SEQUENTIAL THREADED OPENMP GNU INTEL TBB)
+set(ELPA_MKL_THREADING
+    "SEQUENTIAL"
+    CACHE STRING "oneMKL threading layer")
+set_property(
+  CACHE ELPA_MKL_THREADING
+  PROPERTY STRINGS
+           SEQUENTIAL
+           THREADED
+           OPENMP
+           GNU
+           INTEL
+           TBB)
 
-set(ELPA_MKL_LINK "DYNAMIC" CACHE STRING "oneMKL link mode")
+set(ELPA_MKL_LINK
+    "DYNAMIC"
+    CACHE STRING "oneMKL link mode")
 set_property(CACHE ELPA_MKL_LINK PROPERTY STRINGS DYNAMIC STATIC)
 
-set(ELPA_SCALAPACK_VENDOR "AUTO" CACHE STRING "ScaLAPACK provider")
-set_property(CACHE ELPA_SCALAPACK_VENDOR PROPERTY STRINGS AUTO MKL GENERIC CUSTOM)
+set(ELPA_SCALAPACK_VENDOR
+    "AUTO"
+    CACHE STRING "ScaLAPACK provider")
+set_property(CACHE ELPA_SCALAPACK_VENDOR PROPERTY STRINGS AUTO MKL GENERIC
+                                                  CUSTOM)
 
-set(ELPA_SCALAPACK_LIBRARIES "" CACHE STRING "Custom ScaLAPACK link libraries")
+set(ELPA_SCALAPACK_LIBRARIES
+    ""
+    CACHE STRING "Custom ScaLAPACK link libraries")
 
-set(ELPA_MKL_BLACS "AUTO" CACHE STRING "oneMKL BLACS ABI")
+set(ELPA_MKL_BLACS
+    "AUTO"
+    CACHE STRING "oneMKL BLACS ABI")
 set_property(CACHE ELPA_MKL_BLACS PROPERTY STRINGS AUTO OPENMPI INTELMPI MPICH)
 
 # Option validation
 function(_elpa_validate_choice variable)
   string(TOUPPER "${${variable}}" _elpa_value)
-  get_property(_elpa_help CACHE "${variable}" PROPERTY HELPSTRING)
-  set("${variable}" "${_elpa_value}" CACHE STRING "${_elpa_help}" FORCE)
+  get_property(
+    _elpa_help
+    CACHE "${variable}"
+    PROPERTY HELPSTRING)
+  set("${variable}"
+      "${_elpa_value}"
+      CACHE STRING "${_elpa_help}" FORCE)
 
   if(NOT _elpa_value IN_LIST ARGN)
     list(JOIN ARGN ", " _elpa_choices)
     message(
       FATAL_ERROR
-        "Invalid ${variable} value '${_elpa_value}'. Supported values: ${_elpa_choices}.")
+        "Invalid ${variable} value '${_elpa_value}'. Supported values: ${_elpa_choices}."
+    )
   endif()
 endfunction()
 
@@ -116,7 +154,14 @@ _elpa_validate_choice(ELPA_CPU_KERNELS AUTO GENERIC)
 _elpa_validate_choice(ELPA_ACCELERATOR NONE CUDA HIP SYCL IOMP_OFFLOAD)
 _elpa_validate_choice(ELPA_BLAS_VENDOR AUTO MKL OPENBLAS GENERIC CUSTOM)
 _elpa_validate_choice(ELPA_BLAS_INTERFACE LP64 ILP64)
-_elpa_validate_choice(ELPA_MKL_THREADING SEQUENTIAL THREADED OPENMP GNU INTEL TBB)
+_elpa_validate_choice(
+  ELPA_MKL_THREADING
+  SEQUENTIAL
+  THREADED
+  OPENMP
+  GNU
+  INTEL
+  TBB)
 _elpa_validate_choice(ELPA_MKL_LINK DYNAMIC STATIC)
 _elpa_validate_choice(ELPA_SCALAPACK_VENDOR AUTO MKL GENERIC CUSTOM)
 _elpa_validate_choice(ELPA_MKL_BLACS AUTO OPENMPI INTELMPI MPICH)
@@ -138,21 +183,22 @@ if(ELPA_BLAS_VENDOR STREQUAL "CUSTOM" AND NOT ELPA_LAPACK_LIBRARIES)
 endif()
 
 if(ELPA_SCALAPACK_VENDOR STREQUAL "CUSTOM" AND NOT ELPA_SCALAPACK_LIBRARIES)
-  message(FATAL_ERROR
-    "ELPA_SCALAPACK_VENDOR=CUSTOM requires ELPA_SCALAPACK_LIBRARIES")
+  message(
+    FATAL_ERROR "ELPA_SCALAPACK_VENDOR=CUSTOM requires ELPA_SCALAPACK_LIBRARIES"
+  )
 endif()
 
-if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL"
-   AND NOT ELPA_BLAS_VENDOR MATCHES "^(AUTO|MKL)$")
-  message(FATAL_ERROR
-    "ELPA_SCALAPACK_VENDOR=MKL requires ELPA_BLAS_VENDOR=AUTO or MKL")
+if(ELPA_SCALAPACK_VENDOR STREQUAL "MKL" AND NOT ELPA_BLAS_VENDOR MATCHES
+                                            "^(AUTO|MKL)$")
+  message(
+    FATAL_ERROR
+      "ELPA_SCALAPACK_VENDOR=MKL requires ELPA_BLAS_VENDOR=AUTO or MKL")
 endif()
 
-if(ELPA_ACCELERATOR MATCHES "^(SYCL|IOMP_OFFLOAD)$"
-   AND NOT ELPA_BLAS_VENDOR MATCHES "^(AUTO|MKL)$")
-  message(FATAL_ERROR
-    "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires "
-    "ELPA_BLAS_VENDOR=AUTO or MKL")
+if(ELPA_ACCELERATOR MATCHES "^(SYCL|IOMP_OFFLOAD)$" AND NOT ELPA_BLAS_VENDOR
+                                                        MATCHES "^(AUTO|MKL)$")
+  message(FATAL_ERROR "ELPA_ACCELERATOR=${ELPA_ACCELERATOR} requires "
+                      "ELPA_BLAS_VENDOR=AUTO or MKL")
 endif()
 
 if(ELPA_ENABLE_CUDA_AWARE_MPI AND NOT ELPA_USE_MPI)
@@ -160,7 +206,8 @@ if(ELPA_ENABLE_CUDA_AWARE_MPI AND NOT ELPA_USE_MPI)
 endif()
 
 if(ELPA_ENABLE_CUDA_AWARE_MPI AND NOT ELPA_ACCELERATOR STREQUAL "CUDA")
-  message(FATAL_ERROR "ELPA_ENABLE_CUDA_AWARE_MPI requires ELPA_ACCELERATOR=CUDA")
+  message(
+    FATAL_ERROR "ELPA_ENABLE_CUDA_AWARE_MPI requires ELPA_ACCELERATOR=CUDA")
 endif()
 
 include(CheckCompilerSupport)

@@ -13,7 +13,7 @@ include(FortranCInterface)
 
 # Check Fortran behavior that affects ELPA's source selection.
 function(_elpa_check_fortran_support)
-  check_fortran_source_compiles(
+  CHECK_Fortran_SOURCE_COMPILES(
     [[
       program main
         use, intrinsic :: iso_fortran_env, only : int64
@@ -22,13 +22,13 @@ function(_elpa_check_fortran_support)
       end program
     ]]
     ELPA_HAVE_ISO_FORTRAN_ENV
-    SRC_EXT F90
-  )
+    SRC_EXT
+    F90)
 
   # A compiler that accepts these calls does not compare actual argument types
   # across calls to an external procedure without an explicit interface. This
   # is the same distinction used by the Autotools build for PACK_REAL_TO_COMPLEX.
-  check_fortran_source_compiles(
+  CHECK_Fortran_SOURCE_COMPILES(
     [[
       program main
         implicit none
@@ -39,17 +39,15 @@ function(_elpa_check_fortran_support)
       end program
     ]]
     ELPA_FORTRAN_ACCEPTS_ARGUMENT_MISMATCH
-    SRC_EXT F90
-  )
+    SRC_EXT
+    F90)
 
-  set(
-    ELPA_PACK_REAL_TO_COMPLEX
-    "${ELPA_FORTRAN_ACCEPTS_ARGUMENT_MISMATCH}"
-    CACHE INTERNAL "Whether ELPA may use the real-to-complex packing path"
-    FORCE
-  )
+  set(ELPA_PACK_REAL_TO_COMPLEX
+      "${ELPA_FORTRAN_ACCEPTS_ARGUMENT_MISMATCH}"
+      CACHE INTERNAL "Whether ELPA may use the real-to-complex packing path"
+            FORCE)
 
-  check_fortran_source_compiles(
+  CHECK_Fortran_SOURCE_COMPILES(
     [[
       program main
         implicit none
@@ -58,8 +56,8 @@ function(_elpa_check_fortran_support)
       end program
     ]]
     ELPA_HAVE_ENVIRONMENT_CHECKING
-    SRC_EXT F90
-  )
+    SRC_EXT
+    F90)
 endfunction()
 
 # Check the non-standard affinity interfaces used by ELPA on Linux systems.
@@ -81,8 +79,7 @@ function(_elpa_check_affinity_support)
         return pthread_getaffinity_np(pthread_self(), sizeof(mask), &mask);
       }
     ]]
-    ELPA_HAVE_AFFINITY_SUPPORT
-  )
+    ELPA_HAVE_AFFINITY_SUPPORT)
 
   if(NOT ELPA_HAVE_AFFINITY_SUPPORT)
     message(
@@ -99,32 +96,33 @@ endfunction()
 function(_elpa_check_mpi_support)
   # The MPI implementation may be changed in an existing build tree. Do not
   # reuse interface results obtained from a previously selected implementation.
-  foreach(_elpa_mpi_check IN ITEMS
-    ELPA_HAVE_MPI_MODULE
-    ELPA_HAVE_MPIF_H
-    ELPA_MPI_HAS_COMPLETE_CHOICE_BUFFER_INTERFACES
-    ELPA_MPI_INTERFACES_WORK_WITH_ARGUMENT_MISMATCH_FLAG
-    ELPA_HAVE_CUDA_AWARE_MPI
-  )
+  foreach(
+    _elpa_mpi_check IN
+    ITEMS ELPA_HAVE_MPI_MODULE
+          ELPA_HAVE_MPIF_H
+          ELPA_MPI_HAS_COMPLETE_CHOICE_BUFFER_INTERFACES
+          ELPA_MPI_INTERFACES_WORK_WITH_ARGUMENT_MISMATCH_FLAG
+          ELPA_HAVE_CUDA_AWARE_MPI)
     unset(${_elpa_mpi_check} CACHE)
   endforeach()
 
-  set(
-    ELPA_MPI_ARGUMENT_MISMATCH_FLAG
-    ""
-    CACHE INTERNAL "Compatibility option required by the detected MPI interfaces"
-    FORCE
-  )
+  set(ELPA_MPI_ARGUMENT_MISMATCH_FLAG
+      ""
+      CACHE INTERNAL
+            "Compatibility option required by the detected MPI interfaces"
+            FORCE)
 
   if(NOT ELPA_USE_MPI)
-    set(ELPA_HAVE_MPI_MODULE FALSE CACHE INTERNAL "Fortran MPI module availability" FORCE)
+    set(ELPA_HAVE_MPI_MODULE
+        FALSE
+        CACHE INTERNAL "Fortran MPI module availability" FORCE)
     return()
   endif()
 
   cmake_push_check_state(RESET)
   set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_Fortran)
 
-  check_fortran_source_compiles(
+  CHECK_Fortran_SOURCE_COMPILES(
     [[
       program main
         use mpi
@@ -134,13 +132,12 @@ function(_elpa_check_mpi_support)
       end program
     ]]
     ELPA_HAVE_MPI_MODULE
-    SRC_EXT F90
-  )
+    SRC_EXT
+    F90)
 
   if(ELPA_HAVE_MPI_MODULE)
-    set(
-      _elpa_mpi_choice_buffer_test
-      [[
+    set(_elpa_mpi_choice_buffer_test
+        [[
         program main
           use mpi
           implicit none
@@ -150,10 +147,9 @@ function(_elpa_check_mpi_support)
           call MPI_Bcast(real_buffer, 2, MPI_REAL8, 0, MPI_COMM_WORLD, error)
           call MPI_Bcast(complex_buffer, 2, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD, error)
         end program
-      ]]
-    )
+      ]])
   else()
-    check_fortran_source_compiles(
+    CHECK_Fortran_SOURCE_COMPILES(
       [[
         program main
           implicit none
@@ -164,8 +160,8 @@ function(_elpa_check_mpi_support)
         end program
       ]]
       ELPA_HAVE_MPIF_H
-      SRC_EXT F90
-    )
+      SRC_EXT
+      F90)
 
     if(NOT ELPA_HAVE_MPIF_H)
       message(
@@ -174,9 +170,8 @@ function(_elpa_check_mpi_support)
       )
     endif()
 
-    set(
-      _elpa_mpi_choice_buffer_test
-      [[
+    set(_elpa_mpi_choice_buffer_test
+        [[
         program main
           implicit none
           include 'mpif.h'
@@ -186,44 +181,35 @@ function(_elpa_check_mpi_support)
           call MPI_Bcast(real_buffer, 2, MPI_REAL8, 0, MPI_COMM_WORLD, error)
           call MPI_Bcast(complex_buffer, 2, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD, error)
         end program
-      ]]
-    )
+      ]])
   endif()
 
-  check_fortran_source_compiles(
+  CHECK_Fortran_SOURCE_COMPILES(
     "${_elpa_mpi_choice_buffer_test}"
-    ELPA_MPI_HAS_COMPLETE_CHOICE_BUFFER_INTERFACES
-    SRC_EXT F90
-  )
+    ELPA_MPI_HAS_COMPLETE_CHOICE_BUFFER_INTERFACES SRC_EXT F90)
 
   if(NOT ELPA_MPI_HAS_COMPLETE_CHOICE_BUFFER_INTERFACES)
-    check_fortran_compiler_flag(
-      "-fallow-argument-mismatch"
-      ELPA_Fortran_HAS_ALLOW_ARGUMENT_MISMATCH
-    )
+    CHECK_Fortran_COMPILER_FLAG("-fallow-argument-mismatch"
+                                ELPA_Fortran_HAS_ALLOW_ARGUMENT_MISMATCH)
 
     if(ELPA_Fortran_HAS_ALLOW_ARGUMENT_MISMATCH)
       set(CMAKE_REQUIRED_FLAGS "-fallow-argument-mismatch")
-      check_fortran_source_compiles(
+      CHECK_Fortran_SOURCE_COMPILES(
         "${_elpa_mpi_choice_buffer_test}"
-        ELPA_MPI_INTERFACES_WORK_WITH_ARGUMENT_MISMATCH_FLAG
-        SRC_EXT F90
-      )
+        ELPA_MPI_INTERFACES_WORK_WITH_ARGUMENT_MISMATCH_FLAG SRC_EXT F90)
     endif()
 
     if(ELPA_MPI_INTERFACES_WORK_WITH_ARGUMENT_MISMATCH_FLAG)
-      set(
-        ELPA_MPI_ARGUMENT_MISMATCH_FLAG
-        "-fallow-argument-mismatch"
-        CACHE INTERNAL "Compatibility option required by the detected MPI interfaces"
-        FORCE
-      )
+      set(ELPA_MPI_ARGUMENT_MISMATCH_FLAG
+          "-fallow-argument-mismatch"
+          CACHE INTERNAL
+                "Compatibility option required by the detected MPI interfaces"
+                FORCE)
     else()
       message(
         FATAL_ERROR
           "The Fortran compiler checks procedure arguments, but the detected MPI Fortran "
-          "interfaces do not support every choice-buffer type used by ELPA."
-      )
+          "interfaces do not support every choice-buffer type used by ELPA.")
     endif()
   endif()
 
@@ -243,16 +229,14 @@ function(_elpa_check_mpi_support)
 
         int main(void) { return 0; }
       ]]
-      ELPA_HAVE_CUDA_AWARE_MPI
-    )
+      ELPA_HAVE_CUDA_AWARE_MPI)
     cmake_pop_check_state()
 
     if(NOT ELPA_HAVE_CUDA_AWARE_MPI)
       message(
         FATAL_ERROR
           "ELPA_ENABLE_CUDA_AWARE_MPI=ON, but the detected MPI implementation does not "
-          "advertise CUDA-aware support through mpi-ext.h."
-      )
+          "advertise CUDA-aware support through mpi-ext.h.")
     endif()
   endif()
 endfunction()
@@ -283,8 +267,7 @@ function(_elpa_check_cpu_kernel_support)
           __m128d vector = _mm_loaddup_pd(value);
           return _mm_cvtsd_f64(vector) != 0.0;
         }
-      ]]
-    )
+      ]])
     _elpa_check_c_kernel(
       ELPA_C_HAS_AVX
       "-mavx"
@@ -295,8 +278,7 @@ function(_elpa_check_cpu_kernel_support)
           __m256d vector = _mm256_loadu_pd(value);
           return _mm256_movemask_pd(vector);
         }
-      ]]
-    )
+      ]])
     _elpa_check_c_kernel(
       ELPA_C_HAS_AVX2
       "-mavx2 -mfma"
@@ -307,8 +289,7 @@ function(_elpa_check_cpu_kernel_support)
           __m256d result = _mm256_fmadd_pd(zero, zero, zero);
           return _mm256_movemask_pd(result);
         }
-      ]]
-    )
+      ]])
     _elpa_check_c_kernel(
       ELPA_C_HAS_AVX512
       "-mavx512f -mavx512dq -mavx512vl -mfma"
@@ -319,8 +300,7 @@ function(_elpa_check_cpu_kernel_support)
           __m512d result = _mm512_fmadd_pd(zero, zero, zero);
           return _mm512_cmp_pd_mask(result, zero, _CMP_NEQ_OQ);
         }
-      ]]
-    )
+      ]])
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     _elpa_check_c_kernel(
       ELPA_C_HAS_NEON_ARCH64
@@ -332,8 +312,7 @@ function(_elpa_check_cpu_kernel_support)
           value = vfmaq_f64(value, value, value);
           return vgetq_lane_f64(value, 0) != 0.0;
         }
-      ]]
-    )
+      ]])
     foreach(_elpa_sve_width IN ITEMS 128 256 512)
       _elpa_check_c_kernel(
         "ELPA_C_HAS_SVE${_elpa_sve_width}"
@@ -344,10 +323,10 @@ function(_elpa_check_cpu_kernel_support)
             svfloat64_t value = svdup_n_f64(0.0);
             return svptest_any(svptrue_b64(), svcmpne_n_f64(svptrue_b64(), value, 0.0));
           }
-        ]]
-      )
+        ]])
     endforeach()
-  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(ppc64|ppc64le|powerpc64|powerpc64le)$")
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES
+         "^(ppc64|ppc64le|powerpc64|powerpc64le)$")
     _elpa_check_c_kernel(
       ELPA_C_HAS_VSX
       "-mvsx"
@@ -359,8 +338,7 @@ function(_elpa_check_cpu_kernel_support)
           __vector double result = vec_add(left, right);
           return vec_extract(result, 0) != 0.0;
         }
-      ]]
-    )
+      ]])
   elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(sparc64|sparc)$")
     _elpa_check_c_kernel(
       ELPA_C_HAS_SPARC64
@@ -373,25 +351,21 @@ function(_elpa_check_cpu_kernel_support)
           value = _fjsp_neg_v2r8(value);
           return 0;
         }
-      ]]
-    )
+      ]])
   endif()
 endfunction()
 
 # Check compiler support required by the selected accelerator backend.
 function(_elpa_check_accelerator_support)
-  set(
-    ELPA_ACCELERATOR_COMPILE_OPTIONS
-    ""
-    CACHE INTERNAL "Compiler options required by the selected accelerator backend"
-    FORCE
-  )
-  set(
-    ELPA_ACCELERATOR_LINK_OPTIONS
-    ""
-    CACHE INTERNAL "Link options required by the selected accelerator backend"
-    FORCE
-  )
+  set(ELPA_ACCELERATOR_COMPILE_OPTIONS
+      ""
+      CACHE INTERNAL
+            "Compiler options required by the selected accelerator backend"
+            FORCE)
+  set(ELPA_ACCELERATOR_LINK_OPTIONS
+      ""
+      CACHE INTERNAL
+            "Link options required by the selected accelerator backend" FORCE)
 
   if(ELPA_ACCELERATOR STREQUAL "SYCL")
     cmake_push_check_state(RESET)
@@ -406,8 +380,7 @@ function(_elpa_check_accelerator_support)
           return queue.get_device().is_gpu() ? 0 : 0;
         }
       ]]
-      ELPA_CXX_HAS_SYCL
-    )
+      ELPA_CXX_HAS_SYCL)
     cmake_pop_check_state()
 
     if(NOT ELPA_CXX_HAS_SYCL)
@@ -417,18 +390,15 @@ function(_elpa_check_accelerator_support)
       )
     endif()
 
-    set(
-      ELPA_ACCELERATOR_COMPILE_OPTIONS
-      "-fsycl"
-      CACHE INTERNAL "Compiler options required by the selected accelerator backend"
-      FORCE
-    )
-    set(
-      ELPA_ACCELERATOR_LINK_OPTIONS
-      "-fsycl"
-      CACHE INTERNAL "Link options required by the selected accelerator backend"
-      FORCE
-    )
+    set(ELPA_ACCELERATOR_COMPILE_OPTIONS
+        "-fsycl"
+        CACHE INTERNAL
+              "Compiler options required by the selected accelerator backend"
+              FORCE)
+    set(ELPA_ACCELERATOR_LINK_OPTIONS
+        "-fsycl"
+        CACHE INTERNAL
+              "Link options required by the selected accelerator backend" FORCE)
   elseif(ELPA_ACCELERATOR STREQUAL "IOMP_OFFLOAD")
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_FLAGS "-fiopenmp -fopenmp-targets=spir64")
@@ -440,30 +410,25 @@ function(_elpa_check_accelerator_support)
         #include <omp.h>
         int main() { return omp_get_num_devices() < 0; }
       ]]
-      ELPA_CXX_HAS_OPENMP_OFFLOAD
-    )
+      ELPA_CXX_HAS_OPENMP_OFFLOAD)
     cmake_pop_check_state()
 
     if(NOT ELPA_CXX_HAS_OPENMP_OFFLOAD)
       message(
         FATAL_ERROR
           "ELPA_ACCELERATOR=IOMP_OFFLOAD requires Intel OpenMP target offloading "
-          "and oneMKL offload headers."
-      )
+          "and oneMKL offload headers.")
     endif()
 
-    set(
-      ELPA_ACCELERATOR_COMPILE_OPTIONS
-      "-fiopenmp;-fopenmp-targets=spir64"
-      CACHE INTERNAL "Compiler options required by the selected accelerator backend"
-      FORCE
-    )
-    set(
-      ELPA_ACCELERATOR_LINK_OPTIONS
-      "-fiopenmp;-fopenmp-targets=spir64"
-      CACHE INTERNAL "Link options required by the selected accelerator backend"
-      FORCE
-    )
+    set(ELPA_ACCELERATOR_COMPILE_OPTIONS
+        "-fiopenmp;-fopenmp-targets=spir64"
+        CACHE INTERNAL
+              "Compiler options required by the selected accelerator backend"
+              FORCE)
+    set(ELPA_ACCELERATOR_LINK_OPTIONS
+        "-fiopenmp;-fopenmp-targets=spir64"
+        CACHE INTERNAL
+              "Link options required by the selected accelerator backend" FORCE)
   endif()
 endfunction()
 
@@ -485,10 +450,7 @@ function(elpa_check_compiler_support)
   endif()
 
   FortranCInterface_VERIFY()
-  set(
-    ELPA_FORTRAN_GLOBAL_SUFFIX
-    "${FortranCInterface_GLOBAL_SUFFIX}"
-    CACHE INTERNAL "Fortran global-symbol suffix"
-    FORCE
-  )
+  set(ELPA_FORTRAN_GLOBAL_SUFFIX
+      "${FortranCInterface_GLOBAL_SUFFIX}"
+      CACHE INTERNAL "Fortran global-symbol suffix" FORCE)
 endfunction()
