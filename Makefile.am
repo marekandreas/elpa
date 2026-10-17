@@ -1103,6 +1103,7 @@ EXTRA_DIST = \
   cmake/CompilerConfiguration.cmake \
   CMakeLists.txt \
   src/CMakeLists.txt \
+  test/CMakeLists.txt \
   src/helpers/fortran_blas_interfaces.F90 \
   src/helpers/fortran_scalapack_interfaces.F90 \
   src/GPU/check_for_gpu_template.F90 \
