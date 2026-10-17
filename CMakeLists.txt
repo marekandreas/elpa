@@ -296,7 +296,7 @@ if(ELPA_USE_MPI)
   else()
     set(SCALAPACK_BLAS_TARGETS ${ELPA_BLAS_TARGET})
     find_package(Scalapack REQUIRED)
-    set(ELPA_SCALAPACK_TARGET SCALAPACK::SCALAPACK)
+    set(ELPA_SCALAPACK_TARGET ScaLAPACK::scalapack)
   endif()
 endif()
 
