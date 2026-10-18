@@ -347,15 +347,11 @@ endif()
 install(
   TARGETS elpa
   EXPORT elpa-targets
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
   INCLUDES
   DESTINATION "${ELPA_INSTALL_INCLUDEDIR}")
 
 if(TARGET elpa2_print_kernels)
-  install(TARGETS elpa2_print_kernels
-          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  install(TARGETS elpa2_print_kernels)
   install(FILES man/elpa2_print_kernels.1
           DESTINATION "${CMAKE_INSTALL_MANDIR}/man1")
 endif()
