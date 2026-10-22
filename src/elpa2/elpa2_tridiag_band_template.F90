@@ -381,7 +381,8 @@ subroutine tridiag_band_&
   check_allocate("tridiag_band: snd_limits", istat, errorMessage)
 
   do iblk=1,nblocks
-    call determine_workload(obj, na-(iblk+block_limits(my_pe)-1)*nb, nb, np_rows, snd_limits(:,iblk))
+    nx = na-(iblk+block_limits(my_pe)-1)*nb
+    call determine_workload(obj, nx, nb, np_rows, snd_limits(:,iblk))
   enddo
 
 #ifdef WITH_OPENMP_TRADITIONAL
@@ -1150,6 +1151,10 @@ endif
 
       if (hh_dst(iblk) >= np_rows) exit
       if (snd_limits(hh_dst(iblk)+1,iblk) == snd_limits(hh_dst(iblk),iblk)) exit
+      nx = na-(iblk+block_limits(my_pe)-1)*nb ! For nx=1, the last block has width 1:
+      if (nx <= 1) exit                       ! its only HH vector is 0 and is neither stored in hh_trans
+                                              ! nor received (mpi_irecv only for nx>1 above), so mustn't be sent
+
 
       if (hh_cnt(iblk) == snd_limits(hh_dst(iblk)+1,iblk)-snd_limits(hh_dst(iblk),iblk)) then
         ! Wait for last transfer to finish

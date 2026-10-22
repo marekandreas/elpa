@@ -37,10 +37,14 @@ LDFLAGS="-L$MKL_HOME/lib/intel64 -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_sequen
 
 
 make -j 4 validate_real_double_eigenvectors_2stage_default_kernel_gpu_random \
-          validate_real_double_generalized_1stage_gpu_random
+          validate_real_double_generalized_1stage_gpu_random \
+          validate_complex_double_eigenvectors_2stage_default_kernel_random
 
 # Test for small nev in ELPA2-GPU. Minimum 4 MPI processes needed here
 srun -n 4 ./validate_real_double_eigenvectors_2stage_default_kernel_gpu_random 150 1 16
 
 # Test block sizes larger than the maximum CUDA thread-block size
 srun -n 4 ./validate_real_double_generalized_1stage_gpu_random 4000 4000 2048
+
+# Test na==1 (mod nb) for small complex CPU matrices
+srun -n 2 ./validate_complex_double_eigenvectors_2stage_default_kernel_random 65 65 64

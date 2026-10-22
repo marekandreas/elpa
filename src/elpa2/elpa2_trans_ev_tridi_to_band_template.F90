@@ -2006,7 +2006,9 @@ subroutine trans_ev_tridi_to_band_&
 #endif /* WITH_MPI */
     endif ! sweep==0 .and. current_n_end < current_n .and. l_nev > 0
 
-    if (current_local_n > 1) then
+    ! A HH vector chunk is stored in hh_trans if the sweep has global width current_n > 1
+    ! (cf. nx>1 in tridiag_band); locally we may still own just 1 row of it (current_local_n == 1)
+    if (current_n > 1 .and. current_local_n > 0) then
       if (useGPU .and. allComputeOnGPU) then
         if (my_pcol == mod(sweep,np_cols)) then
           if (wantDebug) call obj%timer%start("cuda_memcpy")
@@ -2164,9 +2166,9 @@ subroutine trans_ev_tridi_to_band_&
         if (wantDebug) call obj%timer%stop("extract_hh")
       endif ! useGPU
 
-    else ! (current_local_n > 1) then
+    else ! (current_n > 1 .and. current_local_n > 0)
 
-      ! for current_local_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
+      ! for current_n == 1 the one and only HH Vector is 0 and not stored in hh_trans_real/complex
       bcast_buffer(:,1) = 0.0_rck
       if (useGPU) then
 #if defined(WITH_OPENMP_OFFLOAD_GPU_VERSION)
@@ -2202,7 +2204,7 @@ subroutine trans_ev_tridi_to_band_&
              nbw, 1, .true., my_stream)
         if (wantDebug) call obj%timer%stop("extract_hh")
       endif ! useGPU
-    endif ! (current_local_n > 1) then
+    endif ! (current_n > 1 .and. current_local_n > 0)
 
     if (l_nev == 0) cycle
 
