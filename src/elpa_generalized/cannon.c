@@ -83,7 +83,7 @@
 #endif
 
 #ifdef WITH_NVTX
-#include <nvToolsExt.h>
+#include <nvtx3/nvToolsExt.h>
 #endif
 
 #ifdef WITH_NVTX

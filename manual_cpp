@@ -43,6 +43,7 @@ def is_nvidia_backend():
 
 args = sys.argv[1:]
 cpp_args = list(filter(cpp_arg, args))
+cxx_dialect_args = list(filter(lambda q: q.startswith(("-std=", "--std=")), args))
 files = list(filter(lambda q: q.endswith((".F90", ".cu", ".hip")), args))
 args = list(filter(lambda q: not q.endswith((".F90", ".cu", ".hip")), args))
 
@@ -75,7 +76,7 @@ tmp_filename = tmp_filename[-250:]
 
 if (ext==".cu"):
     # preprocess
-    list_preprocess_call_cu  = ["nvcc"]  + cpp_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
+    list_preprocess_call_cu  = ["nvcc"]  + cpp_args + cxx_dialect_args + ["-E"] + [file] + ["-o"] + [tmp_filename]
     check_call(list_preprocess_call_cu)
 
     # compile
