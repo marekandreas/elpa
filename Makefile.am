@@ -850,9 +850,12 @@ check_SCRIPTS =
 test_program_ldadd = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
 test_program_fcflags = $(AM_FCFLAGS) $(FC_MODOUT)test_modules $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
-# library with shared sources for the test files
+# Build the shared test library only when test programs are requested.
+if BUILD_TEST_LIBRARY
 noinst_LTLIBRARIES += libelpatest@SUFFIX@.la
 libelpatest@SUFFIX@_la_FCFLAGS = $(test_program_fcflags)
+# Let the Fortran dependency scanner find modules provided by libelpa.
+libelpatest@SUFFIX@_la_LIBADD = libelpa@SUFFIX@.la
 libelpatest@SUFFIX@_la_SOURCES = \
   test/shared/tests_variable_definitions.F90 \
   test/shared/mod_tests_scalapack_interfaces.F90 \
@@ -902,6 +905,8 @@ libelpatest@SUFFIX@_la_SOURCES += \
   test/shared/test_redir.c \
   test/shared/test_redirect.F90
 endif
+
+endif # BUILD_TEST_LIBRARY
 
 if BUILD_FUGAKU
 else

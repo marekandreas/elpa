@@ -4301,6 +4301,10 @@ AC_MSG_RESULT([${withval}])
 AM_CONDITIONAL([BUILD_CPU_TESTS],[test x"$build_cpu_tests" = x"yes"])
 AM_CONDITIONAL([BUILD_GPU_TESTS],[test x"$build_gpu_tests" = x"yes"])
 AM_CONDITIONAL([BUILD_EXTRA_TESTS],[test x"$build_extra_tests" = x"yes"])
+AM_CONDITIONAL([BUILD_TEST_LIBRARY],
+               [test x"$build_cpu_tests" = x"yes" ||
+                test x"$build_gpu_tests" = x"yes" ||
+                test x"$build_extra_tests" = x"yes"])
 
 
 
