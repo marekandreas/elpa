@@ -2,8 +2,9 @@
 
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(FC_MODINC)modules
-AM_LDFLAGS = $(SCALAPACK_LDFLAGS)
+AM_CPPFLAGS = $(ELPA_MATH_CFLAGS)
+AM_FCFLAGS = $(SCALAPACK_FCFLAGS) $(ELPA_MATH_CFLAGS) $(FC_MODINC)modules
+AM_LDFLAGS =
 if WITH_SYCL_GPU_VERSION
 AM_LDFLAGS2 = $(LDFLAGS)
 AM_ARFLAGS = 'qc'
@@ -19,8 +20,8 @@ FCLD = @ACTUAL_FC@
 
 # libelpa
 lib_LTLIBRARIES = libelpa@SUFFIX@.la
-libelpa@SUFFIX@_la_LINK = $(FCLINK) $(AM_LDFLAGS) -version-info $(ELPA_SO_VERSION)
-libelpa@SUFFIX@_la_LIBADD = libelpa@SUFFIX@_public.la libelpa@SUFFIX@_private.la
+libelpa@SUFFIX@_la_LINK = $(FCLINK) -version-info $(ELPA_SO_VERSION)
+libelpa@SUFFIX@_la_LIBADD = libelpa@SUFFIX@_public.la libelpa@SUFFIX@_private.la $(ELPA_MATH_LIBS)
 libelpa@SUFFIX@_la_SOURCES =
 
 # parts with public interface
@@ -775,7 +776,6 @@ BUILT_SOURCES = $(generated_headers)
 # install public headers and Fortran modules files in the include/ dir
 elpa_includedir = $(includedir)/elpa@SUFFIX@-@PACKAGE_VERSION@
 nobase_elpa_include_HEADERS = \
-  $(wildcard modules/*) \
   src/helpers/lapack_interfaces.h \
   src/helpers/scalapack_interfaces.h \
   elpa/elpa_simd_constants.h \
@@ -791,6 +791,12 @@ nobase_nodist_elpa_include_HEADERS = \
   elpa/elpa_generated.h \
   elpa/elpa_generated_c_api.h \
   elpa/elpa_configured_options.h
+
+# These are compiler outputs, with the same versioned modules/ install path.
+elpa_public_modules = modules/elpa.mod modules/elpa_api.mod modules/elpa_constants.mod
+nobase_nodist_elpa_include_HEADERS += $(elpa_public_modules)
+$(elpa_public_modules): libelpa@SUFFIX@_public.la
+	@test -f $@
 
 dist_man_MANS = \
   man/elpa2_print_kernels.1 \
@@ -847,7 +853,7 @@ endif
 noinst_PROGRAMS =
 check_SCRIPTS =
 
-test_program_ldadd = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la
+test_program_ldadd = libelpatest@SUFFIX@.la libelpa@SUFFIX@.la $(ELPA_MATH_LIBS)
 test_program_fcflags = $(AM_FCFLAGS) $(FC_MODOUT)test_modules $(FC_MODINC)test_modules $(FC_MODINC)modules $(FC_MODINC)private_modules
 
 # Build the shared test library only when test programs are requested.
@@ -1058,9 +1064,6 @@ clean-local:
 	-rm -rf *.sh.log
 
 distclean-local:
-	-rm -rf ./m4
-	-rm -rf ./src
-	-rm -rf ./test
 	-rm -rf ./modules
 	-rm -rf ./private_modules
 	-rm -rf ./test_modules
@@ -1082,7 +1085,10 @@ distclean-local:
 	-rm -rf *.sh.trs
 	-rm -rf *.sh.log
 
+FORCE_MATH_DISCOVERY:
+
 EXTRA_DIST = \
+  documentation/AUTOTOOLS_DEPENDENCIES.md \
   elpa.spec \
   elpa/elpa.h \
   elpa/elpa_generic.h \
