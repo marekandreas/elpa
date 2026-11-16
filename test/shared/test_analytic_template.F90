@@ -293,7 +293,10 @@
       max_ev_diff = max(diff, max_ev_diff)
     end do
     call timer%stop("loop_eigenvalues")
-
+    ! for eigenvalue-only solves, z holds no eigenvectors 
+    ! "too small" early return below would otherwise cause
+    ! test failure depending on that uninitialized content 
+    if (check_eigenvectors) then
     call timer%start("loop_eigenvectors")
     do globJ = 1, nev
       max_curr_z_diff = 0.0_rk
@@ -383,6 +386,7 @@
       max_z_diff = max(max_z_diff, max_curr_z_diff)
     end do !globJ
     call timer%stop("loop_eigenvectors")
+    endif ! check_eigenvectors test fix
 
 #ifdef WITH_MPI
     call mpi_allreduce(max_z_diff, glob_max_z_diff, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, &
