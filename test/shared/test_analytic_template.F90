@@ -293,7 +293,10 @@
       max_ev_diff = max(diff, max_ev_diff)
     end do
     call timer%stop("loop_eigenvalues")
-
+    ! for eigenvalue-only solves, z holds no eigenvectors 
+    ! "too small" early return below would otherwise cause
+    ! test failure depending on that uninitialized content 
+    if (check_eigenvectors) then
     call timer%start("loop_eigenvectors")
     do globJ = 1, nev
       max_curr_z_diff = 0.0_rk
@@ -390,6 +393,7 @@
 #else
     glob_max_z_diff = max_z_diff
 #endif
+    endif ! check_eigenvectors test fix
     if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
     if (check_eigenvectors) then
       if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
