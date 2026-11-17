@@ -386,7 +386,6 @@
       max_z_diff = max(max_z_diff, max_curr_z_diff)
     end do !globJ
     call timer%stop("loop_eigenvectors")
-    endif ! check_eigenvectors test fix
 
 #ifdef WITH_MPI
     call mpi_allreduce(max_z_diff, glob_max_z_diff, 1_MPI_KIND, MPI_REAL_PRECISION, MPI_MAX, &
@@ -394,6 +393,7 @@
 #else
     glob_max_z_diff = max_z_diff
 #endif
+    endif ! check_eigenvectors test fix
     if(myid == 0) print *, 'Maximum error in eigenvalues      :', max_ev_diff
     if (check_eigenvectors) then
       if(myid == 0) print *, 'Maximum error in eigenvectors     :', glob_max_z_diff
