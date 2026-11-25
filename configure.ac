@@ -2776,10 +2776,17 @@ if test x"${need_amd_gpu}" = x"yes" ; then
   AC_SUBST(HIPCC)
   AC_SUBST(HIPCCFLAGS)
 
-  dnl check whether hipcc compiler is found
-  AC_CHECK_PROG(hipcc_found,hipcc,yes,no)
+  dnl check whether the HIP compiler of $HIPCC is found, e.g. hipcc or amdclang++
+  for hipcc_prog in $HIPCC; do break; done
+  AC_MSG_CHECKING([for ${hipcc_prog}])
+  if command -v "${hipcc_prog}" >/dev/null 2>&1 ; then
+    hipcc_found=yes
+  else
+    hipcc_found=no
+  fi
+  AC_MSG_RESULT([${hipcc_found}])
   if test x"${hipcc_found}" = x"no" ; then
-    AC_MSG_ERROR([hipcc not found; try to set the hip-path or disable AMD GPU support])
+    AC_MSG_ERROR([${hipcc_prog} not found; try to set HIPCC or the hip-path, or disable AMD GPU support])
   fi
   AC_MSG_CHECKING(how to querry GPU memory types)
   AC_LANG_PUSH([C++])
