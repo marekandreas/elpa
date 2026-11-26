@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Copyright 2015 Lorenz Hüdepohl
 #
@@ -7,6 +7,7 @@
 #
 
 use strict;
+use warnings;
 
 my %defs = ();
 my %uses = ();
